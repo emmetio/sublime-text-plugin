@@ -1,0 +1,10 @@
+npm-debug.log*
+node_modules
+jspm_packages
+.npm
+/.*
+/*.*
+/test
+/src
+/packages
+/snippets

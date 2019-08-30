@@ -1,0 +1,25 @@
+{
+  "name": "@emmetio/sublime-text-plugin",
+  "version": "1.0.0",
+  "description": "Emmet plugin for Sublime Text 3",
+  "main": "index.js",
+  "scripts": {
+    "build": "rollup -c",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "emmet",
+    "plugin",
+    "sublime text",
+    "st"
+  ],
+  "author": "Sergey Chikuyonok <serge.che@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "emmet": "^2.0.0-rc.2"
+  },
+  "devDependencies": {
+    "rollup": "^1.20.3",
+    "rollup-plugin-node-resolve": "^5.2.0"
+  }
+}
