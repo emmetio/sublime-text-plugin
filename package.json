@@ -16,10 +16,18 @@
   "author": "Sergey Chikuyonok <serge.che@gmail.com>",
   "license": "MIT",
   "dependencies": {
-    "emmet": "^2.0.0-rc.2"
+    "emmet": "^2.0.0-rc.3"
   },
   "devDependencies": {
     "rollup": "^1.20.3",
     "rollup-plugin-node-resolve": "^5.2.0"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/emmetio/sublime-text-plugin.git"
+  },
+  "bugs": {
+    "url": "https://github.com/emmetio/sublime-text-plugin/issues"
+  },
+  "homepage": "https://github.com/emmetio/sublime-text-plugin#readme"
 }

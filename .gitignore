@@ -64,3 +64,4 @@ __pycache__
 # next.js build output
 .next
 .DS_Store
+.vscode

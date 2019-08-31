@@ -33,6 +33,6 @@ def extract(line, pos=None, options={}):
 
     return None
 
-print(expand('p10'))
-print(expand('p10', { 'type': 'stylesheet' }))
-print(extract('hello foo>bar')['abbreviation'])
+# print(expand('p10'))
+# print(expand('p10', { 'type': 'stylesheet' }))
+# print(extract('hello foo>bar')['abbreviation'])
