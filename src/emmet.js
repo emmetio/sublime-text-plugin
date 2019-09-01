@@ -12,6 +12,15 @@ function field(index, placeholder) {
 }
 
 /**
+ * @param {string} str
+ * @returns {string}
+ */
+function text(str) {
+    // Escape all `$` in plain text for snippet output
+    return str.replace(/\$/g, '\\$');
+}
+
+/**
  * Expands given abbreviation
  * @param {string} abbr
  * @param {import('emmet').UserConfig} [config]
@@ -22,6 +31,7 @@ export function expand(abbr, config) {
         ...config,
         options: {
             'output.field': field,
+            'output.text': text,
             ...(config && config.options),
         }
     });

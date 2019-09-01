@@ -1,0 +1,6 @@
+[
+    {
+        "caption": "Emmet: Expand Abbreviation",
+        "command": "expand_abbreviation",
+    }
+]
