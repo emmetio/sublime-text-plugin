@@ -46,7 +46,7 @@ def is_autocomplete_context(view, pt):
     """
     Check if given location in view is allowed for autocomplete context
     """
-    return view.match_selector(pt, "text.html - (source - source text.html)")
+    return view.match_selector(pt, "text.html - (source - source text.html, meta)")
 
 def expand_from_line(view: sublime.View, pt: int):
     """
@@ -94,8 +94,9 @@ def popup_content(snippet: str):
     return """
     <body>
         <style>
+            body { font-size: 0.85rem; }
             pre { display: block }
-            h1 { font-size: 1.1rem; margin-top: 0; }
+            h1 { font-size: 1rem; margin-top: 0; margin-bottom: 0.3rem; }
             .main { line-height: 1.5rem; }
         </style>
         <h1>Emmet abbreviation:</h1>
