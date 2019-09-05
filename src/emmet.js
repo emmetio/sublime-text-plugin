@@ -12,6 +12,15 @@ function field(index, placeholder) {
 }
 
 /**
+ * @param {number} index
+ * @param {string} placeholder
+ * @returns {string}
+ */
+function fieldPreview(index, placeholder) {
+    return placeholder;
+}
+
+/**
  * @param {string} str
  * @returns {string}
  */
@@ -27,10 +36,11 @@ function text(str) {
  * @returns {string}
  */
 export function expand(abbr, config) {
+    const isPreview = config && config.preview;
     return expandAbbreviation(abbr, {
         ...config,
         options: {
-            'output.field': field,
+            'output.field': isPreview ? fieldPreview : field,
             'output.text': text,
             ...(config && config.options),
         }

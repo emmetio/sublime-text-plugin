@@ -2,5 +2,9 @@
     {
         "caption": "Emmet: Expand Abbreviation",
         "command": "expand_abbreviation",
+    },
+    {
+        "caption": "Emmet: Mark Abbreviation",
+        "command": "mark_abbreviation",
     }
 ]

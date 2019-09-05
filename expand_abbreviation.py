@@ -1,7 +1,5 @@
-# pylint: disable=import-error
 import sublime
 import sublime_plugin
-# pylint: enable=import-error
 
 import re
 import sys
@@ -105,7 +103,7 @@ def popup_content(snippet: str):
     """ % '\n'.join(lines)
 
 
-class ExpandAbbreviation(sublime_plugin.TextCommand):
+class ExpandAbbreviationOld(sublime_plugin.TextCommand):
     def run(self, edit, **kw):
         selections = list(self.view.sel())
         for sel in reversed(selections):
@@ -120,11 +118,11 @@ class ExpandAbbreviation(sublime_plugin.TextCommand):
 class EmmetCompletions(sublime_plugin.EventListener):
     def on_modified(self, view: sublime.View):
         caret = view.sel()[0].begin()
-        if is_autocomplete_context(view, caret):
-            expanded = expand_from_line(view, caret)
-            if expanded:
-                view.show_popup(popup_content(expanded[0]),
-                                sublime.COOPERATE_WITH_AUTO_COMPLETE, expanded[1], 400, 300)
+        # if is_autocomplete_context(view, caret):
+        #     expanded = expand_from_line(view, caret)
+        #     if expanded:
+        #         view.show_popup(popup_content(expanded[0]),
+        #                         sublime.COOPERATE_WITH_AUTO_COMPLETE, expanded[1], 400, 300)
 
 
     def on_query_completions(self, view, prefix, locations):

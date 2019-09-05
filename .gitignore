@@ -50,7 +50,7 @@ typings/
 .rpt2_cache
 dist/
 __pycache__
-/emmet.js
+/emmet/emmet.js
 
 # Output of 'npm pack'
 *.tgz
