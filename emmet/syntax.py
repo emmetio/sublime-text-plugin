@@ -2,7 +2,6 @@ import re
 import sublime
 
 re_string_scope = re.compile(r'\bstring\b')
-# rs_jsx_scope = re.compile(r'\bsource\.jsx?\b')
 re_source_scope = re.compile(r'\bsource\.([\w\-]+)')
 
 markup_syntaxes = ['html', 'xml', 'xsl', 'jsx', 'haml', 'jade', 'pug', 'slim']

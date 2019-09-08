@@ -1,12 +1,11 @@
 [
-	{ "keys": ["ctrl+e"], "command": "expand_abbreviation" },
-	{ "keys": ["ctrl+m"], "command": "mark_abbreviation" },
+    { "keys": ["ctrl+e"], "command": "expand_abbreviation" },
     {
         "keys": ["tab"],
         "command": "expand_abbreviation",
         "context": [
             { "key": "has_next_field", "operand": false },
-            { "key": "emmet_tab_expand" }
+            { "key": "emmet_abbreviation" }
         ]
     }
 ]
