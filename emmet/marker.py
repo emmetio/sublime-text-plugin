@@ -1,30 +1,20 @@
 import re
 import sublime
-from . import expand, validate
+from . import expand, validate, get_options
 
 abbr_region_id = 'emmet-abbreviation'
-lookup = { 'marker': None }
-
-def get_marker(view):
-    "Returns marker for given view"
-    m = lookup['marker']
-    if not m or m.view != view:
-        lookup['marker'] = AbbreviationMarker(view)
-
-    return lookup['marker']
-
-def dispose_marker():
-    lookup['marker'] = None
 
 class AbbreviationMarker:
-    def __init__(self, view):
+    def __init__(self, view, start, end):
         self.view = view
+        self.options = get_options(view, start)
         self.region = None
         self.valid = False
         self.simple = False
         self.matched = False
         self.error = self.error_snippet = None
         self.error_pos = -1
+        self.update(start, end)
 
     def __del__(self):
         regions = self.view.get_regions(abbr_region_id)
@@ -40,9 +30,8 @@ class AbbreviationMarker:
     def abbreviation(self):
         return self.region and self.view.substr(self.region) or None
 
-    def update(self, start, end, options=None):
+    def update(self, start, end):
         self.region = sublime.Region(start, end)
-        self.options = options
         self.mark()
         self.validate()
 
@@ -88,6 +77,12 @@ class AbbreviationMarker:
         "Check if current abbreviation range contains given point"
         return self.region and self.region.contains(pt)
 
+
+    def snippet(self):
+        if self.valid:
+            return expand(self.abbreviation, self.options)
+        return ''
+
     def preview(self):
         """
         Returns generated preview of current abbreviation: if abbreviation is valid,
@@ -106,7 +101,10 @@ class AbbreviationMarker:
                 return popup_content('\n'.join(lines))
 
             except Exception as e:
-                return popup_content('<div class="error">%s</div>' % e)
+                lines = [
+                    '<div><code>%s</code></div>' % escape_html(line) for line in str(e).splitlines()
+                ]
+                return popup_content('<div class="error">%s</div>' % '\n'.join(lines))
 
         else:
             return popup_content('<div class="error">%s<br/>%s</div>' % (self.error, self.error_snippet))
