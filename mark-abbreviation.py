@@ -2,7 +2,7 @@ import re
 import sublime
 import sublime_plugin
 from .emmet import extract, expand, get_options
-from .emmet.marker import AbbreviationMarker, abbr_region_id
+from .emmet.marker import AbbreviationMarker, clear_marker_region, get_marker_region
 
 active_preview = False
 active_preview_id = None
@@ -11,7 +11,7 @@ markers = {}
 def plugin_unloaded():
     for wnd in sublime.windows():
         for view in wnd.views():
-            view.erase_regions(abbr_region_id)
+            clear_marker_region(view)
             if view.id() == active_preview_id:
                 hide_preview(view)
 
@@ -117,7 +117,13 @@ class AbbreviationMarkerListener(sublime_plugin.EventListener):
         if marker:
             if marker.contains(caret):
                 # Modification made inside caret: validate current abbreviation
-                return marker.validate()
+                marker.validate()
+                if not marker.region:
+                    # In case if user removed abbreviation, `marker` will end up
+                    # with empty state
+                    dispose_marker(view)
+                return
+
 
             # Check if modification was made right after or before abbreviation marker
             line_range = view.line(caret)
@@ -142,6 +148,7 @@ class AbbreviationMarkerListener(sublime_plugin.EventListener):
                 # Initially invalid abbreviation, abort
                 marker.reset()
 
+
     def on_query_context(self, view: sublime.View, key: str, op: str, operand: str, match_all: bool):
         if key == 'emmet_abbreviation':
             # Check if caret is currently inside Emmet abbreviation
@@ -161,6 +168,7 @@ class AbbreviationMarkerListener(sublime_plugin.EventListener):
     def on_query_completions(self, view, prefix, locations):
         marker = get_marker(view)
         caret = locations[0]
+
         if marker and not marker.contains(caret):
             dispose_marker(view)
             marker = None
@@ -172,13 +180,14 @@ class AbbreviationMarkerListener(sublime_plugin.EventListener):
                 marker = AbbreviationMarker(view, abbr_data[0], abbr_data[1])
                 if marker.valid:
                     set_marker(view, marker)
+                    show_preview(view, marker)
                 else:
                     marker.reset()
                     marker = None
 
         if marker:
             return [
-                ['%s\tExpand Emmet abbreviation' % marker.abbreviation, marker.snippet()]
+                ['%s\tEmmet' % marker.abbreviation, marker.snippet()]
             ]
 
         return None
@@ -186,6 +195,22 @@ class AbbreviationMarkerListener(sublime_plugin.EventListener):
     def on_text_command(self, view, command_name, args):
         if command_name == 'commit_completion':
             dispose_marker(view)
+
+    def on_post_text_command(self, view, command_name, args):
+        if command_name == 'undo':
+            # In case of undo, editor may restore previously marked range.
+            # If so, restore marker from it
+            r = get_marker_region(view)
+            if r:
+                clear_marker_region(view)
+                marker = AbbreviationMarker(view, r.begin(), r.end())
+                if marker.valid:
+                    set_marker(view, marker)
+                    caret = get_caret(view)
+                    if marker.contains(caret):
+                        show_preview(view, marker)
+                else:
+                    marker.reset()
 
 
 class ExpandAbbreviation(sublime_plugin.TextCommand):

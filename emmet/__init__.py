@@ -3,7 +3,7 @@ import threading
 import json
 import os.path
 import re
-import quickjs
+from .. import quickjs
 
 re_string_scope = re.compile(r'\bstring\b')
 re_source_scope = re.compile(r'\bsource\.([\w\-]+)')

@@ -4,6 +4,17 @@ from . import expand, validate, get_options
 
 abbr_region_id = 'emmet-abbreviation'
 
+def clear_marker_region(view):
+    "Removes any abbreviation markers from given view"
+    view.erase_regions(abbr_region_id)
+
+
+def get_marker_region(view):
+    "Returns range of currently marked abbreviation in given view, if any"
+    regions = view.get_regions(abbr_region_id)
+    return regions and regions[0] or None
+
+
 class AbbreviationMarker:
     def __init__(self, view, start, end):
         self.view = view
@@ -38,8 +49,8 @@ class AbbreviationMarker:
     def validate(self):
         "Validates currently marked abbreviation"
         regions = self.view.get_regions(abbr_region_id)
-        if regions:
-            self.region = regions[0]
+        self.region = get_marker_region(self.view)
+        if self.region and not self.region.empty():
             data = validate(self.abbreviation, self.options)
 
             if data['valid']:
@@ -61,7 +72,7 @@ class AbbreviationMarker:
 
     def mark(self):
         "Marks abbreviation in view with current state"
-        self.view.erase_regions(abbr_region_id)
+        clear_marker_region(self.view)
         if self.region:
             scope = '%s.emmet' % (self.valid and 'string' or 'error',)
             self.view.add_regions(abbr_region_id, [self.region], 'string.emmet', '',
@@ -71,7 +82,7 @@ class AbbreviationMarker:
         self.valid = self.simple = self.matched = False
         self.region = self.error = self.error_snippet = None
         self.error_pos = -1
-        self.mark()
+        clear_marker_region(self.view)
 
     def contains(self, pt):
         "Check if current abbreviation range contains given point"
