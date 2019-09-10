@@ -74,8 +74,8 @@ class AbbreviationMarker:
         "Marks abbreviation in view with current state"
         clear_marker_region(self.view)
         if self.region:
-            scope = '%s.emmet' % (self.valid and 'string' or 'error',)
-            self.view.add_regions(abbr_region_id, [self.region], 'string.emmet', '',
+            scope = '%s.emmet' % (self.valid and 'string' or 'invalid',)
+            self.view.add_regions(abbr_region_id, [self.region], scope, '',
                 sublime.DRAW_SOLID_UNDERLINE | sublime.DRAW_NO_FILL | sublime.DRAW_NO_OUTLINE)
 
     def reset(self):
@@ -87,7 +87,6 @@ class AbbreviationMarker:
     def contains(self, pt):
         "Check if current abbreviation range contains given point"
         return self.region and self.region.contains(pt)
-
 
     def snippet(self):
         if self.valid:
@@ -104,29 +103,29 @@ class AbbreviationMarker:
                 opt = self.options.copy()
                 opt['preview'] = True
                 snippet = expand(self.abbreviation, opt)
-
-                lines = [
-                    '<div style="padding-left: %dpx"><code>%s</code></div>' % (indent_size(line) * 20, escape_html(line)) for line in snippet.splitlines()
-                ]
-
-                return popup_content('\n'.join(lines))
+                return popup_content(format_snippet(snippet))
 
             except Exception as e:
-                lines = [
-                    '<div><code>%s</code></div>' % escape_html(line) for line in str(e).splitlines()
-                ]
-                return popup_content('<div class="error">%s</div>' % '\n'.join(lines))
-
+                return popup_content('<div class="error">%s</div>' % format_snippet(str(e)))
         else:
-            return popup_content('<div class="error">%s<br/>%s</div>' % (self.error, self.error_snippet))
+            msg = '%s\n%s' % (self.error_snippet, self.error)
+            return popup_content('<div class="error">%s</div>' % format_snippet(msg))
+
+
+def format_snippet(text, class_name=None):
+    class_attr = class_name and (' class="%s"' % class_name) or ''
+    lines = [
+        '<div%s style="padding-left: %dpx"><code>%s</code></div>' % (class_attr, indent_size(line, 20), escape_html(line)) for line in text.splitlines()
+    ]
+
+    return '\n'.join(lines)
 
 
 def popup_content(content):
     return """
     <body>
         <style>
-            body { font-size: 0.85rem; line-height: 1.5rem; }
-            pre { display: block }
+            body { line-height: 1.5rem; }
             .error { color: red }
         </style>
         <div>%s</div>
@@ -139,8 +138,8 @@ def escape_html(text):
     return re.sub(r'[<>&]', lambda m: escaped[m.group(0)], text)
 
 
-def indent_size(line):
+def indent_size(line, width=1):
     m = re.match(r'\t+', line)
     if m:
-        return len(m.group(0))
+        return len(m.group(0)) * width
     return 0

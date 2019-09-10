@@ -96,16 +96,11 @@ export function validate(abbr, config) {
             matched: m ? knownTags.includes(m[1]) || (m[1] in config.snippets) : false
         };
     } catch (err) {
-        let snippet = '';
-        if (err.pos != null) {
-            snippet = `${abbr}\n${'-'.repeat(err.pos)}^`;
-        }
-
         return {
             valid: false,
             error: err.message,
             pos: err.pos,
-            snippet
+            snippet: err.pos != null ? `${'-'.repeat(err.pos)}^` : ''
         };
     }
 }

@@ -61,6 +61,19 @@ def abbr_from_line(view, pt):
         return start, end, opt
 
 
+def marker_from_line(view, pt):
+    "Extracts abbreviation from given location and, if it's valid, returns marker for it"
+    abbr_data = abbr_from_line(view, pt)
+    if abbr_data:
+        marker = AbbreviationMarker(view, abbr_data[0], abbr_data[1])
+        if marker.valid:
+            set_marker(view, marker)
+            return marker
+
+        # Invalid abbreviation in marker, dispose it
+        marker.reset()
+
+
 def show_preview(view, marker):
     globals()['active_preview'] = True
     globals()['active_preview_id'] = view.id()
@@ -78,6 +91,32 @@ def hide_preview(view):
 
 def get_caret(view):
     return view.sel()[0].begin()
+
+
+def validate_marker(view, marker):
+    "Validates given marker right after modifications *inside* it"
+    marker.validate()
+    if not marker.region:
+        # In case if user removed abbreviation, `marker` will end up
+        # with empty state
+        dispose_marker(view)
+
+
+def handle_marker_append(view, marker, caret):
+    "Handle modifications made right after marker abbreviation"
+    # To properly track updates, we can't just add a [prev_caret, caret]
+    # substring since user may type `[` which will automatically insert `]`
+    # as a snippet and we won't be able to properly track it.
+    # We should extract abbreviation instead.
+    abbr_data = abbr_from_line(view, caret)
+    if abbr_data:
+        marker.update(abbr_data[0], abbr_data[1])
+        return True
+
+    # Unable to extract abbreviation or abbreviation is invalid
+    marker.reset()
+    dispose_marker(view)
+    return False
 
 
 def nonpanel(fn):
@@ -111,42 +150,25 @@ class AbbreviationMarkerListener(sublime_plugin.EventListener):
 
     @nonpanel
     def on_modified(self, view):
+        last_pos = self.last_pos
         caret = get_caret(view)
         marker = get_marker(view)
 
         if marker:
             if marker.contains(caret):
-                # Modification made inside caret: validate current abbreviation
-                marker.validate()
-                if not marker.region:
-                    # In case if user removed abbreviation, `marker` will end up
-                    # with empty state
-                    dispose_marker(view)
-                return
+                return validate_marker(view, marker)
 
+            if caret > last_pos and marker.contains(last_pos):
+                # Inserted contents right after marker
+                return handle_marker_append(view, marker, caret)
 
-            # Check if modification was made right after or before abbreviation marker
-            line_range = view.line(caret)
-            if line_range.contains(marker.region) and marker.contains(self.last_pos):
-                start = min(marker.region.begin(), caret)
-                end = max(marker.region.end(), caret)
-
-                # In case if we receive space chacarter as input, check if it’s
-                # not at abbreviation edge
-                abbr = view.substr(sublime.Region(start, end))
-                if abbr == abbr.strip():
-                    marker.update(start, end)
-                    return
+            # TODO handle marker prepend
 
         dispose_marker(view)
 
-        if caret > self.last_pos and is_abbreviation_context(view, caret) and is_abbreviation_bound(view, self.last_pos):
-            marker = AbbreviationMarker(view, self.last_pos, caret)
-            if marker.valid:
-                set_marker(view, marker)
-            else:
-                # Initially invalid abbreviation, abort
-                marker.reset()
+        if caret > last_pos and is_abbreviation_context(view, caret) and is_abbreviation_bound(view, last_pos):
+            # User started abbreviation typing
+            marker_from_line(view, caret)
 
 
     def on_query_context(self, view: sublime.View, key: str, op: str, operand: str, match_all: bool):
