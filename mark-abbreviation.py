@@ -35,13 +35,13 @@ def dispose_marker(view):
 
 def is_abbreviation_context(view, pt):
     "Check if given location in view is allowed for abbreviation marking"
-    return view.match_selector(pt, "text.html - (source - source text.html, meta)")
+    return view.match_selector(pt, "text.html - (entity, punctuation.definition.tag.end)")
 
 
 def is_abbreviation_bound(view, pt):
     "Check if given point in view is a possible abbreviation start"
     line_range = view.line(pt)
-    bound_chars = ' \t'
+    bound_chars = ' \t>'
     left = line_range.begin() == pt or view.substr(pt - 1) in bound_chars
     right = line_range.end() != pt and view.substr(pt) not in bound_chars
     return left and right
@@ -79,6 +79,14 @@ def show_preview(view, marker):
     globals()['active_preview_id'] = view.id()
     view.show_popup(marker.preview(), sublime.COOPERATE_WITH_AUTO_COMPLETE,
         marker.region.begin(), 400, 300)
+
+
+def toggle_preview_for_pos(view, marker, pos):
+    "Toggle Emmet abbreviation preview display for given marker and location"
+    if not marker.simple and marker.contains(pos):
+        show_preview(view, marker)
+    else:
+        hide_preview(view)
 
 
 def hide_preview(view):
@@ -142,9 +150,9 @@ class AbbreviationMarkerListener(sublime_plugin.EventListener):
         self.last_pos = caret
         marker = get_marker(view)
 
-        if marker and not marker.simple and marker.contains(caret):
+        if marker :
             # Caret is inside marked abbreviation, display preview
-            show_preview(view, marker)
+            toggle_preview_for_pos(view, marker, caret)
         else:
             hide_preview(view)
 
@@ -202,7 +210,7 @@ class AbbreviationMarkerListener(sublime_plugin.EventListener):
                 marker = AbbreviationMarker(view, abbr_data[0], abbr_data[1])
                 if marker.valid:
                     set_marker(view, marker)
-                    show_preview(view, marker)
+                    toggle_preview_for_pos(view, marker, caret)
                 else:
                     marker.reset()
                     marker = None
@@ -228,9 +236,7 @@ class AbbreviationMarkerListener(sublime_plugin.EventListener):
                 marker = AbbreviationMarker(view, r.begin(), r.end())
                 if marker.valid:
                     set_marker(view, marker)
-                    caret = get_caret(view)
-                    if marker.contains(caret):
-                        show_preview(view, marker)
+                    toggle_preview_for_pos(view, marker, get_caret(view))
                 else:
                     marker.reset()
 

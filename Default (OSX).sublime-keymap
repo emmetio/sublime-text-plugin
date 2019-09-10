@@ -13,6 +13,7 @@
         "command": "clear_abbreviation_marker",
         "context": [
             { "key": "has_next_field", "operand": false },
+            { "key": "auto_complete_visible", "operand": false },
             { "key": "has_emmet_abbreviation_mark" }
         ]
     }
