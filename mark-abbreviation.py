@@ -110,23 +110,6 @@ def validate_marker(view, marker):
         dispose_marker(view)
 
 
-def handle_marker_append(view, marker, caret):
-    "Handle modifications made right after marker abbreviation"
-    # To properly track updates, we can't just add a [prev_caret, caret]
-    # substring since user may type `[` which will automatically insert `]`
-    # as a snippet and we won't be able to properly track it.
-    # We should extract abbreviation instead.
-    abbr_data = abbr_from_line(view, caret)
-    if abbr_data:
-        marker.update(abbr_data[0], abbr_data[1])
-        return True
-
-    # Unable to extract abbreviation or abbreviation is invalid
-    marker.reset()
-    dispose_marker(view)
-    return False
-
-
 def nonpanel(fn):
     def wrapper(self, view):
         if not view.settings().get('is_widget'):
@@ -146,13 +129,12 @@ class AbbreviationMarkerListener(sublime_plugin.EventListener):
 
     @nonpanel
     def on_selection_modified(self, view):
-        caret = get_caret(view)
-        self.last_pos = caret
+        self.last_pos = get_caret(view)
         marker = get_marker(view)
 
-        if marker :
+        if marker:
             # Caret is inside marked abbreviation, display preview
-            toggle_preview_for_pos(view, marker, caret)
+            toggle_preview_for_pos(view, marker, self.last_pos)
         else:
             hide_preview(view)
 
@@ -163,18 +145,41 @@ class AbbreviationMarkerListener(sublime_plugin.EventListener):
         marker = get_marker(view)
 
         if marker:
-            if marker.contains(caret):
-                return validate_marker(view, marker)
+            marker.validate()
+            marker_region = get_marker_region(view)
+            if not marker_region or marker_region.empty():
+                # User removed marked abbreviation
+                dispose_marker(view)
+                return
 
-            if caret > last_pos and marker.contains(last_pos):
-                # Inserted contents right after marker
-                return handle_marker_append(view, marker, caret)
+            # Check if modification was made inside marked region
+            prev_inside = marker_region.contains(last_pos)
+            next_inside = marker_region.contains(caret)
 
-            # TODO handle marker prepend
+            if prev_inside and next_inside:
+                # Modifications made completely inside abbreviation
+                marker.validate()
+            elif prev_inside:
+                # Modifications made right after marker
+                # To properly track updates, we can't just add a [prev_caret, caret]
+                # substring since user may type `[` which will automatically insert `]`
+                # as a snippet and we won't be able to properly track it.
+                # We should extract abbreviation instead.
+                abbr_data = abbr_from_line(view, caret)
+                if abbr_data:
+                    marker.update(abbr_data[0], abbr_data[1])
+                else:
+                    # Unable to extract abbreviation or abbreviation is invalid
+                    dispose_marker(view)
+            elif next_inside:
+                # Modifications made right before marker
+                marker.update(last_pos, marker_region.end())
+            else:
+                # Modifications made outside marker
+                dispose_marker(view)
+                marker = None
 
-        dispose_marker(view)
-
-        if caret > last_pos and is_abbreviation_context(view, caret) and is_abbreviation_bound(view, last_pos):
+        if not marker and caret > last_pos and is_abbreviation_context(view, caret) and is_abbreviation_bound(view, last_pos):
             # User started abbreviation typing
             marker_from_line(view, caret)
 

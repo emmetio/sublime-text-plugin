@@ -89,7 +89,7 @@ export function validate(abbr, config) {
             markupAbbreviation(abbr, parserConf);
         }
 
-        const m = abbr.match(reSimple);
+        const m = abbr === '.' || abbr.match(reSimple);
         return {
             valid: true,
             simple: !!m,

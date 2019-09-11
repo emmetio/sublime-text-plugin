@@ -48,7 +48,6 @@ class AbbreviationMarker:
 
     def validate(self):
         "Validates currently marked abbreviation"
-        regions = self.view.get_regions(abbr_region_id)
         self.region = get_marker_region(self.view)
         if self.region and not self.region.empty():
             data = validate(self.abbreviation, self.options)
