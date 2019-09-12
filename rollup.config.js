@@ -6,6 +6,6 @@ export default {
     output: {
         format: 'iife',
         name: 'emmet',
-        file: './emmet/emmet.js'
+        file: './emmet.js'
     }
 }
