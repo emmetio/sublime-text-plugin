@@ -1,12 +1,13 @@
 import re
 import sublime
 import sublime_plugin
-from .emmet import extract, expand, validate, get_options
+from . import emmet
 
 active_preview = False
 active_preview_id = None
 markers = {}
 abbr_region_id = 'emmet-abbreviation'
+
 
 def plugin_unloaded():
     for wnd in sublime.windows():
@@ -63,8 +64,8 @@ def abbr_from_line(view, pt):
     line_region = view.line(pt)
     line_start = line_region.begin()
     line = view.substr(line_region)
-    opt = get_options(view, pt)
-    abbr_data = extract(line, pt - line_start, opt)
+    opt = emmet.get_options(view, pt)
+    abbr_data = emmet.extract(line, pt - line_start, opt)
 
     if abbr_data:
         start = line_start + abbr_data['start']
@@ -164,7 +165,7 @@ def nonpanel(fn):
 class AbbreviationMarker:
     def __init__(self, view, start, end):
         self.view = view
-        self.options = get_options(view, start)
+        self.options = emmet.get_options(view, start)
         self.region = None
         self.valid = False
         self.simple = False
@@ -196,7 +197,7 @@ class AbbreviationMarker:
         "Validates currently marked abbreviation"
         self.region = get_marker_region(self.view)
         if self.region and not self.region.empty():
-            data = validate(self.abbreviation, self.options)
+            data = emmet.validate(self.abbreviation, self.options)
 
             if data['valid']:
                 self.valid = True
@@ -235,7 +236,7 @@ class AbbreviationMarker:
 
     def snippet(self):
         if self.valid:
-            return expand(self.abbreviation, self.options)
+            return emmet.expand(self.abbreviation, self.options)
         return ''
 
     def preview(self):
@@ -247,7 +248,7 @@ class AbbreviationMarker:
             try:
                 opt = self.options.copy()
                 opt['preview'] = True
-                snippet = expand(self.abbreviation, opt)
+                snippet = emmet.expand(self.abbreviation, opt)
                 return popup_content(format_snippet(snippet))
 
             except Exception as e:
@@ -395,7 +396,7 @@ class ExpandAbbreviation(sublime_plugin.TextCommand):
         if marker.contains(caret):
             if marker.valid:
                 region = marker.region
-                snippet = expand(marker.abbreviation, marker.options)
+                snippet = emmet.expand(marker.abbreviation, marker.options)
                 sel.clear()
                 sel.add(sublime.Region(region.begin(), region.begin()))
                 self.view.replace(edit, region, '')
