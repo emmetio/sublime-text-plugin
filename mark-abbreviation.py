@@ -165,7 +165,7 @@ def nonpanel(fn):
 class AbbreviationMarker:
     def __init__(self, view, start, end):
         self.view = view
-        self.options = emmet.get_options(view, start)
+        self.options = emmet.get_options(view, start, True)
         self.region = None
         self.valid = False
         self.simple = False
@@ -298,8 +298,8 @@ class AbbreviationMarkerListener(sublime_plugin.EventListener):
             next_inside = marker_region.contains(caret)
 
             if prev_inside and next_inside:
-                # Modifications made completely inside abbreviation
-                marker.validate()
+                # Modifications made completely inside abbreviation, should be already validated
+                pass
             elif prev_inside:
                 # Modifications made right after marker
                 # To properly track updates, we can't just add a [prev_caret, caret]
@@ -312,10 +312,10 @@ class AbbreviationMarkerListener(sublime_plugin.EventListener):
                 else:
                     # Unable to extract abbreviation or abbreviation is invalid
                     dispose_marker(view)
-            elif next_inside:
+            elif next_inside and caret > last_pos:
                 # Modifications made right before marker
                 marker.update(last_pos, marker_region.end())
-            else:
+            elif not next_inside:
                 # Modifications made outside marker
                 dispose_marker(view)
                 marker = None
@@ -389,8 +389,8 @@ class AbbreviationMarkerListener(sublime_plugin.EventListener):
 
 class ExpandAbbreviation(sublime_plugin.TextCommand):
     def run(self, edit, **kw):
-        marker = get_marker(self.view)
         sel = self.view.sel()
+        marker = get_marker(self.view)
         caret = get_caret(self.view)
 
         if marker.contains(caret):

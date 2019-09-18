@@ -1,3 +1,4 @@
+import sublime
 import concurrent.futures
 import threading
 import json
@@ -10,14 +11,15 @@ re_source_scope = re.compile(r'\bsource\.([\w\-]+)')
 
 markup_syntaxes = ['html', 'xml', 'xsl', 'jsx', 'haml', 'jade', 'pug', 'slim']
 stylesheet_syntaxes = ['css', 'scss', 'sass', 'less', 'sss', 'stylus', 'postcss']
-
+xml_syntaxes = ['xml', 'xsl']
+html_syntaxes = ['html']
 
 def _get_js_code():
     base_path = os.path.abspath(os.path.dirname(__file__))
     with open(os.path.join(base_path, 'emmet.js'), encoding='UTF-8') as f:
         src = f.read()
 
-    src += "\nvar {expand, extract, validate} = emmet;"
+    src += "\nvar {expand, extract, validate, match} = emmet;"
     return src
 
 
@@ -27,7 +29,8 @@ def _compile(code):
     expand = context.get('expand')
     extract = context.get('extract')
     validate = context.get('validate')
-    return context, expand, extract, validate
+    match = context.get('match')
+    return context, expand, extract, validate, match
 
 
 threadpool = concurrent.futures.ThreadPoolExecutor(max_workers=1)
@@ -35,7 +38,7 @@ lock = threading.Lock()
 
 future = threadpool.submit(_compile, _get_js_code())
 concurrent.futures.wait([future])
-context, js_expand, js_extract, js_validate = future.result()
+context, js_expand, js_extract, js_validate, js_match = future.result()
 
 def expand(abbr, options=None):
     "Expands given abbreviation into code snippet"
@@ -54,6 +57,12 @@ def validate(abbr, options=None):
     """
     return call_js(js_validate, abbr, options)
 
+
+def match(code, pos, options=None):
+    """
+    Finds matching tag pair for given `pos` in `code`
+    """
+    return call_js(js_match, code, pos, options)
 
 def is_know_syntax(syntax):
     "Check if given syntax name is supported by Emmet"
@@ -78,12 +87,39 @@ def get_syntax(view, pt):
     return 'html'
 
 
-def get_options(view, pt):
+def get_tag_context(view, pt, xml=False):
+    "Returns matched HTML/XML tag for given point in view"
+    content = view.substr(sublime.Region(0, view.size()))
+    tag = match(content, pt, { 'xml': xml })
+    if tag:
+        ctx = {
+            'name': tag['name'],
+            'attributes': {}
+        }
+
+        for attr in tag['attributes']:
+            name = attr['name']
+            value = attr['value']
+            # unquote value
+            if value and value[0] == '"' or value[0] == "'":
+                value = value.strip(value[0])
+            ctx['attributes'][name] = value
+
+        return ctx
+
+def get_options(view, pt, with_context=False):
     "Returns Emmet options for given character location in view"
     syntax = get_syntax(view, pt)
+
+    # Get element context
+    ctx = None
+    if with_context and (syntax in xml_syntaxes or syntax in html_syntaxes):
+        ctx = get_tag_context(view, pt, syntax in xml_syntaxes)
+
     return {
         'syntax': syntax,
-        'type': get_syntax_type(syntax)
+        'type': get_syntax_type(syntax),
+        'context': ctx
     }
 
 

@@ -1,6 +1,7 @@
 import expandAbbreviation, { markupAbbreviation, stylesheetAbbreviation, resolveConfig } from 'emmet';
 
 export { extract } from 'emmet';
+export { default as match } from '@emmetio/html-matcher';
 
 const reSimple = /^([\w!-]+)\.?$/;
 const knownTags = [
@@ -98,7 +99,7 @@ export function validate(abbr, config) {
     } catch (err) {
         return {
             valid: false,
-            error: err.message,
+            error: err.message + err.stack,
             pos: err.pos,
             snippet: err.pos != null ? `${'-'.repeat(err.pos)}^` : ''
         };
