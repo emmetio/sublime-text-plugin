@@ -4,7 +4,6 @@
         "keys": ["tab"],
         "command": "expand_abbreviation",
         "context": [
-            { "key": "has_next_field", "operand": false },
             { "key": "emmet_abbreviation" }
         ]
     },
@@ -12,9 +11,15 @@
         "keys": ["escape"],
         "command": "clear_abbreviation_marker",
         "context": [
-            { "key": "has_next_field", "operand": false },
             { "key": "auto_complete_visible", "operand": false },
             { "key": "has_emmet_abbreviation_mark" }
+        ]
+    },
+    {
+        "keys": ["escape"],
+        "command": "clear_abbreviation_marker",
+        "context": [
+            { "key": "emmet_abbreviation" }
         ]
     }
 ]
