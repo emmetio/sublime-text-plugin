@@ -9,6 +9,13 @@ markers = {}
 abbr_region_id = 'emmet-abbreviation'
 
 
+# List of scope selectors where abbreviation should automatically
+# start abbreviation marking
+marker_selectors = [
+    "text.html - (entity, punctuation.definition.tag.end)",
+    "source.css - meta.selector - string - punctuation"
+]
+
 def plugin_unloaded():
     for wnd in sublime.windows():
         for view in wnd.views():
@@ -47,7 +54,11 @@ def dispose_marker(view):
 
 def is_abbreviation_context(view, pt):
     "Check if given location in view is allowed for abbreviation marking"
-    return view.match_selector(pt, "text.html - (entity, punctuation.definition.tag.end)")
+    for sel in marker_selectors:
+        if view.match_selector(pt, sel):
+            return True
+
+    return False
 
 
 def is_abbreviation_bound(view, pt):
@@ -89,13 +100,21 @@ def marker_from_line(view, pt):
 def show_preview(view, marker):
     globals()['active_preview'] = True
     globals()['active_preview_id'] = view.id()
-    view.show_popup(marker.preview(), sublime.COOPERATE_WITH_AUTO_COMPLETE,
-        marker.region.begin(), 400, 300)
+
+    content = None
+    try:
+        content = format_snippet(marker.preview())
+    except Exception as e:
+        content = '<div class="error">%s</div>' % format_snippet(str(e))
+
+    if content:
+        view.show_popup(popup_content(content), sublime.COOPERATE_WITH_AUTO_COMPLETE,
+            marker.region.begin(), 400, 300)
 
 
 def toggle_preview_for_pos(view, marker, pos):
     "Toggle Emmet abbreviation preview display for given marker and location"
-    if not marker.simple and marker.contains(pos):
+    if marker.contains(pos) and (not marker.simple or marker.type == 'stylesheet'):
         show_preview(view, marker)
     else:
         hide_preview(view)
@@ -188,6 +207,10 @@ class AbbreviationMarker:
     def abbreviation(self):
         return self.region and self.view.substr(self.region) or None
 
+    @property
+    def type(self):
+        return self.options['type']
+
     def update(self, start, end):
         self.region = sublime.Region(start, end)
         self.mark()
@@ -242,20 +265,15 @@ class AbbreviationMarker:
     def preview(self):
         """
         Returns generated preview of current abbreviation: if abbreviation is valid,
-        returns expanded snippet, otherwise returns error snippet
+        returns expanded snippet, otherwise raises error
         """
-        if self.region and self.valid:
-            try:
-                opt = self.options.copy()
-                opt['preview'] = True
-                snippet = emmet.expand(self.abbreviation, opt)
-                return popup_content(format_snippet(snippet))
+        if not self.valid or self.error:
+            raise RuntimeError('%s\n%s' % (self.error_snippet, self.error))
 
-            except Exception as e:
-                return popup_content('<div class="error">%s</div>' % format_snippet(str(e)))
-        else:
-            msg = '%s\n%s' % (self.error_snippet, self.error)
-            return popup_content('<div class="error">%s</div>' % format_snippet(msg))
+        if self.region:
+            opt = self.options.copy()
+            opt['preview'] = True
+            return emmet.expand(self.abbreviation, opt)
 
 class AbbreviationMarkerListener(sublime_plugin.EventListener):
     def __init__(self):
@@ -361,7 +379,7 @@ class AbbreviationMarkerListener(sublime_plugin.EventListener):
                     marker.reset()
                     marker = None
 
-        if marker:
+        if marker and marker.valid:
             return [
                 ['%s\tEmmet' % marker.abbreviation, marker.snippet()]
             ]
