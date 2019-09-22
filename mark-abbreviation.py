@@ -2,9 +2,8 @@ import re
 import sublime
 import sublime_plugin
 from . import emmet
+from . import abbreviation_preview
 
-active_preview = False
-active_preview_id = None
 markers = {}
 abbr_region_id = 'emmet-abbreviation'
 
@@ -20,8 +19,7 @@ def plugin_unloaded():
     for wnd in sublime.windows():
         for view in wnd.views():
             clear_marker_region(view)
-            if view.id() == active_preview_id:
-                hide_preview(view)
+            abbreviation_preview.hide(view)
 
 
 def clear_marker_region(view):
@@ -106,53 +104,9 @@ def marker_from_line(view, pt):
         # Invalid abbreviation in marker, dispose it
         marker.reset()
 
-phantom_sets_by_buffer = {}
 
-def show_preview(view, marker):
-    globals()['active_preview'] = True
-    globals()['active_preview_id'] = view.id()
-
-    content = None
-    try:
-        content = format_snippet(marker.preview())
-    except Exception as e:
-        content = '<div class="error">%s</div>' % format_snippet(str(e))
-
-    if content:
-        if marker.type == 'stylesheet':
-            buffer_id = view.buffer_id()
-            if buffer_id not in phantom_sets_by_buffer:
-                phantom_set = sublime.PhantomSet(view, 'emmet')
-                phantom_sets_by_buffer[buffer_id] = phantom_set
-            else:
-                phantom_set = phantom_sets_by_buffer[buffer_id]
-
-            r = sublime.Region(marker.region.end(), marker.region.end())
-            phantoms = [sublime.Phantom(r, phantom_content(content), sublime.LAYOUT_INLINE)]
-            phantom_set.update(phantoms)
-        else:
-            view.show_popup(popup_content(content), 0, marker.region.begin(), 400, 300)
-
-
-def hide_preview(view):
-    if active_preview and active_preview_id == view.id():
-        view.hide_popup()
-
-    buffer_id = view.buffer_id()
-    if buffer_id in phantom_sets_by_buffer:
-        del phantom_sets_by_buffer[buffer_id]
-        view.erase_phantoms('emmet')
-
-    globals()['active_preview'] = False
-    globals()['active_preview_id'] = None
-
-
-def toggle_preview_for_pos(view, marker, pos):
-    "Toggle Emmet abbreviation preview display for given marker and location"
-    if marker.contains(pos) and (not marker.simple or marker.type == 'stylesheet'):
-        show_preview(view, marker)
-    else:
-        hide_preview(view)
+def preview_as_phantom(marker):
+    return marker.type == 'stylesheet'
 
 
 def get_caret(view):
@@ -166,58 +120,6 @@ def validate_marker(view, marker):
         # In case if user removed abbreviation, `marker` will end up
         # with empty state
         dispose_marker(view)
-
-
-def format_snippet(text, class_name=None):
-    class_attr = class_name and (' class="%s"' % class_name) or ''
-    lines = [
-        '<div%s style="padding-left: %dpx"><code>%s</code></div>' % (class_attr, indent_size(line, 20), escape_html(line)) for line in text.splitlines()
-    ]
-
-    return '\n'.join(lines)
-
-
-def popup_content(content):
-    return """
-    <body>
-        <style>
-            body { line-height: 1.5rem; }
-            .error { color: red }
-        </style>
-        <div>%s</div>
-    </body>
-    """ % content
-
-
-def phantom_content(content):
-    return """
-    <body>
-        <style>
-            body {
-                background-color: var(--orangish);
-                color: #fff;
-                border-radius: 3px;
-                padding: 1px 3px;
-                position: relative;
-            }
-
-            .error { color: red }
-        </style>
-        <div class="main">%s</div>
-    </body>
-    """ % content
-
-
-def escape_html(text):
-    escaped = { '<': '&lt;', '&': '&amp;', '>': '&gt;' }
-    return re.sub(r'[<>&]', lambda m: escaped[m.group(0)], text)
-
-
-def indent_size(line, width=1):
-    m = re.match(r'\t+', line)
-    if m:
-        return len(m.group(0)) * width
-    return 0
 
 
 def nonpanel(fn):
@@ -339,9 +241,9 @@ class AbbreviationMarkerListener(sublime_plugin.EventListener):
 
         if marker:
             # Caret is inside marked abbreviation, display preview
-            toggle_preview_for_pos(view, marker, self.last_pos)
+            abbreviation_preview.toggle(view, marker, self.last_pos, preview_as_phantom(marker))
         else:
-            hide_preview(view)
+            abbreviation_preview.hide(view)
 
     @nonpanel
     def on_modified(self, view):
@@ -424,7 +326,7 @@ class AbbreviationMarkerListener(sublime_plugin.EventListener):
                 marker = AbbreviationMarker(view, abbr_data[0], abbr_data[1])
                 if marker.valid:
                     set_marker(view, marker)
-                    toggle_preview_for_pos(view, marker, caret)
+                    abbreviation_preview.toggle(view, marker, caret, preview_as_phantom(marker))
                 else:
                     marker.reset()
                     marker = None
@@ -450,7 +352,7 @@ class AbbreviationMarkerListener(sublime_plugin.EventListener):
                 marker = AbbreviationMarker(view, r.begin(), r.end())
                 if marker.valid:
                     set_marker(view, marker)
-                    toggle_preview_for_pos(view, marker, get_caret(view))
+                    abbreviation_preview.toggle(view, marker, get_caret(view), preview_as_phantom(marker))
                 else:
                     marker.reset()
 
