@@ -69,6 +69,10 @@ def is_know_syntax(syntax):
     return syntax in markup_syntaxes or syntax in stylesheet_syntaxes
 
 
+def get_syntax_type_view(view, pt):
+    "Returns Emmet syntax type for given view location"
+    return get_syntax_type(get_syntax(view, pt))
+
 def get_syntax_type(syntax):
     "Returns type of given syntax: either 'markup' or 'stylesheet'"
     return syntax in stylesheet_syntaxes and 'stylesheet' or 'markup'
@@ -85,7 +89,6 @@ def get_syntax(view, pt):
 
     # Unknown syntax, fallback to HTML
     return 'html'
-
 
 def get_tag_context(view, pt, xml=False):
     "Returns matched HTML/XML tag for given point in view"
@@ -107,14 +110,32 @@ def get_tag_context(view, pt, xml=False):
 
         return ctx
 
+
+def get_css_context(view: sublime.View, pt: int):
+    "Returns context CSS property name, if any"
+    if view.match_selector(pt, 'meta.property-value'):
+        # Walk back until we find property name
+        scope_range = view.extract_scope(pt)
+        ctx_pos = scope_range.begin() - 1
+        while ctx_pos >= 0 and not view.match_selector(ctx_pos, 'section.property-list') \
+            and not view.match_selector(ctx_pos, 'meta.selector'):
+            scope_range = view.extract_scope(ctx_pos)
+            if view.match_selector(ctx_pos, 'meta.property-name'):
+                return { 'name': view.substr(scope_range) }
+            ctx_pos = scope_range.begin() - 1
+
+
 def get_options(view, pt, with_context=False):
     "Returns Emmet options for given character location in view"
     syntax = get_syntax(view, pt)
 
     # Get element context
     ctx = None
-    if with_context and (syntax in xml_syntaxes or syntax in html_syntaxes):
-        ctx = get_tag_context(view, pt, syntax in xml_syntaxes)
+    if with_context:
+        if syntax in stylesheet_syntaxes:
+            ctx = get_css_context(view, pt)
+        elif syntax in xml_syntaxes or syntax in html_syntaxes:
+            ctx = get_tag_context(view, pt, syntax in xml_syntaxes)
 
     return {
         'syntax': syntax,

@@ -13,7 +13,7 @@ abbr_region_id = 'emmet-abbreviation'
 # start abbreviation marking
 marker_selectors = [
     "text.html - (entity, punctuation.definition.tag.end)",
-    "source.css - meta.selector - string - punctuation"
+    "source.css - meta.selector - meta.property-value - string - punctuation - comment"
 ]
 
 def plugin_unloaded():
@@ -61,6 +61,16 @@ def is_abbreviation_context(view, pt):
     return False
 
 
+def is_css_value_context(view, pt):
+    "Check if given location in view is a CSS property value"
+    return view.match_selector(pt, 'meta.property-value | punctuation.terminator.rule')
+
+
+def is_css_color_start(view, begin, end):
+    "Check if given view substring is a hex CSS color"
+    return view.substr(sublime.Region(begin, end)) == '#'
+
+
 def is_abbreviation_bound(view, pt):
     "Check if given point in view is a possible abbreviation start"
     line_range = view.line(pt)
@@ -96,6 +106,7 @@ def marker_from_line(view, pt):
         # Invalid abbreviation in marker, dispose it
         marker.reset()
 
+phantom_sets_by_buffer = {}
 
 def show_preview(view, marker):
     globals()['active_preview'] = True
@@ -108,8 +119,32 @@ def show_preview(view, marker):
         content = '<div class="error">%s</div>' % format_snippet(str(e))
 
     if content:
-        view.show_popup(popup_content(content), sublime.COOPERATE_WITH_AUTO_COMPLETE,
-            marker.region.begin(), 400, 300)
+        if marker.type == 'stylesheet':
+            buffer_id = view.buffer_id()
+            if buffer_id not in phantom_sets_by_buffer:
+                phantom_set = sublime.PhantomSet(view, 'emmet')
+                phantom_sets_by_buffer[buffer_id] = phantom_set
+            else:
+                phantom_set = phantom_sets_by_buffer[buffer_id]
+
+            r = sublime.Region(marker.region.end(), marker.region.end())
+            phantoms = [sublime.Phantom(r, phantom_content(content), sublime.LAYOUT_INLINE)]
+            phantom_set.update(phantoms)
+        else:
+            view.show_popup(popup_content(content), 0, marker.region.begin(), 400, 300)
+
+
+def hide_preview(view):
+    if active_preview and active_preview_id == view.id():
+        view.hide_popup()
+
+    buffer_id = view.buffer_id()
+    if buffer_id in phantom_sets_by_buffer:
+        del phantom_sets_by_buffer[buffer_id]
+        view.erase_phantoms('emmet')
+
+    globals()['active_preview'] = False
+    globals()['active_preview_id'] = None
 
 
 def toggle_preview_for_pos(view, marker, pos):
@@ -118,14 +153,6 @@ def toggle_preview_for_pos(view, marker, pos):
         show_preview(view, marker)
     else:
         hide_preview(view)
-
-
-def hide_preview(view):
-    if active_preview and active_preview_id == view.id():
-        view.hide_popup()
-
-    globals()['active_preview'] = False
-    globals()['active_preview_id'] = None
 
 
 def get_caret(view):
@@ -162,6 +189,25 @@ def popup_content(content):
     """ % content
 
 
+def phantom_content(content):
+    return """
+    <body>
+        <style>
+            body {
+                background-color: var(--orangish);
+                color: #fff;
+                border-radius: 3px;
+                padding: 1px 3px;
+                position: relative;
+            }
+
+            .error { color: red }
+        </style>
+        <div class="main">%s</div>
+    </body>
+    """ % content
+
+
 def escape_html(text):
     escaped = { '<': '&lt;', '&': '&amp;', '>': '&gt;' }
     return re.sub(r'[<>&]', lambda m: escaped[m.group(0)], text)
@@ -182,9 +228,9 @@ def nonpanel(fn):
 
 
 class AbbreviationMarker:
-    def __init__(self, view, start, end):
+    def __init__(self, view, start, end, options=None):
         self.view = view
-        self.options = emmet.get_options(view, start, True)
+        self.options = options or emmet.get_options(view, start, True)
         self.region = None
         self.valid = False
         self.simple = False
@@ -338,9 +384,13 @@ class AbbreviationMarkerListener(sublime_plugin.EventListener):
                 dispose_marker(view)
                 marker = None
 
-        if not marker and caret > last_pos and is_abbreviation_context(view, caret) and is_abbreviation_bound(view, last_pos):
-            # User started abbreviation typing
-            marker_from_line(view, caret)
+        if not marker and caret > last_pos:
+            # We’re able to start abbreviation mark
+            if is_abbreviation_bound(view, last_pos) and is_abbreviation_context(view, caret):
+                # User started abbreviation typing
+                marker_from_line(view, caret)
+            elif is_css_value_context(view, caret) and is_css_color_start(view, last_pos, caret):
+                marker_from_line(view, caret)
 
 
     def on_query_context(self, view: sublime.View, key: str, op: str, operand: str, match_all: bool):
