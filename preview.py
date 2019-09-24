@@ -4,6 +4,12 @@ import sublime
 
 phantom_sets_by_buffer = {}
 
+def plugin_unloaded():
+    for wnd in sublime.windows():
+        for view in wnd.views():
+            hide(view)
+
+
 def show(view, marker, as_phantom=False):
     "Displays Emmet abbreviation as a preview for given view"
     content = None

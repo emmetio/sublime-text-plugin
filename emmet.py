@@ -4,7 +4,13 @@ import threading
 import json
 import os.path
 import re
-from . import _quickjs as quickjs
+
+if sublime.platform() == 'osx':
+    from .osx import _quickjs as quickjs
+elif sublime.platform() == 'window':
+    from .win_x64 import _quickjs as quickjs
+else:
+    raise RuntimeError('Platform %s (%s) is not currently supported' % (sublime.platform(), sublime.arch()))
 
 re_string_scope = re.compile(r'\bstring\b')
 re_source_scope = re.compile(r'\bsource\.([\w\-]+)')
@@ -142,6 +148,25 @@ def get_options(view, pt, with_context=False):
         'type': get_syntax_type(syntax),
         'context': ctx
     }
+
+def abbreviation_from_line(view, pt):
+    "Extracts abbreviation from line that matches given point in view"
+    line_region = view.line(pt)
+    line_start = line_region.begin()
+    line = view.substr(line_region)
+    opt = get_options(view, pt)
+    abbr_data = extract(line, pt - line_start, opt)
+
+    if abbr_data:
+        start = line_start + abbr_data['start']
+        end = line_start + abbr_data['end']
+        return start, end, opt
+
+
+######################################
+## QuickJS Runtime
+## https://github.com/PetterS/quickjs
+######################################
 
 
 def call_js(fn, *args):
