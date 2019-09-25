@@ -47,7 +47,7 @@ def clear_region(view):
     view.erase_regions(abbr_region_id)
 
 
-def from_line(view, pt):
+def from_line(view, pt, syntax_info=None):
     "Extracts abbreviation from given location and, if it's valid, returns marker for it"
     abbr_data = emmet.abbreviation_from_line(view, pt)
     if abbr_data:

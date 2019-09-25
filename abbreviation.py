@@ -4,33 +4,34 @@ import sublime_plugin
 from . import emmet
 from . import preview
 from . import marker
+from . import syntax
 
 
-# List of scope selectors where abbreviation should automatically
-# start abbreviation marking
-marker_selectors = [
-    "text.html - (entity, punctuation.definition.tag.end)",
-    "source.css - meta.selector - meta.property-value - string - punctuation - comment"
-]
+def in_activation_context(view, caret, prev_pos):
+    """
+    Check that given caret position is inside abbreviation activation context,
+    e.g. caret is in location where user expects abbreviation.
+    """
+    syntax_info = syntax.info(view, caret)
+
+    if syntax_info:
+        s_name = syntax_info['syntax']
+        in_scope = syntax.in_activation_scope(view, caret)
+        if syntax_info['type'] == 'stylesheet':
+            # In stylesheet scope, we should either be inside selector block
+            # (outside of CSS property) or inside property value but typing CSS color
+            return in_scope or is_stylesheet_color(view, prev_pos, caret)
+        elif s_name in ('html', 'xml', 'xsl'):
+            # For HTML-like syntaxes, we should detect if we are at abbreviation bound
+            return in_scope and is_abbreviation_bound(view, prev_pos)
+
+        # In all other cases just check if we are in abbreviation scope
+        return in_scope
 
 
-def is_abbreviation_context(view, pt):
-    "Check if given location in view is allowed for abbreviation marking"
-    for sel in marker_selectors:
-        if view.match_selector(pt, sel):
-            return True
-
-    return False
-
-
-def is_css_value_context(view, pt):
-    "Check if given location in view is a CSS property value"
-    return view.match_selector(pt, 'meta.property-value | punctuation.terminator.rule')
-
-
-def is_css_color_start(view, begin, end):
-    "Check if given view substring is a hex CSS color"
-    return view.substr(sublime.Region(begin, end)) == '#'
+def is_stylesheet_color(view, begin, end):
+    return view.match_selector(end, 'meta.property-value | punctuation.terminator.rule') and\
+        view.substr(sublime.Region(begin, end)) == '#'
 
 
 def is_abbreviation_bound(view, pt):
@@ -47,6 +48,7 @@ def preview_as_phantom(marker):
 
 
 def get_caret(view):
+    "Returns current caret position for single selection"
     return view.sel()[0].begin()
 
 
@@ -64,8 +66,8 @@ class AbbreviationMarkerListener(sublime_plugin.EventListener):
     def on_close(self, view):
         marker.dispose(view)
 
-    @nonpanel
     def on_activated(self, view):
+        settings = view.settings()
         self.last_pos = get_caret(view)
 
     @nonpanel
@@ -120,13 +122,8 @@ class AbbreviationMarkerListener(sublime_plugin.EventListener):
                 marker.dispose(view)
                 mrk = None
 
-        if not mrk and caret > last_pos:
-            # We’re able to start abbreviation mark
-            if is_abbreviation_bound(view, last_pos) and is_abbreviation_context(view, caret):
-                # User started abbreviation typing
-                marker.from_line(view, caret)
-            elif is_css_value_context(view, caret) and is_css_color_start(view, last_pos, caret):
-                marker.from_line(view, caret)
+        if not mrk and caret > last_pos and in_activation_context(view, caret, last_pos):
+            marker.from_line(view, caret)
 
 
     def on_query_context(self, view: sublime.View, key: str, op: str, operand: str, match_all: bool):
@@ -153,7 +150,7 @@ class AbbreviationMarkerListener(sublime_plugin.EventListener):
             marker.dispose(view)
             mrk = None
 
-        if not mrk and is_abbreviation_context(view, caret):
+        if not mrk and in_activation_context(view, caret, caret - len(prefix)):
             # Try to extract abbreviation from given location
             abbr_data = emmet.abbreviation_from_line(view, caret)
             if abbr_data:

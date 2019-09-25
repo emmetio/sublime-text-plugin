@@ -4,6 +4,7 @@ import threading
 import json
 import os.path
 import re
+from . import syntax
 
 if sublime.platform() == 'osx':
     from .osx import _quickjs as quickjs
@@ -12,11 +13,6 @@ elif sublime.platform() == 'window':
 else:
     raise RuntimeError('Platform %s (%s) is not currently supported' % (sublime.platform(), sublime.arch()))
 
-re_string_scope = re.compile(r'\bstring\b')
-re_source_scope = re.compile(r'\bsource\.([\w\-]+)')
-
-markup_syntaxes = ['html', 'xml', 'xsl', 'jsx', 'haml', 'jade', 'pug', 'slim']
-stylesheet_syntaxes = ['css', 'scss', 'sass', 'less', 'sss', 'stylus', 'postcss']
 xml_syntaxes = ['xml', 'xsl']
 html_syntaxes = ['html']
 
@@ -70,31 +66,6 @@ def match(code, pos, options=None):
     """
     return call_js(js_match, code, pos, options)
 
-def is_know_syntax(syntax):
-    "Check if given syntax name is supported by Emmet"
-    return syntax in markup_syntaxes or syntax in stylesheet_syntaxes
-
-
-def get_syntax_type_view(view, pt):
-    "Returns Emmet syntax type for given view location"
-    return get_syntax_type(get_syntax(view, pt))
-
-def get_syntax_type(syntax):
-    "Returns type of given syntax: either 'markup' or 'stylesheet'"
-    return syntax in stylesheet_syntaxes and 'stylesheet' or 'markup'
-
-
-def get_syntax(view, pt):
-    "Returns context syntax for given point"
-    scope = view.scope_name(pt)
-
-    if not re_string_scope.search(scope):
-        m = re_source_scope.search(scope)
-        if m and is_know_syntax(m.group(1)):
-            return m.group(1)
-
-    # Unknown syntax, fallback to HTML
-    return 'html'
 
 def get_tag_context(view, pt, xml=False):
     "Returns matched HTML/XML tag for given point in view"
@@ -133,21 +104,17 @@ def get_css_context(view: sublime.View, pt: int):
 
 def get_options(view, pt, with_context=False):
     "Returns Emmet options for given character location in view"
-    syntax = get_syntax(view, pt)
+    syntax_info = syntax.info(view, pt, 'html')
 
     # Get element context
-    ctx = None
     if with_context:
-        if syntax in stylesheet_syntaxes:
-            ctx = get_css_context(view, pt)
-        elif syntax in xml_syntaxes or syntax in html_syntaxes:
-            ctx = get_tag_context(view, pt, syntax in xml_syntaxes)
+        if syntax_info['type'] == 'stylesheet':
+            syntax_info['context'] = get_css_context(view, pt)
+        elif syntax_info['syntax'] in xml_syntaxes or syntax_info['syntax'] in html_syntaxes:
+            syntax_info['context'] = get_tag_context(view, pt, syntax_info['syntax'] in xml_syntaxes)
 
-    return {
-        'syntax': syntax,
-        'type': get_syntax_type(syntax),
-        'context': ctx
-    }
+    syntax_info['inline'] = syntax.is_inline(view, pt)
+    return syntax_info
 
 def abbreviation_from_line(view, pt):
     "Extracts abbreviation from line that matches given point in view"

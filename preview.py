@@ -3,6 +3,7 @@ import html
 import sublime
 
 phantom_sets_by_buffer = {}
+previews_by_buffer = set()
 
 def plugin_unloaded():
     for wnd in sublime.windows():
@@ -13,6 +14,8 @@ def plugin_unloaded():
 def show(view, marker, as_phantom=False):
     "Displays Emmet abbreviation as a preview for given view"
     content = None
+    buffer_id = view.buffer_id()
+
     try:
         content = format_snippet(marker.preview())
     except Exception as e:
@@ -20,7 +23,6 @@ def show(view, marker, as_phantom=False):
 
     if content:
         if as_phantom:
-            buffer_id = view.buffer_id()
             if buffer_id not in phantom_sets_by_buffer:
                 phantom_set = sublime.PhantomSet(view, 'emmet')
                 phantom_sets_by_buffer[buffer_id] = phantom_set
@@ -31,14 +33,18 @@ def show(view, marker, as_phantom=False):
             phantoms = [sublime.Phantom(r, phantom_content(content), sublime.LAYOUT_INLINE)]
             phantom_set.update(phantoms)
         else:
+            previews_by_buffer.add(buffer_id)
             view.show_popup(popup_content(content), 0, marker.region.begin(), 400, 300)
 
 
 def hide(view):
     "Hides Emmet abbreviation preview for given view"
-    view.hide_popup()
-
     buffer_id = view.buffer_id()
+
+    if buffer_id in previews_by_buffer:
+        previews_by_buffer.remove(buffer_id)
+        view.hide_popup()
+
     if buffer_id in phantom_sets_by_buffer:
         del phantom_sets_by_buffer[buffer_id]
         view.erase_phantoms('emmet')
