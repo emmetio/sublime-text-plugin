@@ -122,6 +122,10 @@ def abbreviation_from_line(view, pt):
     line_start = line_region.begin()
     line = view.substr(line_region)
     opt = get_options(view, pt)
+
+    if opt['type'] == 'stylesheet':
+        opt['lookAhead'] = False
+
     abbr_data = extract(line, pt - line_start, opt)
 
     if abbr_data:

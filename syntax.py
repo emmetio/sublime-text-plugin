@@ -4,7 +4,7 @@ Syntax-related methods
 
 # Editor scope to Emmet syntax mapping
 syntax_scopes = {
-    'html': 'text.html - source',
+    'html': 'text.html - source - meta.attribute-with-value.style',
     'xml': 'text.xml - text.xml.xsl',
     'xsl': 'text.xml.xsl',
     'jsx': 'source.jsx', # TODO implement
@@ -30,7 +30,9 @@ inline_scopes = [
 # e.g. plugin will mark text that user types as abbreviation
 marker_activation_scopes = [
     'text - (entity, punctuation.definition.tag.end)',
-    'source - meta.selector - meta.property-value - meta.property-name - string - punctuation - comment'
+    'source - meta.selector - meta.property-value - meta.property-name - string - punctuation - comment',
+    # Inline CSS
+    'text.html meta.attribute-with-value.style string.quoted'
 ]
 
 markup_syntaxes = ['html', 'xml', 'xsl', 'jsx', 'haml', 'jade', 'pug', 'slim']

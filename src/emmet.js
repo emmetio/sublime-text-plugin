@@ -66,6 +66,7 @@ export function expand(abbr, config) {
         options: {
             'output.field': isPreview ? fieldPreview : field,
             'output.text': text,
+            'output.format': !(config && config.inline),
             ...(config && config.options),
         }
     });
