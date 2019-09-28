@@ -7,7 +7,7 @@ from . import marker
 from . import syntax
 
 
-def in_activation_context(view, caret, prev_pos):
+def in_activation_context(view, caret, prev_pos, completion_contex=False):
     """
     Check that given caret position is inside abbreviation activation context,
     e.g. caret is in location where user expects abbreviation.
@@ -24,6 +24,10 @@ def in_activation_context(view, caret, prev_pos):
         elif s_name in ('html', 'xml', 'xsl'):
             # For HTML-like syntaxes, we should detect if we are at abbreviation bound
             return in_scope and is_abbreviation_bound(view, prev_pos)
+        elif s_name == 'jsx':
+            # In JSX, we rely on prefixed match: we should activate abbreviation
+            # only of its prefixed with `<`
+            return prev_pos > 0 and view.substr(prev_pos - 1) == '<' or completion_contex
 
         # In all other cases just check if we are in abbreviation scope
         return in_scope
@@ -37,8 +41,9 @@ def is_stylesheet_color(view, begin, end):
 def is_abbreviation_bound(view, pt):
     "Check if given point in view is a possible abbreviation start"
     line_range = view.line(pt)
-    bound_chars = ' \t>'
-    left = line_range.begin() == pt or view.substr(pt - 1) in bound_chars
+    bound_chars = ' \t'
+    left = line_range.begin() == pt or view.substr(pt - 1) in bound_chars or\
+        view.match_selector(pt - 1, 'punctuation.definition.tag.end.html')
     right = line_range.end() != pt and view.substr(pt) not in bound_chars
     return left and right
 
@@ -52,6 +57,14 @@ def get_caret(view):
     return view.sel()[0].begin()
 
 
+def update_marker(view, mrk, loc):
+    abbr_data = emmet.extract_abbreviation(view, loc)
+    if abbr_data:
+        mrk.update(abbr_data[0])
+    else:
+        # Unable to extract abbreviation or abbreviation is invalid
+        marker.dispose(view)
+
 def nonpanel(fn):
     def wrapper(self, view):
         if not view.settings().get('is_widget'):
@@ -62,6 +75,7 @@ def nonpanel(fn):
 class AbbreviationMarkerListener(sublime_plugin.EventListener):
     def __init__(self):
         self.last_pos = -1
+        self.last_command = None
 
     def on_close(self, view):
         marker.dispose(view)
@@ -89,15 +103,14 @@ class AbbreviationMarkerListener(sublime_plugin.EventListener):
 
         if mrk:
             mrk.validate()
-            marker_region = marker.get_region(view)
-            if not marker_region or marker_region.empty():
+            if not mrk.valid:
                 # User removed marked abbreviation
                 marker.dispose(view)
                 return
 
             # Check if modification was made inside marked region
-            prev_inside = marker_region.contains(last_pos)
-            next_inside = marker_region.contains(caret)
+            prev_inside = mrk.contains(last_pos)
+            next_inside = mrk.contains(caret)
 
             if prev_inside and next_inside:
                 # Modifications made completely inside abbreviation, should be already validated
@@ -108,22 +121,18 @@ class AbbreviationMarkerListener(sublime_plugin.EventListener):
                 # substring since user may type `[` which will automatically insert `]`
                 # as a snippet and we won't be able to properly track it.
                 # We should extract abbreviation instead.
-                abbr_data = emmet.abbreviation_from_line(view, caret)
-                if abbr_data:
-                    mrk.update(abbr_data[0], abbr_data[1])
-                else:
-                    # Unable to extract abbreviation or abbreviation is invalid
-                    marker.dispose(view)
+                update_marker(view, mrk, caret)
             elif next_inside and caret > last_pos:
-                # Modifications made right before marker
-                mrk.update(last_pos, marker_region.end())
+                # Modifications made right before marker, ensure it results
+                # # in valid abbreviation
+                update_marker(view, mrk, (last_pos, mrk.region.end()))
             elif not next_inside:
                 # Modifications made outside marker
                 marker.dispose(view)
                 mrk = None
 
         if not mrk and caret > last_pos and in_activation_context(view, caret, last_pos):
-            marker.from_line(view, caret)
+            marker.extract(view, caret)
 
 
     def on_query_context(self, view: sublime.View, key: str, op: str, operand: str, match_all: bool):
@@ -143,6 +152,8 @@ class AbbreviationMarkerListener(sublime_plugin.EventListener):
         return None
 
     def on_query_completions(self, view, prefix, locations):
+        # Check if completion list was populated by manually invoking autocomplete popup
+        manual = self.last_command == 'auto_complete'
         mrk = marker.get(view)
         caret = locations[0]
 
@@ -152,7 +163,7 @@ class AbbreviationMarkerListener(sublime_plugin.EventListener):
 
         if not mrk and in_activation_context(view, caret, caret - len(prefix)):
             # Try to extract abbreviation from given location
-            abbr_data = emmet.abbreviation_from_line(view, caret)
+            abbr_data = emmet.extract_abbreviation(view, caret, caret, True)
             if abbr_data:
                 mrk = marker.create(view, abbr_data[0], abbr_data[1])
                 if mrk.valid:
@@ -162,14 +173,15 @@ class AbbreviationMarkerListener(sublime_plugin.EventListener):
                     mrk.reset()
                     mrk = None
 
-        if mrk and mrk.valid:
+        if mrk and mrk.valid and manual:
             return [
-                ['%s\tEmmet' % mrk.abbreviation, mrk.snippet()]
+                ['%s\tEmmet' % view.substr(mrk.region), mrk.snippet()]
             ]
 
         return None
 
     def on_text_command(self, view, command_name, args):
+        self.last_command = command_name
         if command_name == 'commit_completion':
             marker.dispose(view)
 
@@ -180,12 +192,9 @@ class AbbreviationMarkerListener(sublime_plugin.EventListener):
             r = marker.get_region(view)
             if r:
                 marker.clear_region(view)
-                mrk = marker.create(view, r.begin(), r.end())
-                if mrk.valid:
-                    marker.attach(view, mrk)
+                mrk = marker.extract(view, r)
+                if mrk:
                     preview.toggle(view, mrk, get_caret(view), preview_as_phantom(mrk))
-                else:
-                    mrk.reset()
 
 
 class ExpandAbbreviation(sublime_plugin.TextCommand):

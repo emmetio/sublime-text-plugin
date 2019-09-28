@@ -7,7 +7,7 @@ syntax_scopes = {
     'html': 'text.html - source - meta.attribute-with-value.style',
     'xml': 'text.xml - text.xml.xsl',
     'xsl': 'text.xml.xsl',
-    'jsx': 'source.jsx', # TODO implement
+    'jsx': 'source.js.jsx',
     'haml': 'source.haml',
     'jade': 'text.jade | source.pyjade',
     'pug': 'text.pug | source.pypug',

@@ -116,22 +116,49 @@ def get_options(view, pt, with_context=False):
     syntax_info['inline'] = syntax.is_inline(view, pt)
     return syntax_info
 
-def abbreviation_from_line(view, pt):
-    "Extracts abbreviation from line that matches given point in view"
-    line_region = view.line(pt)
-    line_start = line_region.begin()
-    line = view.substr(line_region)
+def extract_abbreviation(view, loc):
+    """
+    Extracts abbreviation from given location in view. Locations could be either
+    `int` (a character location in view) or `list`/`tuple`/`sublime.Region`.
+    """
+    pt = -1
+    region = None
+
+    if isinstance(loc, (list, tuple)):
+        loc = sublime.Region(loc[0], loc[1])
+
+    if isinstance(loc, int):
+        # Character location is passed, extract from line
+        pt = loc
+        region = view.line(pt)
+    elif isinstance(loc, sublime.Region):
+        # Extract from given range
+        pt = loc.end()
+        region = loc
+    else:
+        return None
+
+    text = view.substr(region)
+    begin = region.begin()
     opt = get_options(view, pt)
 
     if opt['type'] == 'stylesheet':
+        # No look-ahead for stylesheets: they do not support brackets syntax
+        # and enabled look-ahead produces false matches
         opt['lookAhead'] = False
 
-    abbr_data = extract(line, pt - line_start, opt)
+    if opt['syntax'] == 'jsx':
+        # TODO configure prefix from settings
+        opt['prefix'] = '<'
+
+    abbr_data = extract(text, pt - begin, opt)
 
     if abbr_data:
-        start = line_start + abbr_data['start']
-        end = line_start + abbr_data['end']
-        return start, end, opt
+        print('extracted data %s' % abbr_data)
+        abbr_data['start'] += begin
+        abbr_data['end'] += begin
+        abbr_data['location'] += begin
+        return abbr_data, opt
 
 
 ######################################

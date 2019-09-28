@@ -11,9 +11,9 @@ def plugin_unloaded():
             dispose(view)
 
 
-def create(view, start, end, options=None):
+def create(view, abbr_data, options=None):
     "Creates abbreviation marker"
-    return AbbreviationMarker(view, start, end, options)
+    return AbbreviationMarker(view, abbr_data, options)
 
 
 def get(view):
@@ -47,9 +47,9 @@ def clear_region(view):
     view.erase_regions(abbr_region_id)
 
 
-def from_line(view, pt, syntax_info=None):
+def extract(view, loc):
     "Extracts abbreviation from given location and, if it's valid, returns marker for it"
-    abbr_data = emmet.abbreviation_from_line(view, pt)
+    abbr_data = emmet.extract_abbreviation(view, loc)
     if abbr_data:
         marker = create(view, abbr_data[0], abbr_data[1])
         if marker.valid:
@@ -59,14 +59,17 @@ def from_line(view, pt, syntax_info=None):
         # Invalid abbreviation in marker, dispose it
         marker.reset()
 
+def from_region(view, begin, end):
+    "Extracts abbreviation from given region and, if it's valid, returns marker for it"
 
 class AbbreviationMarker:
-    def __init__(self, view, start, end, options=None):
+    def __init__(self, view, abbr_data, options=None):
         self.view = view
-        self.options = options or emmet.get_options(view, start, True)
+        self.abbr_data = None
+        self.options = options or emmet.get_options(view, abbr_data['start'], True)
         self.region = None
         self._data = None
-        self.update(start, end)
+        self.update(abbr_data)
 
     def __del__(self):
         region = get_region(self.view)
@@ -80,7 +83,7 @@ class AbbreviationMarker:
 
     @property
     def abbreviation(self):
-        return self.region and self.view.substr(self.region) or None
+        return self.region and self.abbr_data['abbreviation'] or None
 
     @property
     def type(self):
@@ -110,8 +113,9 @@ class AbbreviationMarker:
     def error_pos(self):
         return self._data and self._data.get('pos', -1) or -1
 
-    def update(self, start, end):
-        self.region = sublime.Region(start, end)
+    def update(self, abbr_data):
+        self.abbr_data = abbr_data
+        self.region = sublime.Region(abbr_data['start'], abbr_data['end'])
         self.mark()
         self.validate()
 
@@ -119,8 +123,10 @@ class AbbreviationMarker:
         "Validates currently marked abbreviation"
         self.region = get_region(self.view)
         if self.region and not self.region.empty():
-            self._data = emmet.validate(self.abbreviation, self.options)
-            self.mark()
+            prefix = self.options.get('prefix', '')
+            abbr = self.view.substr(self.region)[len(prefix):]
+            self._data = emmet.validate(abbr, self.options)
+            self.abbr_data['abbreviation'] = abbr
         else:
             self.reset()
 
@@ -136,7 +142,7 @@ class AbbreviationMarker:
 
     def reset(self):
         clear_region(self.view)
-        self.region = self._data = None
+        self.region = self.abbr_data = self._data = None
 
     def contains(self, pt):
         "Check if current abbreviation range contains given point"
