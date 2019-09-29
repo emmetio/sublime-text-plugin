@@ -34,7 +34,7 @@ def show(view, marker, as_phantom=False):
             phantom_set.update(phantoms)
         else:
             previews_by_buffer.add(buffer_id)
-            view.show_popup(popup_content(content), 0, marker.region.begin(), 400, 300)
+            view.show_popup(popup_content(content), sublime.COOPERATE_WITH_AUTO_COMPLETE, marker.region.begin(), 400, 300)
 
 
 def hide(view):

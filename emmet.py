@@ -148,13 +148,11 @@ def extract_abbreviation(view, loc):
         opt['lookAhead'] = False
 
     if opt['syntax'] == 'jsx':
-        # TODO configure prefix from settings
-        opt['prefix'] = '<'
+        opt['prefix'] = view.settings().get('emmet_jsx_prefix', None)
 
     abbr_data = extract(text, pt - begin, opt)
 
     if abbr_data:
-        print('extracted data %s' % abbr_data)
         abbr_data['start'] += begin
         abbr_data['end'] += begin
         abbr_data['location'] += begin

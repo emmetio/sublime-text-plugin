@@ -1,0 +1,26 @@
+[
+    {
+        "keys": ["tab"],
+        "command": "expand_abbreviation",
+        "context": [
+            { "key": "emmet_abbreviation" },
+            { "key": "setting.emmet_tab_expand" }
+        ]
+    },
+    {
+        "keys": ["shift+tab"],
+        "command": "next_field",
+        "context": [
+            { "key": "has_next_field" },
+            { "key": "emmet_abbreviation" },
+            { "key": "setting.emmet_tab_expand" }
+        ]
+    },
+    {
+        "keys": ["escape"],
+        "command": "clear_abbreviation_marker",
+        "context": [
+            { "key": "has_emmet_abbreviation_mark" }
+        ]
+    }
+]

@@ -1,0 +1,10 @@
+{
+	// Automatically mark Emmet abbreviation when typing text
+	"emmet_auto_mark": true,
+
+	// Expand Emmet abbreviation with tab key when in abbreviation marker
+	"emmet_tab_expand": true,
+
+	// Prefix for JSX context to start abbreviation matching
+	"emmet_jsx_prefix": "<"
+}

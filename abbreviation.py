@@ -57,6 +57,22 @@ def get_caret(view):
     return view.sel()[0].begin()
 
 
+def activate_marker(view, pt):
+    "Explicitly activates abbreviation marker at given location"
+    mrk = marker.get(view)
+
+    if mrk and not mrk.contains(pt):
+        marker.dispose(view)
+        mrk = None
+
+    if not mrk and syntax.in_activation_scope(view, pt):
+        # Try to extract abbreviation from given location
+        mrk = marker.extract(view, pt)
+
+    if mrk and mrk.valid:
+        preview.toggle(view, mrk, pt, preview_as_phantom(mrk))
+
+
 def update_marker(view, mrk, loc):
     abbr_data = emmet.extract_abbreviation(view, loc)
     if abbr_data:
@@ -81,7 +97,6 @@ class AbbreviationMarkerListener(sublime_plugin.EventListener):
         marker.dispose(view)
 
     def on_activated(self, view):
-        settings = view.settings()
         self.last_pos = get_caret(view)
 
     @nonpanel
@@ -131,8 +146,9 @@ class AbbreviationMarkerListener(sublime_plugin.EventListener):
                 marker.dispose(view)
                 mrk = None
 
-        if not mrk and caret > last_pos and in_activation_context(view, caret, last_pos):
-            marker.extract(view, caret)
+        if not mrk and caret > last_pos and view.settings().get('emmet_auto_mark') and\
+            in_activation_context(view, caret, last_pos):
+            mrk = marker.extract(view, caret)
 
 
     def on_query_context(self, view: sublime.View, key: str, op: str, operand: str, match_all: bool):
@@ -153,32 +169,9 @@ class AbbreviationMarkerListener(sublime_plugin.EventListener):
 
     def on_query_completions(self, view, prefix, locations):
         # Check if completion list was populated by manually invoking autocomplete popup
-        manual = self.last_command == 'auto_complete'
-        mrk = marker.get(view)
-        caret = locations[0]
-
-        if mrk and not mrk.contains(caret):
-            marker.dispose(view)
-            mrk = None
-
-        if not mrk and in_activation_context(view, caret, caret - len(prefix)):
-            # Try to extract abbreviation from given location
-            abbr_data = emmet.extract_abbreviation(view, caret, caret, True)
-            if abbr_data:
-                mrk = marker.create(view, abbr_data[0], abbr_data[1])
-                if mrk.valid:
-                    marker.attach(view, mrk)
-                    preview.toggle(view, mrk, caret, preview_as_phantom(mrk))
-                else:
-                    mrk.reset()
-                    mrk = None
-
-        if mrk and mrk.valid and manual:
-            return [
-                ['%s\tEmmet' % view.substr(mrk.region), mrk.snippet()]
-            ]
-
-        return None
+        if self.last_command == 'auto_complete':
+            # Produce auto-complete option only when completion popup invoked manually
+            activate_marker(view, locations[0])
 
     def on_text_command(self, view, command_name, args):
         self.last_command = command_name
