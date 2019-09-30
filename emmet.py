@@ -72,9 +72,13 @@ def get_tag_context(view, pt, xml=False):
     content = view.substr(sublime.Region(0, view.size()))
     tag = match(content, pt, { 'xml': xml })
     if tag:
+        open_tag = tag.get('open')
+        close_tag = tag.get('close')
         ctx = {
-            'name': tag['name'],
-            'attributes': {}
+            'name': tag.get('name'),
+            'attributes': {},
+            'open': sublime.Region(open_tag[0], open_tag[1]),
+            'close': close_tag and sublime.Region(close_tag[0], close_tag[1])
         }
 
         for attr in tag['attributes']:

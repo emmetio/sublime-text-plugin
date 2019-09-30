@@ -22,5 +22,9 @@
         "context": [
             { "key": "has_emmet_abbreviation_mark" }
         ]
+    },
+    {
+        "keys": ["ctrl+w"],
+        "command": "wrap_with_abbreviation"
     }
 ]
