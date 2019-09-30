@@ -16,7 +16,7 @@
   "author": "Sergey Chikuyonok <serge.che@gmail.com>",
   "license": "MIT",
   "dependencies": {
-    "emmet": "^2.0.0-rc.3"
+    "emmet": "^2.0.0-rc.5"
   },
   "devDependencies": {
     "@emmetio/html-matcher": "^1.0.0",
