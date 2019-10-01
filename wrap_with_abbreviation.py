@@ -6,10 +6,15 @@ from . import syntax
 from . import preview
 
 re_indent = re.compile(r'^\s+')
+last_abbreviation = None
 
 class WrapWithAbbreviation(sublime_plugin.TextCommand):
     def run(self, edit, wrap_abbreviation):
-        print('will wrap with %s' % wrap_abbreviation)
+        global last_abbreviation
+        if wrap_abbreviation:
+            snippet = emmet.expand(wrap_abbreviation, self.options)
+            emmet.replace_with_snippet(self.view, edit, self.region, snippet)
+            last_abbreviation = wrap_abbreviation
 
     def get_range(self):
         sel = self.view.sel()[0]
@@ -19,33 +24,42 @@ class WrapWithAbbreviation(sublime_plugin.TextCommand):
 
     def input(self, *args, **kw):
         sel = self.view.sel()[0]
-        opt = syntax.info(self.view, sel.begin(), 'html')
-        region = self.get_range()
-        lines = get_content(self.view, region, True)
-        opt['text'] = lines
+        self.region = self.get_range()
+        self.lines = get_content(self.view, self.region, True)
+        self.options = syntax.info(self.view, sel.begin(), 'html')
+        self.options['text'] = self.lines
 
-        return WrapAbbreviationInputHandler(opt)
+        return WrapAbbreviationInputHandler(self.options)
 
 
 class WrapAbbreviationInputHandler(sublime_plugin.TextInputHandler):
     def __init__(self, options):
-        self.options = options
+        self.options = options.copy()
+        self.options['preview'] = True
 
     def placeholder(self):
         return 'Enter abbreviation'
 
+    def initial_text(self):
+        return last_abbreviation
+
     def validate(self, text):
-        print('validate "%s"' % text)
-        return True
+        data = emmet.validate(text, self.options)
+        return data and data.get('valid')
 
     def preview(self, text):
-        opt = self.options.copy()
-        opt['preview'] = True
         abbr = text.strip()
+        snippet = None
         if abbr:
-            result = emmet.expand(abbr, opt)
-            snippet = preview.format_snippet(result)
-            return sublime.Html(preview.popup_content(snippet))
+            try:
+                result = emmet.expand(abbr, self.options)
+                snippet = preview.format_snippet(result)
+            except:
+                snippet = '<div class="error">Invalid abbreviation</div>'
+
+        if snippet:
+            return sublime.Html(popup_content(snippet))
+
 
 def find_context_tag(view, pt, syntax_info=None):
     "Finds tag context for given location and returns its range, if found"
@@ -107,3 +121,14 @@ def narrow_to_non_space(view, region):
         end -= 1
 
     return sublime.Region(begin, end)
+
+def popup_content(content):
+    return """
+    <body>
+        <style>
+            body { font-size: 0.8rem; }
+            .error { color: red }
+        </style>
+        <div>%s</div>
+    </body>
+    """ % content

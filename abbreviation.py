@@ -192,17 +192,12 @@ class AbbreviationMarkerListener(sublime_plugin.EventListener):
 
 class ExpandAbbreviation(sublime_plugin.TextCommand):
     def run(self, edit, **kw):
-        sel = self.view.sel()
         mrk = marker.get(self.view)
         caret = get_caret(self.view)
 
         if mrk.contains(caret):
             if mrk.valid:
-                region = mrk.region
                 snippet = emmet.expand(mrk.abbreviation, mrk.options)
-                sel.clear()
-                sel.add(sublime.Region(region.begin(), region.begin()))
-                self.view.replace(edit, region, '')
-                self.view.run_command('insert_snippet', {'contents': snippet})
+                emmet.replace_with_snippet(self.view, edit, mrk.region, snippet)
 
             marker.dispose(self.view)

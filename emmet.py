@@ -163,6 +163,14 @@ def extract_abbreviation(view, loc):
         return abbr_data, opt
 
 
+def replace_with_snippet(view, edit, region, snippet):
+    "Replaces given region view with snippet contents"
+    sel = view.sel()
+    sel.clear()
+    sel.add(sublime.Region(region.begin(), region.begin()))
+    view.replace(edit, region, '')
+    view.run_command('insert_snippet', { 'contents': snippet })
+
 ######################################
 ## QuickJS Runtime
 ## https://github.com/PetterS/quickjs
