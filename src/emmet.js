@@ -1,7 +1,8 @@
 import expandAbbreviation, { markupAbbreviation, stylesheetAbbreviation, resolveConfig } from 'emmet';
+import { balancedInward, balancedOutward } from '@emmetio/html-matcher';
 
 export { extract } from 'emmet';
-export { default as match } from '@emmetio/html-matcher';
+export { default as match, scan, createOptions } from '@emmetio/html-matcher';
 
 const reSimple = /^([\w!-]+)\.?$/;
 const knownTags = [
@@ -105,4 +106,17 @@ export function validate(abbr, config) {
             snippet: err.pos != null ? `${'-'.repeat(err.pos)}^` : ''
         };
     }
+}
+
+/**
+ * Returns list of tags for balancing for given location
+ * @param {string} code
+ * @param {number} pos
+ * @param {'inward' | 'outward'} dir
+ * @param {import('@emmetio/html-matcher').ScannerOptions} options
+ */
+export function balance(code, pos, dir, options) {
+    return dir === 'inward'
+        ? balancedInward(code, pos, options)
+        : balancedOutward(code, pos, options)
 }

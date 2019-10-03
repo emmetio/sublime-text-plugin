@@ -15,11 +15,10 @@
   ],
   "author": "Sergey Chikuyonok <serge.che@gmail.com>",
   "license": "MIT",
-  "dependencies": {
-    "emmet": "^2.0.0-rc.5"
-  },
+  "dependencies": {},
   "devDependencies": {
-    "@emmetio/html-matcher": "^1.0.0",
+    "emmet": "^2.0.0-rc.5",
+    "@emmetio/html-matcher": "^1.1.0",
     "rollup": "^1.20.3",
     "rollup-plugin-node-resolve": "^5.2.0"
   },

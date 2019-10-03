@@ -32,7 +32,8 @@ def _compile(code):
     extract = context.get('extract')
     validate = context.get('validate')
     match = context.get('match')
-    return context, expand, extract, validate, match
+    balance = context.get('balance')
+    return context, expand, extract, validate, match, balance
 
 
 threadpool = concurrent.futures.ThreadPoolExecutor(max_workers=1)
@@ -40,7 +41,7 @@ lock = threading.Lock()
 
 future = threadpool.submit(_compile, _get_js_code())
 concurrent.futures.wait([future])
-context, js_expand, js_extract, js_validate, js_match = future.result()
+context, js_expand, js_extract, js_validate, js_match, js_balance = future.result()
 
 def expand(abbr, options=None):
     "Expands given abbreviation into code snippet"
@@ -65,6 +66,11 @@ def match(code, pos, options=None):
     Finds matching tag pair for given `pos` in `code`
     """
     return call_js(js_match, code, pos, options)
+
+
+def balance(code, pos, direction, xml=False):
+    "Returns list of tags for balancing for given code"
+    return call_js(js_balance, code, pos, direction, { 'xml': xml })
 
 
 def get_tag_context(view, pt, xml=False):
