@@ -6,5 +6,9 @@
 	"emmet_tab_expand": true,
 
 	// Prefix for JSX context to start abbreviation matching
-	"emmet_jsx_prefix": "<"
+	"emmet_jsx_prefix": "<",
+
+	// Display open tag preview next to closing tag when caret is inside it
+	// and open tag is not currently visible
+	"emmet_tag_preview": true,
 }

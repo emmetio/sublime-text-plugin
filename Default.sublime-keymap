@@ -24,6 +24,13 @@
         ]
     },
     {
+        "keys": ["escape"],
+        "command": "hide_tag_preview",
+        "context": [
+            { "key": "emmet_tag_preview" }
+        ]
+    },
+    {
         "keys": ["ctrl+w"],
         "command": "wrap_with_abbreviation"
     },
@@ -36,5 +43,9 @@
         "keys": ["ctrl+shift+d"],
         "command": "balance_tag",
         "args": { "direction": "inward" }
+    },
+    {
+        "keys": ["ctrl+i"],
+        "command": "go_to_tag_pair"
     }
 ]
