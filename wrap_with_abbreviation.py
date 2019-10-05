@@ -4,6 +4,7 @@ import sublime_plugin
 from . import emmet
 from . import syntax
 from . import preview
+from . import utils
 
 re_indent = re.compile(r'^\s+')
 last_abbreviation = None
@@ -13,7 +14,7 @@ class WrapWithAbbreviation(sublime_plugin.TextCommand):
         global last_abbreviation
         if wrap_abbreviation:
             snippet = emmet.expand(wrap_abbreviation, self.options)
-            emmet.replace_with_snippet(self.view, edit, self.region, snippet)
+            utils.replace_with_snippet(self.view, edit, self.region, snippet)
             last_abbreviation = wrap_abbreviation
 
     def get_range(self):
@@ -82,7 +83,7 @@ def find_context_tag(view, pt, syntax_info=None):
 
             if close_tag:
                 r = sublime.Region(open_tag.end(), close_tag.begin())
-                return narrow_to_non_space(view, region)
+                return utils.narrow_to_non_space(view, region)
 
 
 def in_range(region, pt):
@@ -104,23 +105,6 @@ def get_content(view, region, lines=False):
 
     return lines and dest_lines or '\n'.join(dest_lines)
 
-
-def narrow_to_non_space(view, region):
-    "Returns copy of region which starts and ends at non-space character"
-    begin = region.begin()
-    end = region.end()
-
-    while begin < end:
-        if not view.substr(begin).isspace():
-            break
-        begin += 1
-
-    while end > begin:
-        if not view.substr(end - 1).isspace():
-            break
-        end -= 1
-
-    return sublime.Region(begin, end)
 
 def popup_content(content):
     return """

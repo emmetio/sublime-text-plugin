@@ -70,6 +70,7 @@ def is_supported(syntax):
     "Check if given syntax name is supported by Emmet"
     return syntax in markup_syntaxes or syntax in stylesheet_syntaxes
 
+
 def is_inline(view, pt):
     """
     Check if abbreviation in given location must be expanded as single line

@@ -59,8 +59,6 @@ def extract(view, loc):
         # Invalid abbreviation in marker, dispose it
         marker.reset()
 
-def from_region(view, begin, end):
-    "Extracts abbreviation from given region and, if it's valid, returns marker for it"
 
 class AbbreviationMarker:
     def __init__(self, view, abbr_data, options=None):

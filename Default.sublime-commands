@@ -6,5 +6,15 @@
     {
         "caption": "Emmet: Wrap with Abbreviation",
         "command": "wrap_with_abbreviation",
+    },
+    {
+        "caption": "Emmet: Balance Tag Outward",
+        "command": "balance_tag",
+        "args": { "direction": "outward" }
+    },
+    {
+        "caption": "Emmet: Balance Tag Inward",
+        "command": "balance_tag",
+        "args": { "direction": "inward" }
     }
 ]

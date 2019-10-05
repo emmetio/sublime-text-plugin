@@ -26,5 +26,15 @@
     {
         "keys": ["ctrl+w"],
         "command": "wrap_with_abbreviation"
+    },
+    {
+        "keys": ["ctrl+d"],
+        "command": "balance_tag",
+        "args": { "direction": "outward" }
+    },
+    {
+        "keys": ["ctrl+shift+d"],
+        "command": "balance_tag",
+        "args": { "direction": "inward" }
     }
 ]

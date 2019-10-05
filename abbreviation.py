@@ -5,6 +5,7 @@ from . import emmet
 from . import preview
 from . import marker
 from . import syntax
+from . import utils
 
 
 def in_activation_context(view, caret, prev_pos, completion_contex=False):
@@ -52,11 +53,6 @@ def preview_as_phantom(marker):
     return marker.type == 'stylesheet'
 
 
-def get_caret(view):
-    "Returns current caret position for single selection"
-    return view.sel()[0].begin()
-
-
 def activate_marker(view, pt):
     "Explicitly activates abbreviation marker at given location"
     mrk = marker.get(view)
@@ -97,11 +93,11 @@ class AbbreviationMarkerListener(sublime_plugin.EventListener):
         marker.dispose(view)
 
     def on_activated(self, view):
-        self.last_pos = get_caret(view)
+        self.last_pos = utils.get_caret(view)
 
     @nonpanel
     def on_selection_modified(self, view):
-        self.last_pos = get_caret(view)
+        self.last_pos = utils.get_caret(view)
         mrk = marker.get(view)
 
         if mrk:
@@ -113,7 +109,7 @@ class AbbreviationMarkerListener(sublime_plugin.EventListener):
     @nonpanel
     def on_modified(self, view):
         last_pos = self.last_pos
-        caret = get_caret(view)
+        caret = utils.get_caret(view)
         mrk = marker.get(view)
 
         if mrk:
@@ -187,17 +183,17 @@ class AbbreviationMarkerListener(sublime_plugin.EventListener):
                 marker.clear_region(view)
                 mrk = marker.extract(view, r)
                 if mrk:
-                    preview.toggle(view, mrk, get_caret(view), preview_as_phantom(mrk))
+                    preview.toggle(view, mrk, utils.get_caret(view), preview_as_phantom(mrk))
 
 
 class ExpandAbbreviation(sublime_plugin.TextCommand):
     def run(self, edit, **kw):
         mrk = marker.get(self.view)
-        caret = get_caret(self.view)
+        caret = utils.get_caret(self.view)
 
         if mrk.contains(caret):
             if mrk.valid:
                 snippet = emmet.expand(mrk.abbreviation, mrk.options)
-                emmet.replace_with_snippet(self.view, edit, mrk.region, snippet)
+                utils.replace_with_snippet(self.view, edit, mrk.region, snippet)
 
             marker.dispose(self.view)

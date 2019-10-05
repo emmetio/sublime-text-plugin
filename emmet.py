@@ -13,7 +13,7 @@ elif sublime.platform() == 'window':
 else:
     raise RuntimeError('Platform %s (%s) is not currently supported' % (sublime.platform(), sublime.arch()))
 
-xml_syntaxes = ['xml', 'xsl']
+xml_syntaxes = ['xml', 'xsl', 'jsx']
 html_syntaxes = ['html']
 
 def _get_js_code():
@@ -21,7 +21,7 @@ def _get_js_code():
     with open(os.path.join(base_path, 'emmet.js'), encoding='UTF-8') as f:
         src = f.read()
 
-    src += "\nvar {expand, extract, validate, match} = emmet;"
+    src += "\nvar {expand, extract, validate, match, balance} = emmet;"
     return src
 
 
@@ -168,14 +168,6 @@ def extract_abbreviation(view, loc):
         abbr_data['location'] += begin
         return abbr_data, opt
 
-
-def replace_with_snippet(view, edit, region, snippet):
-    "Replaces given region view with snippet contents"
-    sel = view.sel()
-    sel.clear()
-    sel.add(sublime.Region(region.begin(), region.begin()))
-    view.replace(edit, region, '')
-    view.run_command('insert_snippet', { 'contents': snippet })
 
 ######################################
 ## QuickJS Runtime
