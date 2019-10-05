@@ -11,4 +11,10 @@
 	// Display open tag preview next to closing tag when caret is inside it
 	// and open tag is not currently visible
 	"emmet_tag_preview": true,
+
+	// The maximum file size where Emmet will capture HTML tag context for abbreviation.
+	// Tag context is used for resolving implicit tag names in abbreviation
+	// (e.g. `.item` should expand to `<li class="item">` inside `<ul>` tag), but
+	// requires full document scan
+	"emmet_context_size_limit": 102400,
 }

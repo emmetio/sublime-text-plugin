@@ -64,7 +64,10 @@ class AbbreviationMarker:
     def __init__(self, view, abbr_data, options=None):
         self.view = view
         self.abbr_data = None
-        self.options = options or emmet.get_options(view, abbr_data['start'], True)
+        # Do not capture context for large documents since it may reduce performance
+        max_doc_size = view.settings().get('emmet_context_size_limit', 0)
+        with_context = max_doc_size > 0 and max_doc_size < max_size_for_context
+        self.options = options or emmet.get_options(view, abbr_data['start'], with_context)
         self.region = None
         self._data = None
         self.update(abbr_data)
