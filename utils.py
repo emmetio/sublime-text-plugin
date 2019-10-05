@@ -1,3 +1,5 @@
+import sublime
+
 def narrow_to_non_space(view, region):
     "Returns copy of region which starts and ends at non-space character"
     begin = region.begin()
@@ -28,3 +30,11 @@ def replace_with_snippet(view, edit, region, snippet):
 def get_caret(view):
     "Returns current caret position for single selection"
     return view.sel()[0].begin()
+
+
+def go_to_pos(view, pos):
+    sel = view.sel()
+    sel.clear()
+    sel.add(sublime.Region(pos, pos))
+    view.show(pos)
+

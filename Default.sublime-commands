@@ -20,5 +20,13 @@
     {
         "caption": "Emmet: Go to Tag Pair",
         "command": "go_to_tag_pair"
+    },
+    {
+        "caption": "Emmet: Go to Next Edit Point",
+        "command": "go_to_next_edit_point"
+    },
+    {
+        "caption": "Emmet: Go to Previous Edit Point",
+        "command": "go_to_previous_edit_point"
     }
 ]

@@ -21,7 +21,8 @@ def show_tag_preview(view, pt, text, dest):
         phantom_set = phantoms_by_buffer[buffer_id]
 
     r = sublime.Region(pt, pt)
-    phantoms = [sublime.Phantom(r, phantom_content(text, dest), sublime.LAYOUT_INLINE, on_navigate=lambda href: go_to_pos(view, int(href)))]
+    nav = lambda href: utils.go_to_pos(view, int(href))
+    phantoms = [sublime.Phantom(r, phantom_content(text, dest), sublime.LAYOUT_INLINE, on_navigate=nav)]
     phantom_set.update(phantoms)
 
 
@@ -57,10 +58,7 @@ def phantom_content(content, dest):
 
 
 def go_to_pos(view, pos):
-    sel = view.sel()
-    sel.clear()
-    sel.add(sublime.Region(pos, pos))
-    view.show(pos)
+    utils.go_to_pos(view, pos)
     hide_tag_preview(view)
 
 
@@ -82,7 +80,7 @@ class GoToTagPair(sublime_plugin.TextCommand):
                 else:
                     pos = open_tag.a
 
-                go_to_pos(self.view, pos)
+                utils.go_to_pos(self.view, pos)
 
 
 class HideTagPreview(sublime_plugin.TextCommand):
