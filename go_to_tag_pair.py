@@ -125,7 +125,6 @@ class PreviewTagPair(sublime_plugin.EventListener):
                 preview = view.substr(ctx['open'])
                 if len(preview) > max_preview_len:
                     preview = '%s...' % preview[0:max_preview_len]
-                print('will show %s' % preview)
                 show_tag_preview(view, pos, preview, ctx['open'].a)
                 previews_by_buffer[buffer_id] = (pos, True)
                 return
