@@ -16,5 +16,9 @@
         "caption": "Emmet: Balance Tag Inward",
         "command": "balance_tag",
         "args": { "direction": "inward" }
+    },
+    {
+        "caption": "Emmet: Go to Tag Pair",
+        "command": "go_to_tag_pair"
     }
 ]

@@ -37,7 +37,8 @@ marker_activation_scopes = [
 
 markup_syntaxes = ['html', 'xml', 'xsl', 'jsx', 'haml', 'jade', 'pug', 'slim']
 stylesheet_syntaxes = ['css', 'scss', 'sass', 'less', 'sss', 'stylus', 'postcss']
-
+xml_syntaxes = ['xml', 'xsl', 'jsx']
+html_syntaxes = ['html']
 
 def info(view, pt, fallback=None):
     """
@@ -65,6 +66,14 @@ def from_pos(view, pt):
 
     return None
 
+
+def is_xml(syntax):
+    "Check if given syntax is XML dialect"
+    return syntax in xml_syntaxes
+
+def is_html(syntax):
+    "Check if given syntax is HTML dialect (including XML)"
+    return syntax in html_syntaxes or is_xml(syntax)
 
 def is_supported(syntax):
     "Check if given syntax name is supported by Emmet"

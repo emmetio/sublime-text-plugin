@@ -13,8 +13,6 @@ elif sublime.platform() == 'window':
 else:
     raise RuntimeError('Platform %s (%s) is not currently supported' % (sublime.platform(), sublime.arch()))
 
-xml_syntaxes = ['xml', 'xsl', 'jsx']
-html_syntaxes = ['html']
 
 def _get_js_code():
     base_path = os.path.abspath(os.path.dirname(__file__))
@@ -120,8 +118,8 @@ def get_options(view, pt, with_context=False):
     if with_context:
         if syntax_info['type'] == 'stylesheet':
             syntax_info['context'] = get_css_context(view, pt)
-        elif syntax_info['syntax'] in xml_syntaxes or syntax_info['syntax'] in html_syntaxes:
-            syntax_info['context'] = get_tag_context(view, pt, syntax_info['syntax'] in xml_syntaxes)
+        elif syntax.is_html(syntax_info['syntax']):
+            syntax_info['context'] = get_tag_context(view, pt, syntax.is_xml(syntax_info['syntax']))
 
     syntax_info['inline'] = syntax.is_inline(view, pt)
     return syntax_info

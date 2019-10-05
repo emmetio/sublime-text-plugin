@@ -11,11 +11,11 @@ def push_range(items, region):
         items.append(region)
 
 
-def get_regions(view, pt, syntax, direction='outward'):
+def get_regions(view, pt, syntax_name, direction='outward'):
     "Returns regions for balancing"
     result = []
     content = view.substr(sublime.Region(0, view.size()))
-    tags = emmet.balance(content, pt, direction, syntax in emmet.xml_syntaxes)
+    tags = emmet.balance(content, pt, direction, syntax.is_xml(syntax_name))
     for tag in tags:
         open_tag = tag.get('open')
         close_tag = tag.get('close')

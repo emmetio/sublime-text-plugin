@@ -67,10 +67,9 @@ def find_context_tag(view, pt, syntax_info=None):
     if syntax_info is None:
         syntax_info = syntax.info(view, pt, 'html')
     syntax_name = syntax_info.get('syntax')
-    is_xml = syntax_name in emmet.xml_syntaxes
 
-    if is_xml or syntax_name in emmet.html_syntaxes:
-        ctx = emmet.get_tag_context(view, pt, is_xml)
+    if syntax.is_html(syntax_name):
+        ctx = emmet.get_tag_context(view, pt, syntax.is_xml(syntax_name))
         if ctx:
             # Check how given point relates to matched tag:
             # if it's in either open or close tag, we should wrap tag itself,
