@@ -4,6 +4,10 @@ import { balancedInward, balancedOutward, scan, attributes, createOptions } from
 export { extract } from 'emmet';
 export { default as match } from '@emmetio/html-matcher';
 
+/**
+ * @typedef {{name: string, start: number, end: number, ranges: Array<[number, number]>, selfClose: boolean}} SelectTagModel
+ */
+
 const reSimple = /^([\w!-]+)\.?$/;
 const knownTags = [
     'a', 'abbr', 'address', 'area', 'article', 'aside', 'audio',
@@ -126,21 +130,22 @@ export function balance(code, pos, dir, options) {
  * @param {string} code
  * @param {number} pos
  * @param {boolean} isPrev
+ * @returns {SelectTagModel | undefined}
  */
 export function selectItem(code, pos, isPrev) {
-    // TODO implement `isPrev`
-    return selectNextItem(code, pos);
+    return isPrev ? selectPreviousItem(code, pos) : selectNextItem(code, pos);
 }
 
 /**
  * Returns list of ranges for Select Next Item action
  * @param {string} code
  * @param {number} pos
- * @return {Array<[number, number]>}
+ * @return {SelectTagModel | undefined}
  */
 function selectNextItem(code, pos) {
-    const opt = createOptions();
+    /** @type {SelectTagModel | null} */
     let tag = null;
+    const opt = createOptions();
     // Find open or self-closing tag, closest to given position
     scan(code, (name, type, start, end) => {
         if ((type === 1 || type === 3) && end > pos) {
@@ -154,6 +159,36 @@ function selectNextItem(code, pos) {
 }
 
 /**
+ * Returns list of ranges for Select Previous Item action
+ * @param {string} code
+ * @param {number} pos
+ * @return {SelectTagModel | undefined}
+ */
+function selectPreviousItem(code, pos) {
+    const opt = createOptions();
+    let lastType = null, lastName = null, lastStart = null, lastEnd = null;
+
+    // We should find the closest open or self-closing tag left to given `pos`.
+    scan(code, (name, type, start, end) => {
+        if (start >= pos) {
+            return false;
+        }
+
+        if ((type === 1 || type === 3)) {
+            // Found open or self-closing tag
+            lastName = name;
+            lastType = type;
+            lastStart = start;
+            lastEnd = end;
+        }
+    }, opt.special);
+
+    if (lastType != null) {
+        return getTagSelectionModel(code, lastName, lastStart, lastEnd, lastType === 3);
+    }
+}
+
+/**
  * Parsed open or self-closing tag in `start:end` range of `code` and returns its
  * model for selecting items
  * @param {string} code Document source code
@@ -161,6 +196,7 @@ function selectNextItem(code, pos) {
  * @param {number} start Range in `code` of matched tag
  * @param {number} end
  * @param {boolean} selfClose Tag is self-closing
+ * @returns {SelectTagModel}
  */
 function getTagSelectionModel(code, name, start, end, selfClose) {
     // Found open or self-closing tag
@@ -184,11 +220,9 @@ function getTagSelectionModel(code, name, start, end, selfClose) {
                 if (attr.name === 'class') {
                     // For class names, split value into space-separated tokens
                     const tokens = tokenList(tagSrc.slice(val[0], val[1]));
-                    if (tokens.length) {
-                        const offset = start + val[0];
-                        for (let i = 0; i < tokens.length; i += 2) {
-                            ranges.push([offset + tokens[i], offset + tokens[i + 1]]);
-                        }
+                    const offset = start + val[0];
+                    for (const token of tokens) {
+                        ranges.push([offset + token[0], offset + token[1]]);
                     }
                 }
             }
@@ -210,12 +244,13 @@ function tokenList(value) {
     const ranges = [];
     const len = value.length;
     let pos = 0;
-    let start = 0;
+    let start = 0, end = 0;
     while (pos < len) {
+        end = pos;
         const ch = value.charCodeAt(pos++);
         if (isSpace(ch)) {
-            if (start !== pos) {
-                ranges.push([start, pos]);
+            if (start !== end) {
+                ranges.push([start, end]);
             }
 
             while (isSpace(value.charCodeAt(pos))) {

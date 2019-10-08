@@ -74,9 +74,9 @@ def balance(code, pos, direction, xml=False):
     return call_js(js_map['balance'], code, pos, direction, { 'xml': xml })
 
 
-def select_item(code, pos, is_prev=False):
+def select_item(code, pos, is_previous=False):
     "Returns model for selecting next/previous item"
-    model = call_js(js_map['select_item'], code, pos, is_prev)
+    model = call_js(js_map['select_item'], code, pos, is_previous)
     if model:
         model['regions'] = [to_region(r) for r in model['ranges']]
     return model
@@ -98,9 +98,9 @@ def get_tag_context(view, pt, xml=False):
 
         for attr in tag['attributes']:
             name = attr['name']
-            value = attr['value']
+            value = attr.get('value')
             # unquote value
-            if value and value[0] == '"' or value[0] == "'":
+            if value and (value[0] == '"' or value[0] == "'"):
                 value = value.strip(value[0])
             ctx['attributes'][name] = value
 

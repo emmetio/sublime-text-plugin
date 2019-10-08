@@ -32,5 +32,9 @@
     {
         "caption": "Emmet: Select Next Item",
         "command": "select_next_item"
+    },
+    {
+        "caption": "Emmet: Select Previous Item",
+        "command": "select_previous_item"
     }
 ]

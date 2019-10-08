@@ -59,5 +59,9 @@
     {
         "keys": ["ctrl+shift+right"],
         "command": "select_next_item"
+    },
+    {
+        "keys": ["ctrl+shift+left"],
+        "command": "select_previous_item"
     }
 ]
