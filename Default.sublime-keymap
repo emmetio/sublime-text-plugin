@@ -55,5 +55,9 @@
     {
         "keys": ["ctrl+right"],
         "command": "go_to_next_edit_point"
+    },
+    {
+        "keys": ["ctrl+shift+right"],
+        "command": "select_next_item"
     }
 ]

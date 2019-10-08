@@ -19,19 +19,22 @@ def _get_js_code():
     with open(os.path.join(base_path, 'emmet.js'), encoding='UTF-8') as f:
         src = f.read()
 
-    src += "\nvar {expand, extract, validate, match, balance} = emmet;"
+    src += "\nvar {expand, extract, validate, match, balance, selectItem} = emmet;"
     return src
 
 
 def _compile(code):
     context = quickjs.Context()
     context.eval(code)
-    expand = context.get('expand')
-    extract = context.get('extract')
-    validate = context.get('validate')
-    match = context.get('match')
-    balance = context.get('balance')
-    return context, expand, extract, validate, match, balance
+    js_map = {
+        'expand': context.get('expand'),
+        'extract': context.get('extract'),
+        'validate': context.get('validate'),
+        'match': context.get('match'),
+        'balance': context.get('balance'),
+        'select_item': context.get('selectItem')
+    }
+    return context, js_map
 
 
 threadpool = concurrent.futures.ThreadPoolExecutor(max_workers=1)
@@ -39,16 +42,16 @@ lock = threading.Lock()
 
 future = threadpool.submit(_compile, _get_js_code())
 concurrent.futures.wait([future])
-context, js_expand, js_extract, js_validate, js_match, js_balance = future.result()
+context, js_map = future.result()
 
 def expand(abbr, options=None):
     "Expands given abbreviation into code snippet"
-    return call_js(js_expand, abbr, options)
+    return call_js(js_map['expand'], abbr, options)
 
 
 def extract(line, pos, options=None):
     "Extracts abbreviation from given line of source code"
-    return call_js(js_extract, line, pos, options)
+    return call_js(js_map['extract'], line, pos, options)
 
 
 def validate(abbr, options=None):
@@ -56,19 +59,27 @@ def validate(abbr, options=None):
     Validates given abbreviation: check if it can be properly expanded and detects
     if it's a simple abbreviation (looks like a regular word)
     """
-    return call_js(js_validate, abbr, options)
+    return call_js(js_map['validate'], abbr, options)
 
 
 def match(code, pos, options=None):
     """
     Finds matching tag pair for given `pos` in `code`
     """
-    return call_js(js_match, code, pos, options)
+    return call_js(js_map['match'], code, pos, options)
 
 
 def balance(code, pos, direction, xml=False):
     "Returns list of tags for balancing for given code"
-    return call_js(js_balance, code, pos, direction, { 'xml': xml })
+    return call_js(js_map['balance'], code, pos, direction, { 'xml': xml })
+
+
+def select_item(code, pos, is_prev=False):
+    "Returns model for selecting next/previous item"
+    model = call_js(js_map['select_item'], code, pos, is_prev)
+    if model:
+        model['regions'] = [to_region(r) for r in model['ranges']]
+    return model
 
 
 def get_tag_context(view, pt, xml=False):
@@ -81,8 +92,8 @@ def get_tag_context(view, pt, xml=False):
         ctx = {
             'name': tag.get('name'),
             'attributes': {},
-            'open': sublime.Region(open_tag[0], open_tag[1]),
-            'close': close_tag and sublime.Region(close_tag[0], close_tag[1])
+            'open': to_region(open_tag),
+            'close': close_tag and to_region(close_tag)
         }
 
         for attr in tag['attributes']:
@@ -133,7 +144,7 @@ def extract_abbreviation(view, loc):
     region = None
 
     if isinstance(loc, (list, tuple)):
-        loc = sublime.Region(loc[0], loc[1])
+        loc = to_region(loc[0], loc[1])
 
     if isinstance(loc, int):
         # Character location is passed, extract from line
@@ -166,6 +177,9 @@ def extract_abbreviation(view, loc):
         abbr_data['location'] += begin
         return abbr_data, opt
 
+
+def to_region(rng):
+    return sublime.Region(rng[0], rng[1])
 
 ######################################
 ## QuickJS Runtime

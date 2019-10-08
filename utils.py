@@ -32,6 +32,11 @@ def get_caret(view):
     return view.sel()[0].begin()
 
 
+def get_content(view):
+    "Returns contents of given view"
+    return view.substr(sublime.Region(0, view.size()))
+
+
 def go_to_pos(view, pos):
     sel = view.sel()
     sel.clear()

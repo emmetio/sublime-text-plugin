@@ -71,9 +71,11 @@ def is_xml(syntax):
     "Check if given syntax is XML dialect"
     return syntax in xml_syntaxes
 
+
 def is_html(syntax):
     "Check if given syntax is HTML dialect (including XML)"
     return syntax in html_syntaxes or is_xml(syntax)
+
 
 def is_supported(syntax):
     "Check if given syntax name is supported by Emmet"
@@ -81,9 +83,7 @@ def is_supported(syntax):
 
 
 def is_inline(view, pt):
-    """
-    Check if abbreviation in given location must be expanded as single line
-    """
+    "Check if abbreviation in given location must be expanded as single line"
     return matches_selector(view, pt, inline_scopes)
 
 

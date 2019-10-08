@@ -1,8 +1,8 @@
 import expandAbbreviation, { markupAbbreviation, stylesheetAbbreviation, resolveConfig } from 'emmet';
-import { balancedInward, balancedOutward } from '@emmetio/html-matcher';
+import { balancedInward, balancedOutward, scan, attributes, createOptions } from '@emmetio/html-matcher';
 
 export { extract } from 'emmet';
-export { default as match, scan, createOptions } from '@emmetio/html-matcher';
+export { default as match } from '@emmetio/html-matcher';
 
 const reSimple = /^([\w!-]+)\.?$/;
 const knownTags = [
@@ -119,4 +119,153 @@ export function balance(code, pos, dir, options) {
     return dir === 'inward'
         ? balancedInward(code, pos, options)
         : balancedOutward(code, pos, options)
+}
+
+/**
+ * Returns list of ranges for Select Next/Previous Item action
+ * @param {string} code
+ * @param {number} pos
+ * @param {boolean} isPrev
+ */
+export function selectItem(code, pos, isPrev) {
+    // TODO implement `isPrev`
+    return selectNextItem(code, pos);
+}
+
+/**
+ * Returns list of ranges for Select Next Item action
+ * @param {string} code
+ * @param {number} pos
+ * @return {Array<[number, number]>}
+ */
+function selectNextItem(code, pos) {
+    const opt = createOptions();
+    let tag = null;
+    // Find open or self-closing tag, closest to given position
+    scan(code, (name, type, start, end) => {
+        if ((type === 1 || type === 3) && end > pos) {
+            // Found open or self-closing tag
+            tag = getTagSelectionModel(code, name, start, end, type === 3);
+            return false;
+        }
+    }, opt.special);
+
+    return tag;
+}
+
+/**
+ * Parsed open or self-closing tag in `start:end` range of `code` and returns its
+ * model for selecting items
+ * @param {string} code Document source code
+ * @param {string} name Name of matched tag
+ * @param {number} start Range in `code` of matched tag
+ * @param {number} end
+ * @param {boolean} selfClose Tag is self-closing
+ */
+function getTagSelectionModel(code, name, start, end, selfClose) {
+    // Found open or self-closing tag
+    const ranges = [
+        // Add tag name range
+        [start + 1, start + 1 + name.length]
+    ];
+
+    // Parse and add attributes ranges
+    const tagSrc = code.slice(start, end);
+    for (const attr of attributes(tagSrc, name)) {
+        if (attr.value != null) {
+            // Attribute with value
+            ranges.push([start + attr.nameStart, start + attr.valueEnd]);
+
+            // Add (unquoted) value range
+            const val = valueRange(attr);
+            if (val[0] !== val[1]) {
+                ranges.push([start + val[0], start + val[1]]);
+
+                if (attr.name === 'class') {
+                    // For class names, split value into space-separated tokens
+                    const tokens = tokenList(tagSrc.slice(val[0], val[1]));
+                    if (tokens.length) {
+                        const offset = start + val[0];
+                        for (let i = 0; i < tokens.length; i += 2) {
+                            ranges.push([offset + tokens[i], offset + tokens[i + 1]]);
+                        }
+                    }
+                }
+            }
+        } else {
+            // Attribute without value (boolean)
+            ranges.push([start + attr.nameStart, start + attr.nameEnd]);
+        }
+    }
+
+    return { name, start, end, ranges, selfClose };
+}
+
+/**
+ * Returns ranges of tokens in given value. Tokens are space-separated words.
+ * @param {string} value
+ * @returns {Array<[number, number]>}
+ */
+function tokenList(value) {
+    const ranges = [];
+    const len = value.length;
+    let pos = 0;
+    let start = 0;
+    while (pos < len) {
+        const ch = value.charCodeAt(pos++);
+        if (isSpace(ch)) {
+            if (start !== pos) {
+                ranges.push([start, pos]);
+            }
+
+            while (isSpace(value.charCodeAt(pos))) {
+                pos++;
+            }
+
+            start = pos;
+        }
+    }
+
+    if (start !== pos) {
+        ranges.push([start, pos]);
+    }
+
+    return ranges;
+}
+
+/**
+ * Returns `true` if given character code is a space
+ * @param {number} code
+ */
+function isSpace(code) {
+    return code === 32  /* space */
+        || code === 9   /* tab */
+        || code === 160 /* non-breaking space */
+        || code === 10  /* LF */
+        || code === 13; /* CR */
+}
+
+/**
+ * Returns value range of given attribute. Value range is unquoted.
+ * @param {import('@emmetio/html-matcher/dist/attributes').AttributeToken} attr
+ * @returns {[number, number]}
+ */
+function valueRange(attr) {
+    const ch = attr.value[0];
+    const lastCh = attr.value[attr.value.length - 1];
+    if (ch === '"' || ch === '\'') {
+        return [
+            attr.valueStart + 1,
+            attr.valueEnd - (lastCh === ch ? 1 : 0)
+        ];
+    }
+
+    if (ch === '{' && lastCh === '}') {
+        return [
+            attr.valueStart + 1,
+            attr.valueEnd - 1
+        ];
+    }
+
+    return [attr.valueStart, attr.valueEnd];
 }

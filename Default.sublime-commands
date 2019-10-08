@@ -28,5 +28,9 @@
     {
         "caption": "Emmet: Go to Previous Edit Point",
         "command": "go_to_previous_edit_point"
+    },
+    {
+        "caption": "Emmet: Select Next Item",
+        "command": "select_next_item"
     }
 ]
