@@ -63,5 +63,9 @@
     {
         "keys": ["ctrl+shift+left"],
         "command": "select_previous_item"
+    },
+    {
+        "keys": ["ctrl+forward_slash"],
+        "command": "emmet_toggle_comment"
     }
 ]
