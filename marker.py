@@ -66,7 +66,7 @@ class AbbreviationMarker:
         self.abbr_data = None
         # Do not capture context for large documents since it may reduce performance
         max_doc_size = view.settings().get('emmet_context_size_limit', 0)
-        with_context = max_doc_size > 0 and max_doc_size < max_size_for_context
+        with_context = max_doc_size > 0 and view.size() < max_doc_size
         self.options = options or emmet.get_options(view, abbr_data['start'], with_context)
         self.region = None
         self._data = None

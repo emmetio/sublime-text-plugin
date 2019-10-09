@@ -29,7 +29,7 @@ inline_scopes = [
 # List of scope selectors where abbreviation marker should be activated,
 # e.g. plugin will mark text that user types as abbreviation
 marker_activation_scopes = [
-    'text - (entity, punctuation.definition.tag.end)',
+    'text - (entity, punctuation.definition.tag.end) - comment',
     'source - meta.selector - meta.property-value - meta.property-name - string - punctuation - comment',
     # Inline CSS
     'text.html meta.attribute-with-value.style string.quoted'
