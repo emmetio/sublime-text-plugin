@@ -36,5 +36,9 @@
     {
         "caption": "Emmet: Select Previous Item",
         "command": "select_previous_item"
+    },
+    {
+        "caption": "Emmet: Toggle Comment",
+        "command": "emmet_toggle_comment"
     }
 ]
