@@ -82,9 +82,14 @@ def select_item(code, pos, is_previous=False):
     return model
 
 
-def get_tag_context(view, pt, xml=False):
+def get_tag_context(view, pt, xml=None):
     "Returns matched HTML/XML tag for given point in view"
     content = view.substr(sublime.Region(0, view.size()))
+    if xml is None:
+        # Autodetect XML dialect
+        syntax_name = syntax.from_pos(view, pt)
+        xml = syntax.is_xml(syntax_name)
+
     tag = match(content, pt, { 'xml': xml })
     if tag:
         open_tag = tag.get('open')
@@ -93,8 +98,10 @@ def get_tag_context(view, pt, xml=False):
             'name': tag.get('name'),
             'attributes': {},
             'open': to_region(open_tag),
-            'close': close_tag and to_region(close_tag)
         }
+
+        if close_tag:
+            ctx['close'] = to_region(close_tag)
 
         for attr in tag['attributes']:
             name = attr['name']

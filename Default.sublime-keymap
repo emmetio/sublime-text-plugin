@@ -67,5 +67,9 @@
     {
         "keys": ["ctrl+forward_slash"],
         "command": "emmet_toggle_comment"
+    },
+    {
+        "keys": ["ctrl+'"],
+        "command": "split_join_tag"
     }
 ]
