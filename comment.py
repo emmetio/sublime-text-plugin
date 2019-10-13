@@ -1,4 +1,3 @@
-import re
 import sublime
 import sublime_plugin
 from . import emmet
@@ -7,9 +6,6 @@ from . import utils
 
 html_comment_start = '<!--'
 html_comment_end = '-->'
-
-re_html_comment_start = re.compile(r'<!--\s*')
-re_html_comment_end = re.compile(r'\s*-->')
 
 comment_selector = 'comment'
 
@@ -25,23 +21,28 @@ class EmmetToggleComment(sublime_plugin.TextCommand):
                 remove_comments(view, edit, comment_region)
             elif s.empty():
                 # Empty region, find tag
-                pass
+                region = get_html_tag_range(view, pt)
+                if region is None:
+                    # No tag found, comment line
+                    region = utils.narrow_to_non_space(view.line(pt))
 
+                # If there are any comments inside region, remove them
+                comments = get_html_comment_regions(view, region)
+                if comments:
+                    removed = 0
+                    comments.reverse()
+                    for c in comments:
+                        removed += remove_comments(view, edit, c)
+                    region = sublime.Region(region.begin(), region.end() - removed)
 
-
-        if regions is None:
-            regions = get_regions(self.view)
-
-        if regions:
-            regions = regions[:]
-            regions.reverse()
-
-            for r in regions:
-                add_html_comment(self.view, edit, r)
+                add_html_comment(view, edit, region)
+            else:
+                # Comment selection
+                add_html_comment(view, edit, s)
 
 
 def remove_comments(view: sublime.View, edit: sublime.Edit, region: sublime.Region):
-    "Removes comment markers from given region"
+    "Removes comment markers from given region. Returns amount of characters removed"
     text = view.substr(region)
 
     if text.startswith(html_comment_start) and text.endswith(html_comment_end):
@@ -67,106 +68,61 @@ def remove_comments(view: sublime.View, edit: sublime.Edit, region: sublime.Regi
             end_region.end() - start_region.size())
 
         view.erase(edit, end_region)
+        return start_region.size() + end_region.size()
 
-def get_tag_range(view: sublime.View, edit: sublime.Edit, pt: int, strip_comments=False):
+    return 0
+
+def get_html_tag_range(view: sublime.View, pt: int):
     "Returns tag range for given text position, if possible"
     syntax_name = syntax.from_pos(view, pt)
-    print('syntax is %s' % syntax_name)
     if syntax.is_html(syntax_name):
         tag = emmet.get_tag_context(view, pt, syntax.is_xml(syntax_name))
-        print('tag found: %s' % tag)
         if tag:
             open_tag = tag.get('open')
             close_tag = tag.get('close')
-            r = open_tag
 
-            if close_tag:
-                r = open_tag.cover(close_tag)
-
-                # Check if we should strip inner comments
-                text = view.substr(r)
-                clean_text = strip_html_comments(text)
-                if text != clean_text and strip_comments:
-                    view.replace(edit, r, clean_text)
-                    r = sublime.Region(r.begin(), r.begin() + len(clean_text))
-
-            return r
+            return close_tag and open_tag.cover(close_tag) or open_tag
 
 
-def append_overlap(r, regions):
-    """
-    Appends given `r` region to `regions` list and ensures ranges are not overlapped.
-    If so, merges `r` with last range
-    """
-    if r is None:
-        return
-
-    if not regions:
-        regions.append(r)
-    else:
-        last = regions[-1]
-        if last.intersects(r):
-            regions[-1] = last.cover(r)
-        else:
-            regions.append(r)
-
-def get_regions(view, non_empty=False):
-    "Returns regions for tab commening, if any"
-    regions = []
-    for s in view.sel():
-        if s.empty():
-            syntax_name = syntax.from_pos(view, s.begin())
-            if syntax.is_html(syntax_name):
-                tag = emmet.get_tag_context(view, s.begin(), syntax.is_xml(syntax_name))
-                if tag:
-                    open_tag = tag.get('open')
-                    close_tag = tag.get('close')
-                    r = close_tag and open_tag.cover(close_tag) or open_tag
-                    append_overlap(r, regions)
-        elif not non_empty:
-            return None
-        else:
-            append_overlap(s, regions)
-
-    return regions
-
-def add_html_comment(view: sublime.View, edit: sublime.Edit, r: sublime.Region):
+def add_html_comment(view: sublime.View, edit: sublime.Edit, region: sublime.Region):
     "Adds HTML comments around given range and removes any existing comments inside it"
-    text = view.substr(r)
-    clean_text = strip_html_comments(text)
-
-    view.insert(edit, r.end(), ' -->')
-
-    if text != clean_text:
-        view.replace(edit, r, clean_text)
-
-    view.insert(edit, r.begin(), '<!-- ')
+    view.insert(edit, region.end(), ' ' + html_comment_end)
+    view.insert(edit, region.begin(), html_comment_start + ' ')
 
 
-def strip_html_comments(text: str):
-    """
-    Removes HTML comment markers from given text: does not removes comment itself
-    but `<!--` and `-->` only
-    """
-    result = ''
+def get_html_comment_regions(view: sublime.View, region: sublime.Region):
+    "Finds HTML comments inside given region and returns their regions"
+    result = []
+    text = view.substr(region)
+    start = region.begin()
     offset = 0
+
     while True:
-        m = re_html_comment_start.search(text, offset)
-        if m:
-            result += text[offset:m.start(0)]
-            offset = m.end(0)
+        c_start = text.find(html_comment_start, offset)
+        if c_start != -1:
+            offset = c_start + len(html_comment_start)
 
             # Find comment end
-            m = re_html_comment_end.search(text, offset)
-            if m:
-                result += text[offset:m.start(0)]
-                offset = m.end(0)
+            c_end = text.find(html_comment_end, offset)
+            if c_end != -1:
+                offset = c_end + len(html_comment_end)
+                result.append(sublime.Region(start + c_start, start + offset))
         else:
             break
 
-    return result + text[offset:]
+    return result
+
+def allow_emmet_comments(view: sublime.View):
+    "Check if Emmet's Toggle Comment action can be applied at current view"
+    if view.settings().get('emmet_comment'):
+        selectors = view.settings().get('emmet_comment_scopes', [])
+        caret = utils.get_caret(view)
+        return syntax.matches_selector(view, caret, selectors)
+
+    return False
+
 
 class ToggleCommentListener(sublime_plugin.EventListener):
     def on_text_command(self, view, command_name, args):
-        if command_name == 'toggle_comment':
-            print('run toggle comment with %s' % args)
+        if command_name == 'toggle_comment' and allow_emmet_comments(view):
+            return ('emmet_toggle_comment', None)
