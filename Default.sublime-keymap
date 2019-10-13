@@ -70,6 +70,6 @@
     },
     {
         "keys": ["ctrl+'"],
-        "command": "split_join_tag"
+        "command": "remove_tag"
     }
 ]
