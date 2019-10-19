@@ -17,8 +17,9 @@
   "license": "MIT",
   "dependencies": {},
   "devDependencies": {
-    "emmet": "^2.0.0-rc.5",
     "@emmetio/html-matcher": "^1.1.1",
+    "@emmetio/math-expression": "^1.0.1",
+    "emmet": "^2.0.0-rc.5",
     "rollup": "^1.20.3",
     "rollup-plugin-node-resolve": "^5.2.0"
   },

@@ -1,5 +1,6 @@
 import expandAbbreviation, { markupAbbreviation, stylesheetAbbreviation, resolveConfig } from 'emmet';
 import { balancedInward, balancedOutward, scan, attributes, createOptions } from '@emmetio/html-matcher';
+import evaluateMath, { extract as extractMath } from '@emmetio/math-expression';
 
 export { extract } from 'emmet';
 export { default as match } from '@emmetio/html-matcher';
@@ -123,6 +124,23 @@ export function balance(code, pos, dir, options) {
     return dir === 'inward'
         ? balancedInward(code, pos, options)
         : balancedOutward(code, pos, options)
+}
+
+/**
+ * Locates math expression from given `pos` and evaluates it.
+ * On success, returns object with, `start`, `end` and `result` properties
+ * @param {string} code
+ * @param {number} pos
+ * @param {Object} [options] Extract options
+ */
+export function math(code, pos, options) {
+    const range = extractMath(code, pos, options);
+    if (range) {
+        try {
+            const [start, end] = range;
+            return { start, end, result: evaluateMath(code.substring(start, end)) }
+        } catch (err) {}
+    }
 }
 
 /**

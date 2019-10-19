@@ -71,5 +71,9 @@
     {
         "keys": ["ctrl+'"],
         "command": "remove_tag"
+    },
+    {
+        "keys": ["ctrl+m"],
+        "command": "evaluate_math"
     }
 ]

@@ -40,5 +40,9 @@
     {
         "caption": "Emmet: Toggle Comment",
         "command": "emmet_toggle_comment"
+    },
+    {
+        "caption": "Emmet: Evaluate Math Expression",
+        "command": "evaluate_math"
     }
 ]
