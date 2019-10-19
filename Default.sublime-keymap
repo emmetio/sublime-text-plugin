@@ -75,5 +75,15 @@
     {
         "keys": ["ctrl+m"],
         "command": "evaluate_math"
+    },
+    {
+        "keys": ["ctrl+up"],
+        "command": "increment_number",
+        "args": { "delta": 1 }
+    },
+    {
+        "keys": ["ctrl+down"],
+        "command": "increment_number",
+        "args": { "delta": -1 }
     }
 ]

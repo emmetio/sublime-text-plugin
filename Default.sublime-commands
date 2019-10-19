@@ -44,5 +44,35 @@
     {
         "caption": "Emmet: Evaluate Math Expression",
         "command": "evaluate_math"
+    },
+    {
+        "caption": "Emmet: Increment Number by 1",
+        "command": "increment_number",
+        "args": { "delta": 1 }
+    },
+    {
+        "caption": "Emmet: Decrement Number by 1",
+        "command": "increment_number",
+        "args": { "delta": -1 }
+    },
+    {
+        "caption": "Emmet: Increment Number by 0.1",
+        "command": "increment_number",
+        "args": { "delta": 0.1 }
+    },
+    {
+        "caption": "Emmet: Decrement Number by 0.1",
+        "command": "increment_number",
+        "args": { "delta": -0.1 }
+    },
+    {
+        "caption": "Emmet: Increment Number by 10",
+        "command": "increment_number",
+        "args": { "delta": 10 }
+    },
+    {
+        "caption": "Emmet: Decrement Number by 10",
+        "command": "increment_number",
+        "args": { "delta": -10 }
     }
 ]
