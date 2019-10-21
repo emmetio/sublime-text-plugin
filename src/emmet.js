@@ -155,6 +155,34 @@ export function selectItem(code, pos, isPrev) {
 }
 
 /**
+ * Returns context tag for given position in code. If open or self-closed tag found,
+ * returns parsed attributes as well
+ * @param {string} code
+ * @param {number} pos
+ * @return {Object | undefined}
+ */
+export function contextTag(code, pos) {
+    let tag = null;
+    const opt = createOptions();
+    // Find open or self-closing tag, closest to given position
+    scan(code, (name, type, start, end) => {
+        if (start < pos && end > pos) {
+            tag = { name, type, start, end };
+            if (type === 1 || type === 3) {
+                tag.attributes = shiftAttributeRanges(attributes(code.slice(start, end), name), start)
+            }
+
+            return false;
+        }
+        if (end > pos) {
+            return false;
+        }
+    }, opt.special);
+
+    return tag;
+}
+
+/**
  * Returns list of ranges for Select Next Item action
  * @param {string} code
  * @param {number} pos
@@ -207,7 +235,7 @@ function selectPreviousItem(code, pos) {
 }
 
 /**
- * Parsed open or self-closing tag in `start:end` range of `code` and returns its
+ * Parses open or self-closing tag in `start:end` range of `code` and returns its
  * model for selecting items
  * @param {string} code Document source code
  * @param {string} name Name of matched tag
@@ -321,4 +349,16 @@ function valueRange(attr) {
     }
 
     return [attr.valueStart, attr.valueEnd];
+}
+
+function shiftAttributeRanges(attrs, offset) {
+    attrs.forEach(attr => {
+        attr.nameStart += offset;
+        attr.nameEnd += offset;
+        if ('value' in attr) {
+            attr.valueStart += offset;
+            attr.valueEnd += offset;
+        }
+    });
+    return attrs;
 }

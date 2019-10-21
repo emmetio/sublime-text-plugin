@@ -74,5 +74,9 @@
         "caption": "Emmet: Decrement Number by 10",
         "command": "increment_number",
         "args": { "delta": -10 }
+    },
+    {
+        "caption": "Emmet: Update Image Size",
+        "command": ""
     }
 ]

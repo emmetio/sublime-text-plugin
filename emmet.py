@@ -19,7 +19,7 @@ def _get_js_code():
     with open(os.path.join(base_path, 'emmet.js'), encoding='UTF-8') as f:
         src = f.read()
 
-    src += "\nvar {expand, extract, validate, match, balance, math, selectItem} = emmet;"
+    src += "\nvar {expand, extract, validate, match, balance, math, selectItem, contextTag} = emmet;"
     return src
 
 
@@ -33,7 +33,8 @@ def _compile(code):
         'match': context.get('match'),
         'balance': context.get('balance'),
         'select_item': context.get('selectItem'),
-        'math': context.get('math')
+        'math': context.get('math'),
+        'context_tag': context.get('contextTag'),
     }
     return context, js_map
 
@@ -82,6 +83,10 @@ def select_item(code, pos, is_previous=False):
         model['regions'] = [to_region(r) for r in model['ranges']]
     return model
 
+
+def tag(code, pos, options=None):
+    "Find tag that matches given `pos` in `code`"
+    return call_js(js_map['context_tag'], code, pos, options)
 
 def evaluate_math(line, pos, options=None):
     "Finds and evaluates math expression at given position in line"

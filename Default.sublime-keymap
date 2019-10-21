@@ -85,5 +85,9 @@
         "keys": ["ctrl+down"],
         "command": "increment_number",
         "args": { "delta": -1 }
+    },
+    {
+        "keys": ["ctrl+i"],
+        "command": "update_image_size"
     }
 ]
