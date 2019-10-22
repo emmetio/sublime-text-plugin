@@ -77,6 +77,10 @@
     },
     {
         "caption": "Emmet: Update Image Size",
-        "command": ""
+        "command": "update_image_size"
+    },
+    {
+        "caption": "Emmet: Convert data:URL",
+        "command": "convert_data_url"
     }
 ]

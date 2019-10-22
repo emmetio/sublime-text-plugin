@@ -28,5 +28,8 @@
 	"emmet_comment_scopes": [
 		"text.html",
 		"text.xml"
-	]
+	],
+
+	// Max size of file to convert to data:URL. Set to 0 to disable limit
+	"emmet_max_data_url": 20480
 }

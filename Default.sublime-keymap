@@ -89,5 +89,9 @@
     {
         "keys": ["ctrl+i"],
         "command": "update_image_size"
+    },
+    {
+        "keys": ["ctrl+u"],
+        "command": "convert_data_url"
     }
 ]
