@@ -1,5 +1,6 @@
 import re
 import os.path
+import urllib.request
 import sublime
 
 def narrow_to_non_space(view, region):
@@ -51,6 +52,16 @@ def is_url(file_path):
     return re.match(r'^\w+?://', file_path)
 
 
+def read_file(file_path, size=-1):
+    "Reads content of given file. If `size` if given, reads up to `size` bytes"
+    if is_url(file_path):
+        with urllib.request.urlopen(file_path, timeout=5) as req:
+            return req.read(size)
+
+    with open(file_path, 'rb') as fp:
+        return fp.read(size)
+
+
 def locate_file(editor_file: str, file_name: str):
     """
     Locate `file_name` file relative to `editor_file`.
@@ -83,3 +94,41 @@ def create_path(parent, file_name):
         result = os.path.normpath(os.path.join(parent, file_name))
 
     return result
+
+def attribute_value(attr):
+    "Returns value of given attribute, parsed by Emmet HTML matcher"
+    value = attr.get('value', '')
+    if is_quoted(value):
+        return value[1:-1]
+    return value
+
+
+def patch_attribute(attr, value, name=None):
+    "Returns patched version of given HTML attribute, parsed by Emmet HTML matcher"
+    if name is None:
+        name = attr['name']
+
+    before = ''
+    after = ''
+
+    if 'value' in attr:
+        v = attr['value']
+        if is_quoted(v):
+            # Quoted value or React-like expression
+            before = v[0]
+            after = v[-1]
+    else:
+        # Attribute without value (boolean)
+        before = after = '"'
+
+    return '%s=%s%s%s' % (name, before, value, after)
+
+
+def is_quoted(value):
+    "Check if given value is either quoted or written as expression"
+    return value and ((value[0] in '"\'' and value[0] == value[-1]) or value[0] == '{' and value[-1] == '}')
+
+
+def attribute_region(attr):
+    "Returns region that covers entire attribute"
+    return sublime.Region(attr['nameStart'], attr.get('valueEnd', attr['nameEnd']))

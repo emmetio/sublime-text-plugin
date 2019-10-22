@@ -2,7 +2,6 @@ import re
 import io
 import struct
 import os.path
-import urllib.request
 import sublime
 import sublime_plugin
 from . import emmet
@@ -16,23 +15,32 @@ class UpdateImageSize(sublime_plugin.TextCommand):
             attrs = dict([(a['name'].lower(), a) for a in tag['attributes']])
 
             if 'src' in attrs and attrs['src'].get('value'):
-                src = attribute_value(attrs['src'])
+                src = utils.attribute_value(attrs['src'])
                 if utils.is_url(src):
                     abs_file = src
                 elif self.view.file_name():
                     abs_file = utils.locate_file(self.view.file_name(), src)
 
                 if abs_file:
-                    width, height = read_image_size(abs_file)
-                    name, ext = os.path.splitext(abs_file)
+                    size = read_image_size(abs_file)
+                    if size:
+                        dpi = get_dpi(src)
+                        width = round(size[0] / dpi)
+                        height = round(size[1] / dpi)
 
-                    # If file name contains DPI suffix like `@2x`, use it to scale down image size
-                    m = re.search(r'@(\d+(?:\.\d+))x$', name)
-                    dpi = m and float(m.group(1)) or 1
-                    width = round(width / dpi)
-                    height = round(height / dpi)
+                        update_html_size(attrs, self.view, edit, width, height)
+                    else:
+                        print('Unable to determine size of "%s": file is either unsupported or invalid')
+                else:
+                    print('Unable to locate file for "%s" url' % src)
 
-                    update_html_size(attrs, self.view, edit, width, height)
+def get_dpi(file_path):
+    "Detects file DPI from given file path"
+    name, ext = os.path.splitext(file_path)
+
+    # If file name contains DPI suffix like `@2x`, use it to scale down image size
+    m = re.search(r'@(\d+(?:\.\d+))x$', name)
+    return m and float(m.group(1)) or 1
 
 
 def read_image_size(file_path):
@@ -40,45 +48,8 @@ def read_image_size(file_path):
     file_name = os.path.basename(file_path)
     name, ext = os.path.splitext(file_name)
     chunk = ext.lower() in ('.svg', '.jpg', '.jpeg') and 2048 or 100
-    data = read_file(file_path, chunk)
+    data = utils.read_file(file_path, chunk)
     return get_size(data)
-
-
-def patch_attribute(attr, value, name=None):
-    "Returns patched version of given attribute"
-    if name is None:
-        name = attr['name']
-
-    before = ''
-    after = ''
-
-    if 'value' in attr:
-        v = attr['value']
-        if is_quoted(v):
-            # Quoted value or React-like expression
-            before = v[0]
-            after = v[-1]
-    else:
-        # Attribute without value (boolean)
-        before = after = '"'
-
-    return '%s=%s%s%s' % (name, before, value, after)
-
-
-def attribute_value(attr):
-    "Returns value of giver attribute"
-    value = attr.get('value', '')
-    if is_quoted(value):
-        return value[1:-1]
-    return value
-
-
-def is_quoted(value):
-    return value and ((value[0] in '"\'' and value[0] == value[-1]) or value[0] == '{' and value[-1] == '}')
-
-
-def attribute_region(attr):
-    return sublime.Region(attr['nameStart'], attr.get('valueEnd', attr['nameEnd']))
 
 
 def update_html_size(attrs: dict, view: sublime.View, edit: sublime.Edit, width: int, height: int):
@@ -90,35 +61,26 @@ def update_html_size(attrs: dict, view: sublime.View, edit: sublime.Edit, width:
 
     if width_attr and height_attr:
         # We have both attributes, patch them
-        wr = attribute_region(width_attr)
-        hr = attribute_region(height_attr)
+        wr = utils.attribute_region(width_attr)
+        hr = utils.attribute_region(height_attr)
         if wr.begin() < hr.begin():
-            view.replace(edit, hr, patch_attribute(height_attr, height))
-            view.replace(edit, wr, patch_attribute(width_attr, width))
+            view.replace(edit, hr, utils.patch_attribute(height_attr, height))
+            view.replace(edit, wr, utils.patch_attribute(width_attr, width))
         else:
-            view.replace(edit, wr, patch_attribute(width_attr, width))
-            view.replace(edit, hr, patch_attribute(height_attr, height))
+            view.replace(edit, wr, utils.patch_attribute(width_attr, width))
+            view.replace(edit, hr, utils.patch_attribute(height_attr, height))
     elif width_attr or height_attr:
         # Use existing attribute and replace it with patched variations
         attr = width_attr or height_attr
-        data = '%s %s' % (patch_attribute(attr, width, 'width'), patch_attribute(attr, height, 'height'))
-        view.replace(edit, attribute_region(attr), data)
+        data = '%s %s' % (utils.patch_attribute(attr, width, 'width'), utils.patch_attribute(attr, height, 'height'))
+        view.replace(edit, utils.attribute_region(attr), data)
     elif 'src' in attrs:
         # At least 'src' attribute should be available
         attr = attrs['src']
         pos = attr.get('valueEnd', attr['nameEnd'])
-        data = ' %s %s' % (patch_attribute(attr, width, 'width'), patch_attribute(attr, height, 'height'))
+        data = ' %s %s' % (utils.patch_attribute(attr, width, 'width'), utils.patch_attribute(attr, height, 'height'))
         view.insert(edit, pos, data)
 
-
-def read_file(file_path, size=-1):
-    "Reads content of given file. If `size` if given, reads up to `size` bytes"
-    if utils.is_url(file_path):
-        with urllib.request.urlopen(file_path, timeout=5) as req:
-            return req.read(size)
-
-    with open(file_path, 'rb') as fp:
-        return fp.read(size)
 
 def get_size(data: bytes):
     """
@@ -180,11 +142,3 @@ def get_size(data: bytes):
                     input.read(int(struct.unpack(">H", input.read(2))[0]) - 2)
                 b = input.read(1)
             return int(w), int(h)
-
-
-if __name__ == "__main__":
-    files = ['sample.gif', 'sample.png', 'sample-indexed.png', 'sample.webp', 'lossless.webp', 'lossy.webp', 'paris.jpg', 'icon.svg']
-    for f in files:
-        with open('./samples/%s' % f, 'rb') as file:
-            width, height = get_size(file.read(2048))
-            print('%s size: %d×%d' % (f, width, height))
