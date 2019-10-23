@@ -126,7 +126,8 @@ def patch_attribute(attr, value, name=None):
 
 def is_quoted(value):
     "Check if given value is either quoted or written as expression"
-    return value and ((value[0] in '"\'' and value[0] == value[-1]) or value[0] == '{' and value[-1] == '}')
+    return value and ((value[0] in '"\'' and value[0] == value[-1]) or\
+        (value[0] == '{' and value[-1] == '}'))
 
 
 def attribute_region(attr):

@@ -1,7 +1,9 @@
+import os
+import re
+import base64
 import os.path
 import sublime
 import sublime_plugin
-import base64
 from . import emmet
 from . import utils
 
@@ -26,9 +28,17 @@ class ConvertDataUrl(sublime_plugin.TextCommand):
                 return
 
             if src.startswith('data:'):
-                print('Should convert from data URL')
+                on_done = lambda text: convert_from_data_url(self.view, src_attr, src, text)
+                self.view.window().show_input_panel('Enter file name', 'image%s' % get_ext(src), on_done, None, None)
             else:
                 convert_to_data_url(self.view, edit, src_attr, src)
+
+
+class ConvertDataUrlReplace(sublime_plugin.TextCommand):
+    "Internal command for async text replace"
+    def run(self, edit, region, text):
+        region = sublime.Region(*region)
+        self.view.replace(edit, region, text)
 
 
 def convert_to_data_url(view: sublime.View, edit: sublime.Edit, attr: dict, src: str):
@@ -50,3 +60,33 @@ def convert_to_data_url(view: sublime.View, edit: sublime.Edit, attr: dict, src:
                 new_src = 'data:%s;base64,%s' % (mime_types[ext], base64.urlsafe_b64encode(data).decode('utf8'))
                 r = utils.attribute_region(attr)
                 view.replace(edit, r, utils.patch_attribute(attr, new_src))
+
+
+def convert_from_data_url(view: sublime.View, attr: dict, src: str, dest: str):
+    m = re.match(r'^data\:.+?;base64,(.+)', src)
+    if m:
+        base_dir = os.path.dirname(view.file_name())
+        abs_dest = utils.create_path(base_dir, dest)
+        file_url = os.path.relpath(abs_dest, base_dir).replace('\\', '/')
+
+        dest_dir = os.path.dirname(abs_dest)
+        if not os.path.exists(dest_dir):
+            os.makedirs(dest_dir)
+
+        with open(abs_dest, 'wb') as fd:
+            fd.write(base64.urlsafe_b64decode(m.group(1)))
+
+        r = utils.attribute_region(attr)
+        view.run_command('convert_data_url_replace', {
+            'region': [r.begin(), r.end()],
+            'text': utils.patch_attribute(attr, file_url)
+        })
+
+
+def get_ext(data_url: str):
+    m = re.match(r'data:(.+?);', data_url)
+    if m:
+        for k, v in mime_types.items():
+            if v == m.group(1):
+                return k
+    return '.jpg'
