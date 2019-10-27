@@ -17,6 +17,7 @@
   "license": "MIT",
   "dependencies": {},
   "devDependencies": {
+    "@emmetio/css-matcher": "^0.1.0",
     "@emmetio/html-matcher": "^1.1.1",
     "@emmetio/math-expression": "^1.0.1",
     "emmet": "^2.0.0-rc.5",

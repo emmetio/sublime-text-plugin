@@ -1,9 +1,11 @@
 import expandAbbreviation, { markupAbbreviation, stylesheetAbbreviation, resolveConfig } from 'emmet';
 import { balancedInward, balancedOutward, scan, attributes, createOptions } from '@emmetio/html-matcher';
+import { balancedInward as balancedInwardCSS, balancedOutward as balancedOutwardCSS } from '@emmetio/css-matcher';
 import evaluateMath, { extract as extractMath } from '@emmetio/math-expression';
 
 export { extract } from 'emmet';
 export { default as match } from '@emmetio/html-matcher';
+export { default as matchCSS } from '@emmetio/css-matcher';
 
 /**
  * @typedef {{name: string, start: number, end: number, ranges: Array<[number, number]>, selfClose: boolean}} SelectTagModel
@@ -123,7 +125,19 @@ export function validate(abbr, config) {
 export function balance(code, pos, dir, options) {
     return dir === 'inward'
         ? balancedInward(code, pos, options)
-        : balancedOutward(code, pos, options)
+        : balancedOutward(code, pos, options);
+}
+
+/**
+ * Returns list of selector/property ranges for balancing for given location
+ * @param {string} code
+ * @param {number} pos
+ * @param {'inward' | 'outward'} dir
+ */
+export function balanceCSS(code, pos, dir) {
+    return dir === 'inward'
+        ? balancedInwardCSS(code, pos)
+        : balancedOutwardCSS(code, pos);
 }
 
 /**

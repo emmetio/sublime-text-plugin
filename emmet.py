@@ -19,7 +19,7 @@ def _get_js_code():
     with open(os.path.join(base_path, 'emmet.js'), encoding='UTF-8') as f:
         src = f.read()
 
-    src += "\nvar {expand, extract, validate, match, balance, math, selectItem, contextTag} = emmet;"
+    src += "\nvar {expand, extract, validate, match, matchCSS, balance, balanceCSS, math, selectItem, contextTag} = emmet;"
     return src
 
 
@@ -31,7 +31,9 @@ def _compile(code):
         'extract': context.get('extract'),
         'validate': context.get('validate'),
         'match': context.get('match'),
+        'match_css': context.get('matchCSS'),
         'balance': context.get('balance'),
+        'balance_css': context.get('balanceCSS'),
         'select_item': context.get('selectItem'),
         'math': context.get('math'),
         'context_tag': context.get('contextTag'),
@@ -65,15 +67,23 @@ def validate(abbr, options=None):
 
 
 def match(code, pos, options=None):
-    """
-    Finds matching tag pair for given `pos` in `code`
-    """
+    "Finds matching tag pair for given `pos` in `code`"
     return call_js(js_map['match'], code, pos, options)
+
+
+def match_css(code, pos, options=None):
+    "Finds matching selector or property for given `pos` in `code`"
+    return call_js(js_map['match_css'], code, pos, options)
 
 
 def balance(code, pos, direction, xml=False):
     "Returns list of tags for balancing for given code"
     return call_js(js_map['balance'], code, pos, direction, { 'xml': xml })
+
+
+def balance_css(code, pos, direction):
+    "Returns list of selector/property ranges for balancing for given code"
+    return call_js(js_map['balance_css'], code, pos, direction)
 
 
 def select_item(code, pos, is_previous=False):

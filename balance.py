@@ -13,9 +13,15 @@ def push_range(items, region):
 
 def get_regions(view, pt, syntax_name, direction='outward'):
     "Returns regions for balancing"
+    content = utils.get_content(view)
+
+    if syntax.is_css(syntax_name):
+        regions = emmet.balance_css(content, pt, direction)
+        return [sublime.Region(*r) for r in regions]
+
     result = []
-    content = view.substr(sublime.Region(0, view.size()))
     tags = emmet.balance(content, pt, direction, syntax.is_xml(syntax_name))
+
     for tag in tags:
         open_tag = tag.get('open')
         close_tag = tag.get('close')
@@ -81,10 +87,11 @@ def balance_outward(view, syntax_name):
 class BalanceTag(sublime_plugin.TextCommand):
     def run(self, edit, **kw):
         info = syntax.info(self.view, utils.get_caret(self.view), 'html')
-        if info['type'] != 'markup':
+        syntax_name = info['syntax']
+
+        if info['type'] != 'markup' and not syntax.is_css(syntax_name):
             return
 
-        syntax_name = info['syntax']
         direction = kw.get('direction', 'outward')
 
         if direction == 'inward':

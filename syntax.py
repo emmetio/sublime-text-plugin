@@ -82,6 +82,13 @@ def is_supported(syntax):
     return syntax in markup_syntaxes or syntax in stylesheet_syntaxes
 
 
+def is_css(syntax):
+    """
+    Check if given syntax is a CSS dialect. Note that it’s not the same as stylesheet
+    syntax: for example, SASS is a stylesheet but not CSS dialect (but SCSS is)
+    """
+    return syntax in ('css', 'scss', 'less')
+
 def is_inline(view, pt):
     "Check if abbreviation in given location must be expanded as single line"
     return matches_selector(view, pt, inline_scopes)
