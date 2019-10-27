@@ -4,8 +4,15 @@ from . import emmet
 from . import syntax
 from . import utils
 
-html_comment_start = '<!--'
-html_comment_end = '-->'
+html_comment = {
+    'start': '<!--',
+    'end': '-->'
+}
+
+css_comment = {
+    'start': '/*',
+    'end': '*/'
+}
 
 comment_selector = 'comment'
 
@@ -15,39 +22,42 @@ class EmmetToggleComment(sublime_plugin.TextCommand):
         view = self.view
         for s in view.sel():
             pt = s.begin()
+            syntax_name = syntax.from_pos(view, pt)
+            tokens = syntax.is_css(syntax_name) and css_comment or html_comment
+
             if view.match_selector(pt, comment_selector):
                 # Caret inside comment, strip it
                 comment_region = view.extract_scope(pt)
-                remove_comments(view, edit, comment_region)
+                remove_comments(view, edit, comment_region, tokens)
             elif s.empty():
                 # Empty region, find tag
-                region = get_html_tag_range(view, pt)
+                region = get_range_for_comment(view, pt)
                 if region is None:
                     # No tag found, comment line
                     region = utils.narrow_to_non_space(view.line(pt))
 
                 # If there are any comments inside region, remove them
-                comments = get_html_comment_regions(view, region)
+                comments = get_comment_regions(view, region, tokens)
                 if comments:
                     removed = 0
                     comments.reverse()
                     for c in comments:
-                        removed += remove_comments(view, edit, c)
+                        removed += remove_comments(view, edit, c, tokens)
                     region = sublime.Region(region.begin(), region.end() - removed)
 
-                add_html_comment(view, edit, region)
+                add_comment(view, edit, region, tokens)
             else:
                 # Comment selection
-                add_html_comment(view, edit, s)
+                add_comment(view, edit, s, html_comment)
 
 
-def remove_comments(view: sublime.View, edit: sublime.Edit, region: sublime.Region):
+def remove_comments(view: sublime.View, edit: sublime.Edit, region: sublime.Region, tokens: dict):
     "Removes comment markers from given region. Returns amount of characters removed"
     text = view.substr(region)
 
-    if text.startswith(html_comment_start) and text.endswith(html_comment_end):
-        start_offset = region.begin() + len(html_comment_start)
-        end_offset = region.end() - len(html_comment_end)
+    if text.startswith(tokens['start']) and text.endswith(tokens['end']):
+        start_offset = region.begin() + len(tokens['start'])
+        end_offset = region.end() - len(tokens['end'])
 
         # Narrow down offsets for whitespace
         if view.substr(start_offset).isspace():
@@ -72,10 +82,15 @@ def remove_comments(view: sublime.View, edit: sublime.Edit, region: sublime.Regi
 
     return 0
 
-def get_html_tag_range(view: sublime.View, pt: int):
+def get_range_for_comment(view: sublime.View, pt: int):
     "Returns tag range for given text position, if possible"
     syntax_name = syntax.from_pos(view, pt)
-    if syntax.is_html(syntax_name):
+    if syntax.is_css(syntax_name):
+        m = emmet.match_css(utils.get_content(view), pt)
+        if m:
+            # TODO CSS might be an inline fragment of another document
+            return sublime.Region(m['start'], m['end'])
+    elif syntax.is_html(syntax_name):
         tag = emmet.get_tag_context(view, pt, syntax.is_xml(syntax_name))
         if tag:
             open_tag = tag.get('open')
@@ -84,28 +99,28 @@ def get_html_tag_range(view: sublime.View, pt: int):
             return close_tag and open_tag.cover(close_tag) or open_tag
 
 
-def add_html_comment(view: sublime.View, edit: sublime.Edit, region: sublime.Region):
-    "Adds HTML comments around given range and removes any existing comments inside it"
-    view.insert(edit, region.end(), ' ' + html_comment_end)
-    view.insert(edit, region.begin(), html_comment_start + ' ')
+def add_comment(view: sublime.View, edit: sublime.Edit, region: sublime.Region, tokens: dict):
+    "Adds comments around given range"
+    view.insert(edit, region.end(), ' ' + tokens['end'])
+    view.insert(edit, region.begin(), tokens['start'] + ' ')
 
 
-def get_html_comment_regions(view: sublime.View, region: sublime.Region):
-    "Finds HTML comments inside given region and returns their regions"
+def get_comment_regions(view: sublime.View, region: sublime.Region, tokens: dict):
+    "Finds comments inside given region and returns their regions"
     result = []
     text = view.substr(region)
     start = region.begin()
     offset = 0
 
     while True:
-        c_start = text.find(html_comment_start, offset)
+        c_start = text.find(tokens['start'], offset)
         if c_start != -1:
-            offset = c_start + len(html_comment_start)
+            offset = c_start + len(tokens['start'])
 
             # Find comment end
-            c_end = text.find(html_comment_end, offset)
+            c_end = text.find(tokens['end'] , offset)
             if c_end != -1:
-                offset = c_end + len(html_comment_end)
+                offset = c_end + len(tokens['end'])
                 result.append(sublime.Region(start + c_start, start + offset))
         else:
             break
