@@ -11,10 +11,14 @@ class EmmetSelectItem(sublime_plugin.TextCommand):
     def run(self, edit, previous=False):
         sel = self.view.sel()[0]
         syntax_name = syntax.from_pos(self.view, sel.a)
+        fn = None
         if syntax.is_css(syntax_name):
-            select_item_css(self.view, sel, previous)
+            fn = emmet.select_item_css
         elif syntax.is_html(syntax_name):
-            select_item(self.view, sel, previous)
+            fn = emmet.select_item
+
+        if fn:
+            select_item2(self.view, sel, fn, previous)
 
 
 class SelectItemListener(sublime_plugin.EventListener):
@@ -72,6 +76,33 @@ def select_item_css(view: sublime.View, sel: sublime.Region, is_previous=False):
     # Calculate new model from current editor content
     content = utils.get_content(view)
     model = emmet.select_item_css(content, pos, is_previous)
+    if model:
+        models_for_buffer[buffer_id] = model
+        region = find_region(sel, model, is_previous)
+        if region:
+            select(view, region)
+            return
+
+
+def select_item2(view: sublime.View, sel: sublime.Region, fn: callable, is_previous=False):
+    "Selects next/previous item for CSS source"
+    buffer_id = view.buffer_id()
+    pos = sel.begin()
+
+    # Check if we are still in calculated model
+    if buffer_id in models_for_buffer:
+        model = models_for_buffer[buffer_id]
+        region = find_region(sel, model, is_previous)
+        if region:
+            select(view, region)
+            return
+
+        # Out of available selection range, move to next tag
+        pos = model[0].begin() if is_previous else model[-1].end()
+
+    # Calculate new model from current editor content
+    content = utils.get_content(view)
+    model = fn(content, pos, is_previous)
     if model:
         models_for_buffer[buffer_id] = model
         region = find_region(sel, model, is_previous)

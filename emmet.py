@@ -19,7 +19,7 @@ def _get_js_code():
     with open(os.path.join(base_path, 'emmet.js'), encoding='UTF-8') as f:
         src = f.read()
 
-    src += "\nvar {expand, extract, validate, match, matchCSS, balance, balanceCSS, math, selectItem, contextTag, selectItemCSS} = emmet;"
+    src += "\nvar {expand, extract, validate, match, matchCSS, balance, balanceCSS, math, selectItem, selectItemCSS, contextTag} = emmet;"
     return src
 
 
@@ -34,7 +34,6 @@ def _compile(code):
         'match_css': context.get('matchCSS'),
         'balance': context.get('balance'),
         'balance_css': context.get('balanceCSS'),
-        'select_item': context.get('selectItem'),
         'math': context.get('math'),
         'context_tag': context.get('contextTag'),
     }
@@ -88,10 +87,9 @@ def balance_css(code, pos, direction):
 
 def select_item(code, pos, is_previous=False):
     "Returns model for selecting next/previous item"
-    model = call_js(js_map['select_item'], code, pos, is_previous)
+    model = call_js('selectItem', code, pos, is_previous)
     if model:
-        model['regions'] = [to_region(r) for r in model['ranges']]
-    return model
+        return [to_region(r) for r in model]
 
 
 def select_item_css(code, pos, is_previous=False):
