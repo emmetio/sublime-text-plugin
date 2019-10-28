@@ -44,12 +44,23 @@ export function contextSection(code, pos) {
 }
 
 /**
+ * Returns list of ranges for Select Next/Previous CSS Item  action
+ * @param {string} code
+ * @param {number} pos
+ * @param {boolean} isPrev
+ * @returns {Range[]}
+ */
+export function selectItemCSS(code, pos, isPrev) {
+    return isPrev ? selectPreviousItem(code, pos) : selectNextItem(code, pos);
+}
+
+/**
  * Returns regions for selecting next item in CSS
  * @param {string} code
  * @param {number} pos
  * @returns {Range[]}
  */
-export function selectNextItemCSS(code, pos) {
+export function selectNextItem(code, pos) {
     /** @type {Range[]} */
     const result = [];
     /** @type {TokenRange | null} */
@@ -75,12 +86,12 @@ export function selectNextItemCSS(code, pos) {
             pushRange(result, [start, end]);
 
             // Value fragments
-            for (r of splitValue(code.substring(start, end))) {
-                pushRange(result, r[0] + start, r[1] + start);
+            for (const r of splitValue(code.substring(start, end))) {
+                pushRange(result, [r[0] + start, r[1] + start]);
             }
             return false;
         } else if (pendingProperty) {
-            result.push(pendingProperty[0], pendingProperty[1]);
+            result.push([pendingProperty[0], pendingProperty[1]]);
             return false;
         }
     });
@@ -94,7 +105,7 @@ export function selectNextItemCSS(code, pos) {
  * @param {number} pos
  * @returns {Range[]}
  */
-export function selectPreviousItemCSS(code, pos) {
+export function selectPreviousItem(code, pos) {
     const state = {
         type: null,
         start: -1,
@@ -106,7 +117,7 @@ export function selectPreviousItemCSS(code, pos) {
 
     scan(code, (type, start, end, delimiter) => {
         // Accumulate context until we reach given position
-        if (start > pos && type !== 'propertyValue') {
+        if (start >= pos && type !== 'propertyValue') {
             return false;
         }
 
@@ -135,11 +146,11 @@ export function selectPreviousItemCSS(code, pos) {
             pushRange(result, [state.start, state.valueDelimiter !== -1 ? state.valueDelimiter + 1 : state.valueEnd]);
 
             // Full value range
-            pushRange(result, [start, end]);
+            pushRange(result, [state.valueStart, state.valueEnd]);
 
             // Value fragments
-            for (r of splitValue(code.substring(state.valueStart, state.valueEnd))) {
-                pushRange(result, r[0] + state.valueStart, r[1] + state.valueStart);
+            for (const r of splitValue(code.substring(state.valueStart, state.valueEnd))) {
+                pushRange(result, [r[0] + state.valueStart, r[1] + state.valueStart]);
             }
         } else {
             pushRange(result, [state.start, state.end]);

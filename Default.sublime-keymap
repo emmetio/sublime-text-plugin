@@ -58,11 +58,12 @@
     },
     {
         "keys": ["ctrl+shift+right"],
-        "command": "select_next_item"
+        "command": "emmet_select_item"
     },
     {
         "keys": ["ctrl+shift+left"],
-        "command": "select_previous_item"
+        "command": "emmet_select_item",
+        "args": { "previous": true }
     },
     {
         "keys": ["ctrl+forward_slash"],

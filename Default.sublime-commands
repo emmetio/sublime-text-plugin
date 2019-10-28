@@ -31,11 +31,12 @@
     },
     {
         "caption": "Emmet: Select Next Item",
-        "command": "select_next_item"
+        "command": "emmet_select_item"
     },
     {
         "caption": "Emmet: Select Previous Item",
-        "command": "select_previous_item"
+        "command": "emmet_select_item",
+        "args": { "previous": true }
     },
     {
         "caption": "Emmet: Toggle Comment",

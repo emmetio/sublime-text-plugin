@@ -2,13 +2,17 @@ import expandAbbreviation, { markupAbbreviation, stylesheetAbbreviation, resolve
 import { balancedInward, balancedOutward, scan, attributes, createOptions } from '@emmetio/html-matcher';
 import { balancedInward as balancedInwardCSS, balancedOutward as balancedOutwardCSS } from '@emmetio/css-matcher';
 import evaluateMath, { extract as extractMath } from '@emmetio/math-expression';
+import { pushRange } from './utils';
 
 export { extract } from 'emmet';
 export { default as match } from '@emmetio/html-matcher';
 export { default as matchCSS } from '@emmetio/css-matcher';
+export { contextSection, selectItemCSS } from './css';
 
 /**
- * @typedef {{name: string, start: number, end: number, ranges: Array<[number, number]>, selfClose: boolean}} SelectTagModel
+ * @typedef {[number, number]} Range
+ * @typedef {import('@emmetio/html-matcher/dist/attributes').AttributeToken} AttributeToken
+ * @typedef {{name: string, start: number, end: number, ranges: Range[], selfClose: boolean}} SelectTagModel
  */
 
 const reSimple = /^([\w!-]+)\.?$/;
@@ -259,7 +263,7 @@ function selectPreviousItem(code, pos) {
  * @returns {SelectTagModel}
  */
 function getTagSelectionModel(code, name, start, end, selfClose) {
-    // Found open or self-closing tag
+    /** @type {Range[]} */
     const ranges = [
         // Add tag name range
         [start + 1, start + 1 + name.length]
@@ -270,25 +274,24 @@ function getTagSelectionModel(code, name, start, end, selfClose) {
     for (const attr of attributes(tagSrc, name)) {
         if (attr.value != null) {
             // Attribute with value
-            ranges.push([start + attr.nameStart, start + attr.valueEnd]);
+            pushRange(ranges, [start + attr.nameStart, start + attr.valueEnd]);
 
             // Add (unquoted) value range
             const val = valueRange(attr);
             if (val[0] !== val[1]) {
-                ranges.push([start + val[0], start + val[1]]);
+                pushRange(ranges, [start + val[0], start + val[1]]);
 
                 if (attr.name === 'class') {
                     // For class names, split value into space-separated tokens
-                    const tokens = tokenList(tagSrc.slice(val[0], val[1]));
-                    const offset = start + val[0];
+                    const tokens = tokenList(tagSrc.slice(val[0], val[1]), start + val[0]);
                     for (const token of tokens) {
-                        ranges.push([offset + token[0], offset + token[1]]);
+                        pushRange(ranges, token);
                     }
                 }
             }
         } else {
             // Attribute without value (boolean)
-            ranges.push([start + attr.nameStart, start + attr.nameEnd]);
+            pushRange(ranges, [start + attr.nameStart, start + attr.nameEnd]);
         }
     }
 
@@ -298,9 +301,10 @@ function getTagSelectionModel(code, name, start, end, selfClose) {
 /**
  * Returns ranges of tokens in given value. Tokens are space-separated words.
  * @param {string} value
- * @returns {Array<[number, number]>}
+ * @returns {Range[]}
  */
-function tokenList(value) {
+function tokenList(value, offset = 0) {
+    /** @type {Range[]} */
     const ranges = [];
     const len = value.length;
     let pos = 0;
@@ -310,7 +314,7 @@ function tokenList(value) {
         const ch = value.charCodeAt(pos++);
         if (isSpace(ch)) {
             if (start !== end) {
-                ranges.push([start, end]);
+                ranges.push([offset + start, offset + end]);
             }
 
             while (isSpace(value.charCodeAt(pos))) {
@@ -365,6 +369,11 @@ function valueRange(attr) {
     return [attr.valueStart, attr.valueEnd];
 }
 
+/**
+ * @param {AttributeToken[]} attrs
+ * @param {number} offset
+ * @returns {AttributeToken[]}
+ */
 function shiftAttributeRanges(attrs, offset) {
     attrs.forEach(attr => {
         attr.nameStart += offset;

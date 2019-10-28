@@ -19,7 +19,7 @@ def _get_js_code():
     with open(os.path.join(base_path, 'emmet.js'), encoding='UTF-8') as f:
         src = f.read()
 
-    src += "\nvar {expand, extract, validate, match, matchCSS, balance, balanceCSS, math, selectItem, contextTag} = emmet;"
+    src += "\nvar {expand, extract, validate, match, matchCSS, balance, balanceCSS, math, selectItem, contextTag, selectItemCSS} = emmet;"
     return src
 
 
@@ -92,6 +92,13 @@ def select_item(code, pos, is_previous=False):
     if model:
         model['regions'] = [to_region(r) for r in model['ranges']]
     return model
+
+
+def select_item_css(code, pos, is_previous=False):
+    "Returns model for selecting next/previous CSS item"
+    model = call_js('selectItemCSS', code, pos, is_previous)
+    if model:
+        return [to_region(r) for r in model]
 
 
 def tag(code, pos, options=None):
@@ -172,7 +179,7 @@ def extract_abbreviation(view, loc):
     region = None
 
     if isinstance(loc, (list, tuple)):
-        loc = to_region(loc[0], loc[1])
+        loc = to_region(loc)
 
     if isinstance(loc, int):
         # Character location is passed, extract from line
@@ -224,6 +231,8 @@ def call_js(fn, *args):
 
 def _call_js(fn, *args, run_gc=True):
     try:
+        if isinstance(fn, str):
+            fn = context.get(fn)
         result = fn(*[convert_arg(a) for a in args])
         if isinstance(result, quickjs.Object):
             result = json.loads(result.json())
