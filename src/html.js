@@ -2,12 +2,6 @@ import { scan, attributes, createOptions } from '@emmetio/html-matcher';
 import { pushRange, isSpace } from './utils';
 
 /**
- * @typedef {[number, number]} Range
- * @typedef {import('@emmetio/html-matcher/dist/attributes').AttributeToken} AttributeToken
- * @typedef {{name: string, start: number, end: number, ranges: Range[], selfClose: boolean}} SelectTagModel
- */
-
-/**
  * Returns context tag for given position in code. If open or self-closed tag found,
  * returns parsed attributes as well
  * @param {string} code
@@ -15,6 +9,7 @@ import { pushRange, isSpace } from './utils';
  * @return {Object | undefined}
  */
 export function contextTag(code, pos) {
+    /** @type {ContextTag | null} */
     let tag = null;
     const opt = createOptions();
     // Find open or self-closing tag, closest to given position
@@ -40,7 +35,7 @@ export function contextTag(code, pos) {
  * @param {string} code
  * @param {number} pos
  * @param {boolean} isPrev
- * @returns {Range[] | undefined}
+ * @returns {SelectItemModel | undefined}
  */
 export function selectItem(code, pos, isPrev) {
     return isPrev ? selectPreviousItem(code, pos) : selectNextItem(code, pos);
@@ -50,29 +45,29 @@ export function selectItem(code, pos, isPrev) {
  * Returns list of ranges for Select Next Item action
  * @param {string} code
  * @param {number} pos
- * @return {Range[] | undefined}
+ * @return {SelectItemModel | undefined}
  */
 function selectNextItem(code, pos) {
-    /** @type {Range[] | null} */
-    let ranges = null;
+    /** @type {SelectItemModel} */
+    let result = void 0;
     const opt = createOptions();
     // Find open or self-closing tag, closest to given position
     scan(code, (name, type, start, end) => {
         if ((type === 1 || type === 3) && end > pos) {
             // Found open or self-closing tag
-            ranges = getTagSelectionModel(code, name, start, end);
+            result = getTagSelectionModel(code, name, start, end);
             return false;
         }
     }, opt.special);
 
-    return ranges;
+    return result;
 }
 
 /**
  * Returns list of ranges for Select Previous Item action
  * @param {string} code
  * @param {number} pos
- * @return {Range[] | undefined}
+ * @return {SelectItemModel | undefined}
  */
 function selectPreviousItem(code, pos) {
     const opt = createOptions();
@@ -105,10 +100,10 @@ function selectPreviousItem(code, pos) {
  * @param {string} name Name of matched tag
  * @param {number} start Range in `code` of matched tag
  * @param {number} end
- * @returns {Range[]}
+ * @returns {SelectItemModel}
  */
 function getTagSelectionModel(code, name, start, end) {
-    /** @type {Range[]} */
+    /** @type {TextRange[]} */
     const ranges = [
         // Add tag name range
         [start + 1, start + 1 + name.length]
@@ -140,16 +135,17 @@ function getTagSelectionModel(code, name, start, end) {
         }
     }
 
-    return ranges;
+    return { start, end, ranges };
 }
 
 /**
  * Returns ranges of tokens in given value. Tokens are space-separated words.
  * @param {string} value
- * @returns {Range[]}
+ * @param {number} offset
+ * @returns {TextRange[]}
  */
 function tokenList(value, offset = 0) {
-    /** @type {Range[]} */
+    /** @type {TextRange[]} */
     const ranges = [];
     const len = value.length;
     let pos = 0;
@@ -171,7 +167,7 @@ function tokenList(value, offset = 0) {
     }
 
     if (start !== pos) {
-        ranges.push([start, pos]);
+        ranges.push([offset + start, offset + pos]);
     }
 
     return ranges;
@@ -179,8 +175,8 @@ function tokenList(value, offset = 0) {
 
 /**
  * Returns value range of given attribute. Value range is unquoted.
- * @param {import('@emmetio/html-matcher/dist/attributes').AttributeToken} attr
- * @returns {[number, number]}
+ * @param {AttributeToken} attr
+ * @returns {TextRange}
  */
 function valueRange(attr) {
     const ch = attr.value[0];

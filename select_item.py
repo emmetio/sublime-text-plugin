@@ -6,7 +6,6 @@ from . import utils
 
 models_for_buffer = {}
 
-
 class EmmetSelectItem(sublime_plugin.TextCommand):
     def run(self, edit, previous=False):
         sel = self.view.sel()[0]
@@ -18,45 +17,19 @@ class EmmetSelectItem(sublime_plugin.TextCommand):
             fn = emmet.select_item
 
         if fn:
-            select_item2(self.view, sel, fn, previous)
+            select_item(self.view, sel, fn, previous)
 
 
 class SelectItemListener(sublime_plugin.EventListener):
-    def on_modified(self, view: sublime.View):
-        buffer_id = view.buffer_id()
-        if buffer_id in models_for_buffer:
-            del models_for_buffer[buffer_id]
+    def on_modified_async(self, view: sublime.View):
+        reset_model(view)
+
+    def on_post_text_command(self, view, command_name, args):
+        if command_name != 'emmet_select_item':
+            reset_model(view)
 
 
-def select_item(view: sublime.View, sel: sublime.Region, is_previous=False):
-    buffer_id = view.buffer_id()
-    pos = sel.begin()
-    key = 'start' if is_previous else 'end'
-
-    # Check if we are still in calculated model
-    if buffer_id in models_for_buffer:
-        model = models_for_buffer[buffer_id]
-        if model['start'] < pos < model['end']:
-            region = find_region(sel, model['regions'], is_previous)
-            if region:
-                return select(view, region)
-
-            # Out of available selection range, move to next tag
-            pos = model[key]
-
-    # Calculate new model from current editor content
-    # TODO we can start parsing from 'end' position of previous model
-    # and improve performance a bit
-    content = utils.get_content(view)
-    model = emmet.select_item(content, pos, is_previous)
-    if model:
-        models_for_buffer[buffer_id] = model
-        region = find_region(sel, model['regions'], is_previous)
-        if region:
-            return select(view, region)
-
-
-def select_item_css(view: sublime.View, sel: sublime.Region, is_previous=False):
+def select_item(view: sublime.View, sel: sublime.Region, fn: callable, is_previous=False):
     "Selects next/previous item for CSS source"
     buffer_id = view.buffer_id()
     pos = sel.begin()
@@ -64,48 +37,20 @@ def select_item_css(view: sublime.View, sel: sublime.Region, is_previous=False):
     # Check if we are still in calculated model
     if buffer_id in models_for_buffer:
         model = models_for_buffer[buffer_id]
-        region = find_region(sel, model, is_previous)
+        region = find_region(sel, model['ranges'], is_previous)
         if region:
             select(view, region)
             return
 
         # Out of available selection range, move to next tag
-        pos = model[0].begin() if is_previous else model[-1].end()
-
-
-    # Calculate new model from current editor content
-    content = utils.get_content(view)
-    model = emmet.select_item_css(content, pos, is_previous)
-    if model:
-        models_for_buffer[buffer_id] = model
-        region = find_region(sel, model, is_previous)
-        if region:
-            select(view, region)
-            return
-
-
-def select_item2(view: sublime.View, sel: sublime.Region, fn: callable, is_previous=False):
-    "Selects next/previous item for CSS source"
-    buffer_id = view.buffer_id()
-    pos = sel.begin()
-
-    # Check if we are still in calculated model
-    if buffer_id in models_for_buffer:
-        model = models_for_buffer[buffer_id]
-        region = find_region(sel, model, is_previous)
-        if region:
-            select(view, region)
-            return
-
-        # Out of available selection range, move to next tag
-        pos = model[0].begin() if is_previous else model[-1].end()
+        pos = model['start'] if is_previous else model['end']
 
     # Calculate new model from current editor content
     content = utils.get_content(view)
     model = fn(content, pos, is_previous)
     if model:
         models_for_buffer[buffer_id] = model
-        region = find_region(sel, model, is_previous)
+        region = find_region(sel, model['ranges'], is_previous)
         if region:
             select(view, region)
             return
@@ -138,3 +83,11 @@ def select(view: sublime.View, region: sublime.Region):
     selection.clear()
     selection.add(region)
     view.show(region.a)
+
+
+def reset_model(view: sublime.View):
+    "Resets stores model for given view"
+    buffer_id = view.buffer_id()
+    if buffer_id in models_for_buffer:
+        print('reset model for %s' % buffer_id)
+        del models_for_buffer[buffer_id]

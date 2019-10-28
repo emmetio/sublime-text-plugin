@@ -2,21 +2,17 @@ import { scan, splitValue } from '@emmetio/css-matcher';
 import { pushRange } from './utils';
 
 /**
- * @typedef {{start: number, end: number, bodyStart: number, bodyEnd: number}} CSSSection
- * @typedef {[number, number, number]} TokenRange
- * @typedef {[number, number]} Range
- */
-
-/**
  * Returns context CSS section for given location in source code
  * @param {string} code
  * @param {number} pos
  * @returns {CSSSection | null}
  */
 export function contextSection(code, pos) {
+    /** @type {CSSTokenRange[]} */
     const stack = [];
+    /** @type {CSSTokenRange[]} */
     const pool = [];
-    /** @type {CSSSection | null} */
+    /** @type {CSSSection} */
     let result = null;
     scan(code, (type, start, end, delimiter) => {
         if (start > pos && !stack.length) {
@@ -48,7 +44,7 @@ export function contextSection(code, pos) {
  * @param {string} code
  * @param {number} pos
  * @param {boolean} isPrev
- * @returns {Range[]}
+ * @returns {SelectItemModel | void}
  */
 export function selectItemCSS(code, pos, isPrev) {
     return isPrev ? selectPreviousItem(code, pos) : selectNextItem(code, pos);
@@ -58,12 +54,12 @@ export function selectItemCSS(code, pos, isPrev) {
  * Returns regions for selecting next item in CSS
  * @param {string} code
  * @param {number} pos
- * @returns {Range[]}
+ * @returns {SelectItemModel | void}
  */
 export function selectNextItem(code, pos) {
-    /** @type {Range[]} */
-    const result = [];
-    /** @type {TokenRange | null} */
+    /** @type {SelectItemModel} */
+    let result = null;
+    /** @type {CSSTokenRange} */
     let pendingProperty = null;
 
     scan(code, (type, start, end, delimiter) => {
@@ -72,26 +68,36 @@ export function selectNextItem(code, pos) {
         }
 
         if (type === 'selector') {
-            result.push([start, end]);
+            result = { start, end, ranges: [[start, end]] };
             return false;
         } else if (type === 'propertyName') {
             pendingProperty = [start, end, delimiter];
         } else if (type === 'propertyValue') {
+            result = {
+                start,
+                end: delimiter !== -1 ? delimiter + 1 : end,
+                ranges: []
+            };
             if (pendingProperty) {
                 // Full property range
-                pushRange(result, [pendingProperty[0], delimiter !== -1 ? delimiter + 1 : end]);
+                result.start = pendingProperty[0];
+                pushRange(result.ranges, [pendingProperty[0], result.end]);
             }
 
             // Full value range
-            pushRange(result, [start, end]);
+            pushRange(result.ranges, [start, end]);
 
             // Value fragments
             for (const r of splitValue(code.substring(start, end))) {
-                pushRange(result, [r[0] + start, r[1] + start]);
+                pushRange(result.ranges, [r[0] + start, r[1] + start]);
             }
             return false;
         } else if (pendingProperty) {
-            result.push([pendingProperty[0], pendingProperty[1]]);
+            result = {
+                start: pendingProperty[0],
+                end: pendingProperty[1],
+                ranges: [[pendingProperty[0], pendingProperty[1]]]
+            }
             return false;
         }
     });
@@ -103,7 +109,7 @@ export function selectNextItem(code, pos) {
  * Returns regions for selecting previous item in CSS
  * @param {string} code
  * @param {number} pos
- * @returns {Range[]}
+ * @returns {SelectItemModel | void}
  */
 export function selectPreviousItem(code, pos) {
     const state = {
@@ -134,41 +140,48 @@ export function selectPreviousItem(code, pos) {
     });
 
     if (state.type === 'selector') {
-        return [[state.start, state.end]];
+        return {
+            start: state.start,
+            end: state.end,
+            ranges: [[state.start, state.end]]
+        };
     }
 
     if (state.type === 'propertyName') {
-        /** @type {Range[]} */
-        const result = [];
+        /** @type {SelectItemModel} */
+        const result = {
+            start: state.start,
+            end: state.end,
+            ranges: []
+        };
 
         if (state.valueStart !== -1) {
+            result.end = state.valueDelimiter !== -1 ? state.valueDelimiter + 1 : state.valueEnd;
             // Full property range
-            pushRange(result, [state.start, state.valueDelimiter !== -1 ? state.valueDelimiter + 1 : state.valueEnd]);
+            pushRange(result.ranges, [state.start, result.end]);
 
             // Full value range
-            pushRange(result, [state.valueStart, state.valueEnd]);
+            pushRange(result.ranges, [state.valueStart, state.valueEnd]);
 
             // Value fragments
             for (const r of splitValue(code.substring(state.valueStart, state.valueEnd))) {
-                pushRange(result, [r[0] + state.valueStart, r[1] + state.valueStart]);
+                pushRange(result.ranges, [r[0] + state.valueStart, r[1] + state.valueStart]);
             }
         } else {
-            pushRange(result, [state.start, state.end]);
+            pushRange(result.ranges, [state.start, state.end]);
         }
 
         return result;
     }
-
-    return [];
 }
 
 /**
  * Allocates new token range from pool
- * @param {TokenRange[]} pool
+ * @param {CSSTokenRange[]} pool
  * @param {number} start
  * @param {number} end
  * @param {number} delimiter
- * @returns {TokenRange}
+ * @returns {CSSTokenRange}
  */
 function allocRange(pool, start, end, delimiter) {
     if (pool.length) {
@@ -183,8 +196,8 @@ function allocRange(pool, start, end, delimiter) {
 
 /**
  * Releases given token range and pushes it back into the pool
- * @param {TokenRange[]} pool
- * @param {TokenRange} range
+ * @param {CSSTokenRange[]} pool
+ * @param {CSSTokenRange} range
  */
 function releaseRange(pool, range) {
     range && pool.push(range);

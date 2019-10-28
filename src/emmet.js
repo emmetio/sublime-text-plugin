@@ -1,8 +1,7 @@
 import expandAbbreviation, { markupAbbreviation, stylesheetAbbreviation, resolveConfig } from 'emmet';
-import { balancedInward, balancedOutward, scan, attributes, createOptions } from '@emmetio/html-matcher';
+import { balancedInward, balancedOutward } from '@emmetio/html-matcher';
 import { balancedInward as balancedInwardCSS, balancedOutward as balancedOutwardCSS } from '@emmetio/css-matcher';
 import evaluateMath, { extract as extractMath } from '@emmetio/math-expression';
-import { pushRange } from './utils';
 
 export { extract } from 'emmet';
 export { default as match } from '@emmetio/html-matcher';
@@ -69,7 +68,7 @@ function text(str) {
 /**
  * Expands given abbreviation
  * @param {string} abbr
- * @param {import('emmet').UserConfig} [config]
+ * @param {EmmetUserConfig} [config]
  * @returns {string}
  */
 export function expand(abbr, config) {
@@ -88,17 +87,18 @@ export function expand(abbr, config) {
 /**
  * Validates given abbreviation and provides some insights about it
  * @param {string} abbr
- * @param {import('emmet').UserConfig} config
+ * @param {EmmetUserConfig} config
  */
 export function validate(abbr, config) {
-    config = resolveConfig(config);
+    /** @type {EmmetConfig} */
+    const resolved = resolveConfig(config);
 
     try {
-        if (config.type === 'stylesheet') {
+        if (resolved.type === 'stylesheet') {
             stylesheetAbbreviation(abbr)
         } else {
-            let parserConf = config;
-            if (config.options['jsx.enabled']) {
+            let parserConf = resolved;
+            if (resolved.options['jsx.enabled']) {
                 parserConf = { ...parserConf, jsx: true };
             }
             markupAbbreviation(abbr, parserConf);

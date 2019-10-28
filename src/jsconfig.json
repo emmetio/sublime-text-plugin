@@ -3,5 +3,6 @@
     "target": "es2017",
     "moduleResolution": "node",
     "checkJs": true
-  }
+  },
+  "include": ["./*.js", "./*.d.ts"]
 }

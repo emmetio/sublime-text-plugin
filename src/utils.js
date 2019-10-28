@@ -11,8 +11,8 @@ export function isSpace(code) {
 }
 
 /**
- * @param {Array} ranges
- * @param {[number, number]} range
+ * @param {TextRange[]} ranges
+ * @param {TextRange} range
  */
 export function pushRange(ranges, range) {
     const prev = ranges[ranges.length - 1];

@@ -89,14 +89,16 @@ def select_item(code, pos, is_previous=False):
     "Returns model for selecting next/previous item"
     model = call_js('selectItem', code, pos, is_previous)
     if model:
-        return [to_region(r) for r in model]
+        model['ranges'] = [to_region(r) for r in model['ranges']]
+        return model
 
 
 def select_item_css(code, pos, is_previous=False):
     "Returns model for selecting next/previous CSS item"
     model = call_js('selectItemCSS', code, pos, is_previous)
     if model:
-        return [to_region(r) for r in model]
+        model['ranges'] = [to_region(r) for r in model['ranges']]
+        return model
 
 
 def tag(code, pos, options=None):
