@@ -124,6 +124,18 @@ def patch_attribute(attr, value, name=None):
     return '%s=%s%s%s' % (name, before, value, after)
 
 
+def patch_property(view: sublime.View, prop: dict, value: str, name=None):
+    "Returns patched version of given CSS property, parsed by Emmet HTML matcher"
+    if name is None:
+        name = view.substr(prop['name'])
+
+    before = view.substr(sublime.Region(prop['before'], prop['name'].begin()))
+    between = view.substr(sublime.Region(prop['name'].end(), prop['value'].begin()))
+    after = view.substr(sublime.Region(prop['value'].end(), prop['after']))
+
+    return before + name + between + value + after
+
+
 def is_quoted(value):
     "Check if given value is either quoted or written as expression"
     return value and ((value[0] in '"\'' and value[0] == value[-1]) or\

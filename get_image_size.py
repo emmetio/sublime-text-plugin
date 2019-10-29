@@ -5,34 +5,67 @@ import os.path
 import sublime
 import sublime_plugin
 from . import emmet
+from . import syntax
 from . import utils
 
 class UpdateImageSize(sublime_plugin.TextCommand):
     def run(self, edit):
         caret = utils.get_caret(self.view)
-        tag = emmet.tag(utils.get_content(self.view), caret)
-        if tag and tag['name'].lower() == 'img' and 'attributes' in tag:
-            attrs = dict([(a['name'].lower(), a) for a in tag['attributes']])
+        syntax_name = syntax.from_pos(self.view, caret)
 
-            if 'src' in attrs and attrs['src'].get('value'):
-                src = utils.attribute_value(attrs['src'])
-                if utils.is_url(src):
-                    abs_file = src
-                elif self.view.file_name():
-                    abs_file = utils.locate_file(self.view.file_name(), src)
+        if syntax.is_html(syntax_name):
+            update_image_size_html(self.view, edit, caret)
+        elif syntax.is_css(syntax_name):
+            update_image_size_css(self.view, edit, caret)
 
-                if abs_file:
-                    size = read_image_size(abs_file)
-                    if size:
-                        dpi = get_dpi(src)
-                        width = round(size[0] / dpi)
-                        height = round(size[1] / dpi)
 
-                        update_html_size(attrs, self.view, edit, width, height)
-                    else:
-                        print('Unable to determine size of "%s": file is either unsupported or invalid')
-                else:
-                    print('Unable to locate file for "%s" url' % src)
+def update_image_size_html(view: sublime.View, edit: sublime.Edit, pos: int):
+    "Updates image size in HTML context"
+    tag = emmet.tag(utils.get_content(view), pos)
+    if tag and tag['name'].lower() == 'img' and 'attributes' in tag:
+        attrs = dict([(a['name'].lower(), a) for a in tag['attributes']])
+
+        if 'src' in attrs and attrs['src'].get('value'):
+            src = utils.attribute_value(attrs['src'])
+            size = read_image_size(view, src)
+            if size:
+                patch_html_size(attrs, view, edit, size[0], size[1])
+            else:
+                print('Unable to determine size of "%s": file is either unsupported or invalid' % src)
+
+
+def update_image_size_css(view: sublime.View, edit: sublime.Edit, pos: int):
+    "Updates image size in CSS context"
+    section = emmet.css_section(utils.get_content(view), pos, True)
+    # Store all properties in lookup table and find matching URL
+    props = {}
+    src = None
+    context_prop = None
+
+    if section:
+        for p in section['properties']:
+            props[view.substr(p['name'])] = p
+
+            # If value matches caret location, find url(...) token for it
+            if p['value'].contains(pos):
+                context_prop = p
+                src = get_css_url(view, p, pos)
+
+    if src:
+        size = read_image_size(view, src)
+        if size:
+            print('will update size: %dx%d' % size)
+            patch_css_size(view, edit, props, size[0], size[1], context_prop)
+        else:
+            print('Unable to determine size of "%s": file is either unsupported or invalid' % src)
+
+
+def get_css_url(view: sublime.View, css_prop: dict, pos: int):
+    for v in css_prop['valueTokens']:
+        m = re.match(r'url\([\'"](.+?)[\'"]\)', view.substr(v)) if v.contains(pos) else None
+        if m:
+            return m.group(1)
+
 
 def get_dpi(file_path):
     "Detects file DPI from given file path"
@@ -43,16 +76,36 @@ def get_dpi(file_path):
     return m and float(m.group(1)) or 1
 
 
-def read_image_size(file_path):
+def read_image_size(view: sublime.View, src: str):
     "Reads image size of given file, if possible"
-    file_name = os.path.basename(file_path)
-    name, ext = os.path.splitext(file_name)
-    chunk = ext.lower() in ('.svg', '.jpg', '.jpeg') and 2048 or 100
-    data = utils.read_file(file_path, chunk)
-    return get_size(data)
+    if utils.is_url(src):
+        abs_file = src
+    elif view.file_name():
+        abs_file = utils.locate_file(view.file_name(), src)
+
+    if abs_file:
+        file_name = os.path.basename(abs_file)
+        name, ext = os.path.splitext(file_name)
+        chunk = 2048 if ext.lower() in ('.svg', '.jpg', '.jpeg') else 100
+        data = utils.read_file(abs_file, chunk)
+        size = get_size(data)
+        if size:
+            dpi = get_dpi(src)
+            return round(size[0] / dpi), round(size[1] / dpi)
+    else:
+        print('Unable to locate file for "%s" url' % src)
 
 
-def update_html_size(attrs: dict, view: sublime.View, edit: sublime.Edit, width: int, height: int):
+# def read_image_size(file_path):
+#     "Reads image size of given file, if possible"
+#     file_name = os.path.basename(file_path)
+#     name, ext = os.path.splitext(file_name)
+#     chunk = ext.lower() in ('.svg', '.jpg', '.jpeg') and 2048 or 100
+#     data = utils.read_file(file_path, chunk)
+#     return get_size(data)
+
+
+def patch_html_size(attrs: dict, view: sublime.View, edit: sublime.Edit, width: int, height: int):
     "Updates image size of HTML tag"
     width = str(width)
     height = str(height)
@@ -80,6 +133,31 @@ def update_html_size(attrs: dict, view: sublime.View, edit: sublime.Edit, width:
         pos = attr.get('valueEnd', attr['nameEnd'])
         data = ' %s %s' % (utils.patch_attribute(attr, width, 'width'), utils.patch_attribute(attr, height, 'height'))
         view.insert(edit, pos, data)
+
+
+def patch_css_size(view: sublime.View, edit: sublime.Edit, props: dict, width: int, height: int, context_prop: dict):
+    width = '%dpx' % width
+    height = '%dpx' % height
+    width_prop = props.get('width')
+    height_prop = props.get('height')
+
+    if width_prop and height_prop:
+        # We have both properties, patch them
+        if width_prop['before'] < height_prop['before']:
+            view.replace(edit, height_prop['value'], height)
+            view.replace(edit, width_prop['value'], width)
+        else:
+            view.replace(edit, width_prop['value'], width)
+            view.replace(edit, height_prop['value'], height)
+    elif width_prop or height_prop:
+        # Use existing attribute and replace it with patched variations
+        prop = width_prop or height_prop
+        data = utils.patch_property(view, prop, width, 'width') + utils.patch_property(view, prop, height, 'height')
+        view.replace(edit, sublime.Region(prop['before'], prop['after']), data)
+    elif context_prop:
+        # Append to source property
+        data = utils.patch_property(view, context_prop, width, 'width') + utils.patch_property(view, context_prop, height, 'height')
+        view.insert(edit, context_prop['after'], data)
 
 
 def get_size(data: bytes):

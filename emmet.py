@@ -19,7 +19,7 @@ def _get_js_code():
     with open(os.path.join(base_path, 'emmet.js'), encoding='UTF-8') as f:
         src = f.read()
 
-    src += "\nvar {expand, extract, validate, matchHTML, matchCSS, balance, balanceCSS, math, selectItemHTML, selectItemCSS, getOpenTag} = emmet;"
+    src += "\nvar {expand, extract, validate, matchHTML, matchCSS, balance, balanceCSS, math, selectItemHTML, selectItemCSS, getOpenTag, getCSSSection} = emmet;"
     return src
 
 
@@ -86,6 +86,19 @@ def select_item(code, pos, is_css=False, is_previous=False):
 def tag(code, pos, options=None):
     "Find tag that matches given `pos` in `code`"
     return call_js('getOpenTag', code, pos, options)
+
+
+def css_section(code, pos, properties=False):
+    "Find enclosing CSS section and returns its ranges with (optionally) parsed properties"
+    section = call_js('getCSSSection', code, pos, properties)
+    if section and section.get('properties'):
+        # Convert property ranges to Sublime Regions
+        for p in section.get('properties', []):
+            p['name'] = to_region(p['name'])
+            p['value'] = to_region(p['value'])
+            p['valueTokens'] = [to_region(v) for v in p['valueTokens']]
+
+    return section
 
 def evaluate_math(line, pos, options=None):
     "Finds and evaluates math expression at given position in line"
