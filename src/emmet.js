@@ -4,16 +4,9 @@ import { balancedInward as balancedInwardCSS, balancedOutward as balancedOutward
 import evaluateMath, { extract as extractMath } from '@emmetio/math-expression';
 
 export { extract } from 'emmet';
-export { default as match } from '@emmetio/html-matcher';
+export { default as matchHTML } from '@emmetio/html-matcher';
 export { default as matchCSS } from '@emmetio/css-matcher';
-export { contextTag, selectItem } from './html';
-export { contextSection, selectItemCSS } from './css';
-
-/**
- * @typedef {[number, number]} Range
- * @typedef {import('@emmetio/html-matcher/dist/attributes').AttributeToken} AttributeToken
- * @typedef {{name: string, start: number, end: number, ranges: Range[], selfClose: boolean}} SelectTagModel
- */
+export { selectItemCSS, selectItemHTML, getCSSSection, getOpenTag } from '@emmetio/action-utils';
 
 const reSimple = /^([\w!-]+)\.?$/;
 const knownTags = [

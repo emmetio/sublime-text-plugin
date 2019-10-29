@@ -10,14 +10,9 @@ class EmmetSelectItem(sublime_plugin.TextCommand):
     def run(self, edit, previous=False):
         sel = self.view.sel()[0]
         syntax_name = syntax.from_pos(self.view, sel.a)
-        fn = None
-        if syntax.is_css(syntax_name):
-            fn = emmet.select_item_css
-        elif syntax.is_html(syntax_name):
-            fn = emmet.select_item
-
-        if fn:
-            select_item(self.view, sel, fn, previous)
+        is_css = syntax.is_css(syntax_name)
+        if is_css or syntax.is_html(syntax_name):
+            select_item(self.view, sel, is_css, previous)
 
 
 class SelectItemListener(sublime_plugin.EventListener):
@@ -29,7 +24,7 @@ class SelectItemListener(sublime_plugin.EventListener):
             reset_model(view)
 
 
-def select_item(view: sublime.View, sel: sublime.Region, fn: callable, is_previous=False):
+def select_item(view: sublime.View, sel: sublime.Region, is_css=False, is_previous=False):
     "Selects next/previous item for CSS source"
     buffer_id = view.buffer_id()
     pos = sel.begin()
@@ -47,7 +42,7 @@ def select_item(view: sublime.View, sel: sublime.Region, fn: callable, is_previo
 
     # Calculate new model from current editor content
     content = utils.get_content(view)
-    model = fn(content, pos, is_previous)
+    model = emmet.select_item(content, pos, is_css, is_previous)
     if model:
         models_for_buffer[buffer_id] = model
         region = find_region(sel, model['ranges'], is_previous)
@@ -89,5 +84,4 @@ def reset_model(view: sublime.View):
     "Resets stores model for given view"
     buffer_id = view.buffer_id()
     if buffer_id in models_for_buffer:
-        print('reset model for %s' % buffer_id)
         del models_for_buffer[buffer_id]

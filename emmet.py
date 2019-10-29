@@ -19,25 +19,14 @@ def _get_js_code():
     with open(os.path.join(base_path, 'emmet.js'), encoding='UTF-8') as f:
         src = f.read()
 
-    src += "\nvar {expand, extract, validate, match, matchCSS, balance, balanceCSS, math, selectItem, selectItemCSS, contextTag} = emmet;"
+    src += "\nvar {expand, extract, validate, matchHTML, matchCSS, balance, balanceCSS, math, selectItemHTML, selectItemCSS, getOpenTag} = emmet;"
     return src
 
 
 def _compile(code):
     context = quickjs.Context()
     context.eval(code)
-    js_map = {
-        'expand': context.get('expand'),
-        'extract': context.get('extract'),
-        'validate': context.get('validate'),
-        'match': context.get('match'),
-        'match_css': context.get('matchCSS'),
-        'balance': context.get('balance'),
-        'balance_css': context.get('balanceCSS'),
-        'math': context.get('math'),
-        'context_tag': context.get('contextTag'),
-    }
-    return context, js_map
+    return context
 
 
 threadpool = concurrent.futures.ThreadPoolExecutor(max_workers=1)
@@ -45,16 +34,16 @@ lock = threading.Lock()
 
 future = threadpool.submit(_compile, _get_js_code())
 concurrent.futures.wait([future])
-context, js_map = future.result()
+context = future.result()
 
 def expand(abbr, options=None):
     "Expands given abbreviation into code snippet"
-    return call_js(js_map['expand'], abbr, options)
+    return call_js('expand', abbr, options)
 
 
 def extract(line, pos, options=None):
     "Extracts abbreviation from given line of source code"
-    return call_js(js_map['extract'], line, pos, options)
+    return call_js('extract', line, pos, options)
 
 
 def validate(abbr, options=None):
@@ -62,40 +51,33 @@ def validate(abbr, options=None):
     Validates given abbreviation: check if it can be properly expanded and detects
     if it's a simple abbreviation (looks like a regular word)
     """
-    return call_js(js_map['validate'], abbr, options)
+    return call_js('validate', abbr, options)
 
 
 def match(code, pos, options=None):
     "Finds matching tag pair for given `pos` in `code`"
-    return call_js(js_map['match'], code, pos, options)
+    return call_js('matchHTML', code, pos, options)
 
 
 def match_css(code, pos, options=None):
     "Finds matching selector or property for given `pos` in `code`"
-    return call_js(js_map['match_css'], code, pos, options)
+    return call_js('matchCSS', code, pos, options)
 
 
 def balance(code, pos, direction, xml=False):
     "Returns list of tags for balancing for given code"
-    return call_js(js_map['balance'], code, pos, direction, { 'xml': xml })
+    return call_js('balance', code, pos, direction, { 'xml': xml })
 
 
 def balance_css(code, pos, direction):
     "Returns list of selector/property ranges for balancing for given code"
-    return call_js(js_map['balance_css'], code, pos, direction)
+    return call_js('balanceCSS', code, pos, direction)
 
 
-def select_item(code, pos, is_previous=False):
+def select_item(code, pos, is_css=False, is_previous=False):
     "Returns model for selecting next/previous item"
-    model = call_js('selectItem', code, pos, is_previous)
-    if model:
-        model['ranges'] = [to_region(r) for r in model['ranges']]
-        return model
-
-
-def select_item_css(code, pos, is_previous=False):
-    "Returns model for selecting next/previous CSS item"
-    model = call_js('selectItemCSS', code, pos, is_previous)
+    fn = 'selectItemCSS' if is_css else 'selectItemHTML'
+    model = call_js(fn, code, pos, is_previous)
     if model:
         model['ranges'] = [to_region(r) for r in model['ranges']]
         return model
@@ -103,11 +85,11 @@ def select_item_css(code, pos, is_previous=False):
 
 def tag(code, pos, options=None):
     "Find tag that matches given `pos` in `code`"
-    return call_js(js_map['context_tag'], code, pos, options)
+    return call_js('getOpenTag', code, pos, options)
 
 def evaluate_math(line, pos, options=None):
     "Finds and evaluates math expression at given position in line"
-    return call_js(js_map['math'], line, pos, options)
+    return call_js('math', line, pos, options)
 
 
 def get_tag_context(view, pt, xml=None):

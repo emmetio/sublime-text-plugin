@@ -45,7 +45,7 @@
         "args": { "direction": "inward" }
     },
     {
-        "keys": ["ctrl+i"],
+        "keys": ["ctrl+shift+i"],
         "command": "go_to_tag_pair"
     },
     {
