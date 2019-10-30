@@ -6,10 +6,14 @@ import os.path
 import re
 from . import syntax
 
-if sublime.platform() == 'osx':
-    from .osx import _quickjs as quickjs
-elif sublime.platform() == 'window':
-    from .win_x64 import _quickjs as quickjs
+platform = 'osx' if sublime.platform() == 'osx' else '%s_%s' % (sublime.platform(), sublime.arch())
+
+if platform == 'osx':
+    from .osx import _quickjs
+elif platform == 'windows_x64':
+    from .win_x64 import _quickjs
+elif platform == 'linux_x64':
+    from .linux_x64 import _quickjs
 else:
     raise RuntimeError('Platform %s (%s) is not currently supported' % (sublime.platform(), sublime.arch()))
 
@@ -24,7 +28,7 @@ def _get_js_code():
 
 
 def _compile(code):
-    context = quickjs.Context()
+    context = _quickjs.Context()
     context.eval(code)
     return context
 
@@ -229,7 +233,7 @@ def _call_js(fn, *args, run_gc=True):
         if isinstance(fn, str):
             fn = context.get(fn)
         result = fn(*[convert_arg(a) for a in args])
-        if isinstance(result, quickjs.Object):
+        if isinstance(result, _quickjs.Object):
             result = json.loads(result.json())
         return result
     finally:
