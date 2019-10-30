@@ -186,7 +186,7 @@ class AbbreviationMarkerListener(sublime_plugin.EventListener):
                     preview.toggle(view, mrk, utils.get_caret(view), preview_as_phantom(mrk))
 
 
-class ExpandAbbreviation(sublime_plugin.TextCommand):
+class EmmetExpandAbbreviation(sublime_plugin.TextCommand):
     def run(self, edit, **kw):
         mrk = marker.get(self.view)
         caret = utils.get_caret(self.view)

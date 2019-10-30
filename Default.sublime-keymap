@@ -1,7 +1,7 @@
 [
     {
         "keys": ["tab"],
-        "command": "expand_abbreviation",
+        "command": "emmet_expand_abbreviation",
         "context": [
             { "key": "emmet_abbreviation" },
             { "key": "setting.emmet_tab_expand" }
@@ -18,81 +18,16 @@
     },
     {
         "keys": ["escape"],
-        "command": "clear_abbreviation_marker",
+        "command": "emmet_clear_abbreviation_marker",
         "context": [
             { "key": "has_emmet_abbreviation_mark" }
         ]
     },
     {
         "keys": ["escape"],
-        "command": "hide_tag_preview",
+        "command": "emmet_hide_tag_preview",
         "context": [
             { "key": "emmet_tag_preview" }
         ]
-    },
-    {
-        "keys": ["ctrl+w"],
-        "command": "wrap_with_abbreviation"
-    },
-    {
-        "keys": ["ctrl+d"],
-        "command": "balance_tag",
-        "args": { "direction": "outward" }
-    },
-    {
-        "keys": ["ctrl+shift+d"],
-        "command": "balance_tag",
-        "args": { "direction": "inward" }
-    },
-    {
-        "keys": ["ctrl+shift+i"],
-        "command": "go_to_tag_pair"
-    },
-    {
-        "keys": ["ctrl+left"],
-        "command": "go_to_previous_edit_point"
-    },
-    {
-        "keys": ["ctrl+right"],
-        "command": "go_to_next_edit_point"
-    },
-    {
-        "keys": ["ctrl+shift+right"],
-        "command": "emmet_select_item"
-    },
-    {
-        "keys": ["ctrl+shift+left"],
-        "command": "emmet_select_item",
-        "args": { "previous": true }
-    },
-    {
-        "keys": ["ctrl+forward_slash"],
-        "command": "emmet_toggle_comment"
-    },
-    {
-        "keys": ["ctrl+'"],
-        "command": "remove_tag"
-    },
-    {
-        "keys": ["ctrl+m"],
-        "command": "evaluate_math"
-    },
-    {
-        "keys": ["ctrl+up"],
-        "command": "increment_number",
-        "args": { "delta": 1 }
-    },
-    {
-        "keys": ["ctrl+down"],
-        "command": "increment_number",
-        "args": { "delta": -1 }
-    },
-    {
-        "keys": ["ctrl+i"],
-        "command": "update_image_size"
-    },
-    {
-        "keys": ["ctrl+u"],
-        "command": "convert_data_url"
     }
 ]

@@ -62,8 +62,8 @@ def go_to_pos(view, pos):
     hide_tag_preview(view)
 
 
-class GoToTagPair(sublime_plugin.TextCommand):
-    def run(self, edit, **kw):
+class EmmetGoToTagPair(sublime_plugin.TextCommand):
+    def run(self, edit):
         caret = utils.get_caret(self.view)
         if self.view.substr(caret) == '<':
             caret += 1
@@ -74,17 +74,12 @@ class GoToTagPair(sublime_plugin.TextCommand):
             if ctx and 'open' in ctx and 'close' in ctx:
                 open_tag = ctx['open']
                 close_tag = ctx['close']
-
-                if open_tag.contains(caret):
-                    pos = close_tag.a
-                else:
-                    pos = open_tag.a
-
+                pos = close_tag.begin() if open_tag.contains(caret) else open_tag.begin()
                 utils.go_to_pos(self.view, pos)
 
 
-class HideTagPreview(sublime_plugin.TextCommand):
-    def run(self, edit, **kw):
+class EmmetHideTagPreview(sublime_plugin.TextCommand):
+    def run(self, edit):
         buffer_id = self.view.buffer_id()
         if buffer_id in previews_by_buffer:
             pt, visible = previews_by_buffer[buffer_id]

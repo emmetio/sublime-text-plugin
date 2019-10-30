@@ -3,7 +3,7 @@ import sublime_plugin
 from . import emmet
 from . import utils
 
-class IncrementNumber(sublime_plugin.TextCommand):
+class EmmetIncrementNumber(sublime_plugin.TextCommand):
     def run(self, edit, delta=1):
         next_selections = []
         selections = self.view.sel()
@@ -14,7 +14,6 @@ class IncrementNumber(sublime_plugin.TextCommand):
                 offset = line.begin()
                 num_region = extract_number(self.view.substr(line), sel.begin() - offset)
                 if num_region:
-                    print('extracted region: %d:%d' % num_region)
                     sel = sublime.Region(num_region[0] + offset, num_region[1] + offset)
 
             if not sel.empty():

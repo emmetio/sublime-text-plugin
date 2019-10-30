@@ -8,7 +8,7 @@ from . import emmet
 from . import syntax
 from . import utils
 
-class UpdateImageSize(sublime_plugin.TextCommand):
+class EmmetUpdateImageSize(sublime_plugin.TextCommand):
     def run(self, edit):
         caret = utils.get_caret(self.view)
         syntax_name = syntax.from_pos(self.view, caret)

@@ -1,33 +1,42 @@
 [
     {
         "caption": "Emmet: Expand Abbreviation",
-        "command": "expand_abbreviation",
+        "command": "emmet_expand_abbreviation"
     },
     {
         "caption": "Emmet: Wrap with Abbreviation",
-        "command": "wrap_with_abbreviation",
+        "command": "emmet_wrap_with_abbreviation"
     },
     {
-        "caption": "Emmet: Balance Tag Outward",
-        "command": "balance_tag",
+        "caption": "Emmet: Balance Outward",
+        "command": "emmet_balance",
         "args": { "direction": "outward" }
     },
     {
-        "caption": "Emmet: Balance Tag Inward",
-        "command": "balance_tag",
+        "caption": "Emmet: Balance Inward",
+        "command": "emmet_balance",
         "args": { "direction": "inward" }
     },
     {
         "caption": "Emmet: Go to Tag Pair",
-        "command": "go_to_tag_pair"
+        "command": "emmet_go_to_tag_pair"
+    },
+    {
+        "caption": "Emmet: Remove Tag",
+        "command": "emmet_remove_tag"
+    },
+    {
+        "caption": "Emmet: Split/Join Tag",
+        "command": "emmet_split_join_tag"
     },
     {
         "caption": "Emmet: Go to Next Edit Point",
-        "command": "go_to_next_edit_point"
+        "command": "emmet_go_to_edit_point"
     },
     {
         "caption": "Emmet: Go to Previous Edit Point",
-        "command": "go_to_previous_edit_point"
+        "command": "emmet_go_to_edit_point",
+        "args": { "previous": true }
     },
     {
         "caption": "Emmet: Select Next Item",
@@ -44,44 +53,44 @@
     },
     {
         "caption": "Emmet: Evaluate Math Expression",
-        "command": "evaluate_math"
+        "command": "emmet_evaluate_math"
     },
     {
         "caption": "Emmet: Increment Number by 1",
-        "command": "increment_number",
+        "command": "emmet_increment_number",
         "args": { "delta": 1 }
     },
     {
         "caption": "Emmet: Decrement Number by 1",
-        "command": "increment_number",
+        "command": "emmet_increment_number",
         "args": { "delta": -1 }
     },
     {
         "caption": "Emmet: Increment Number by 0.1",
-        "command": "increment_number",
+        "command": "emmet_increment_number",
         "args": { "delta": 0.1 }
     },
     {
         "caption": "Emmet: Decrement Number by 0.1",
-        "command": "increment_number",
+        "command": "emmet_increment_number",
         "args": { "delta": -0.1 }
     },
     {
         "caption": "Emmet: Increment Number by 10",
-        "command": "increment_number",
+        "command": "emmet_increment_number",
         "args": { "delta": 10 }
     },
     {
         "caption": "Emmet: Decrement Number by 10",
-        "command": "increment_number",
+        "command": "emmet_increment_number",
         "args": { "delta": -10 }
     },
     {
         "caption": "Emmet: Update Image Size",
-        "command": "update_image_size"
+        "command": "emmet_update_image_size"
     },
     {
         "caption": "Emmet: Convert data:URL",
-        "command": "convert_data_url"
+        "command": "emmet_convert_data_url"
     }
 ]

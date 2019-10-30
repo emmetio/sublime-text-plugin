@@ -3,7 +3,7 @@ import sublime_plugin
 from . import emmet
 from . import utils
 
-class RemoveTag(sublime_plugin.TextCommand):
+class EmmetRemoveTag(sublime_plugin.TextCommand):
     def run(self, edit):
         view = self.view
         for sel in view.sel():

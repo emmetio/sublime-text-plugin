@@ -17,7 +17,7 @@ mime_types = {
     '.webp' : 'image/webp',
 }
 
-class ConvertDataUrl(sublime_plugin.TextCommand):
+class EmmetConvertDataUrl(sublime_plugin.TextCommand):
     def run(self, edit):
         caret = utils.get_caret(self.view)
         syntax_name = syntax.from_pos(self.view, caret)

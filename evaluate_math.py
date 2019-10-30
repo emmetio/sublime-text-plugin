@@ -3,7 +3,7 @@ import sublime_plugin
 from . import emmet
 from . import utils
 
-class EvaluateMath(sublime_plugin.TextCommand):
+class EmmetEvaluateMath(sublime_plugin.TextCommand):
     def run(self, edit, **kw):
         caret = utils.get_caret(self.view)
         line = self.view.line(caret)

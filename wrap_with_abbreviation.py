@@ -9,7 +9,7 @@ from . import utils
 re_indent = re.compile(r'^\s+')
 last_abbreviation = None
 
-class WrapWithAbbreviation(sublime_plugin.TextCommand):
+class EmmetWrapWithAbbreviation(sublime_plugin.TextCommand):
     def run(self, edit, wrap_abbreviation):
         global last_abbreviation
         if wrap_abbreviation:

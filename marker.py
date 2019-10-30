@@ -167,6 +167,6 @@ class AbbreviationMarker:
             opt['preview'] = True
             return emmet.expand(self.abbreviation, opt)
 
-class ClearAbbreviationMarker(sublime_plugin.TextCommand):
+class EmmetClearAbbreviationMarker(sublime_plugin.TextCommand):
     def run(self, edit, **kw):
         dispose(self.view)

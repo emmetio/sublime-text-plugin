@@ -84,7 +84,7 @@ def balance_outward(view, syntax_name):
     return result
 
 
-class BalanceTag(sublime_plugin.TextCommand):
+class EmmetBalance(sublime_plugin.TextCommand):
     def run(self, edit, **kw):
         info = syntax.info(self.view, utils.get_caret(self.view), 'html')
         syntax_name = info['syntax']
