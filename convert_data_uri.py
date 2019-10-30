@@ -5,6 +5,7 @@ import os.path
 import sublime
 import sublime_plugin
 from . import emmet
+from . import syntax
 from . import utils
 
 mime_types = {
@@ -19,19 +20,53 @@ mime_types = {
 class ConvertDataUrl(sublime_plugin.TextCommand):
     def run(self, edit):
         caret = utils.get_caret(self.view)
-        tag = emmet.tag(utils.get_content(self.view), caret)
+        syntax_name = syntax.from_pos(self.view, caret)
 
-        if tag and tag['name'].lower() == 'img' and 'attributes' in tag:
-            src_attr = next((a for a in tag['attributes'] if a['name'] == 'src'), None)
-            src = src_attr and utils.attribute_value(src_attr)
-            if not src:
-                return
+        if syntax.is_html(syntax_name):
+            convert_html(self.view, edit, caret)
+        elif syntax.is_css(syntax_name):
+            convert_css(self.view, edit, caret)
 
-            if src.startswith('data:'):
-                on_done = lambda text: convert_from_data_url(self.view, src_attr, src, text)
-                self.view.window().show_input_panel('Enter file name', 'image%s' % get_ext(src), on_done, None, None)
-            else:
-                convert_to_data_url(self.view, edit, src_attr, src)
+def convert_html(view: sublime.View, edit: sublime.Edit, pos: int):
+    "Convert to/from data:URL for HTML context"
+    tag = emmet.tag(utils.get_content(view), pos)
+
+    if tag and tag['name'].lower() == 'img' and 'attributes' in tag:
+        src_attr = next((a for a in tag['attributes'] if a['name'] == 'src'), None)
+
+        # Get region of attribute value
+        region = src_attr and attr_value_region(src_attr)
+
+        if region:
+            toggle_url(view, edit, region)
+
+
+def convert_css(view: sublime.View, edit: sublime.Edit, pos: int):
+    "Convert to/from data:URL for CSS context"
+    section = emmet.css_section(utils.get_content(view), pos, True)
+
+    if not section:
+        return
+
+    # Find value token with `url(...)` value under caret
+    for p in section['properties']:
+        # If value matches caret location, find url(...) token for it
+        if p['value'].contains(pos):
+            token = get_url_region(view, p, pos)
+            if token:
+                toggle_url(view, edit, token)
+            break
+
+
+def toggle_url(view: sublime.View, edit: sublime.Edit, region: sublime.Region):
+    "Toggles URL state for given region: either convert it to data:URL or store as file"
+    src = view.substr(region)
+
+    if src.startswith('data:'):
+        on_done = lambda text: convert_from_data_url(view, region, text)
+        view.window().show_input_panel('Enter file name', 'image%s' % get_ext(src), on_done, None, None)
+    else:
+        convert_to_data_url(view, edit, region)
 
 
 class ConvertDataUrlReplace(sublime_plugin.TextCommand):
@@ -41,8 +76,9 @@ class ConvertDataUrlReplace(sublime_plugin.TextCommand):
         self.view.replace(edit, region, text)
 
 
-def convert_to_data_url(view: sublime.View, edit: sublime.Edit, attr: dict, src: str):
+def convert_to_data_url(view: sublime.View, edit: sublime.Edit, region: sublime.Region):
     max_size = view.settings().get('emmet_max_data_url', 0)
+    src = view.substr(region)
 
     if utils.is_url(src):
         abs_file = src
@@ -58,11 +94,11 @@ def convert_to_data_url(view: sublime.View, edit: sublime.Edit, attr: dict, src:
             base, ext = os.path.splitext(abs_file)
             if ext in mime_types:
                 new_src = 'data:%s;base64,%s' % (mime_types[ext], base64.urlsafe_b64encode(data).decode('utf8'))
-                r = utils.attribute_region(attr)
-                view.replace(edit, r, utils.patch_attribute(attr, new_src))
+                view.replace(edit, region, new_src)
 
 
-def convert_from_data_url(view: sublime.View, attr: dict, src: str, dest: str):
+def convert_from_data_url(view: sublime.View, region: sublime.Region, dest: str):
+    src = view.substr(region)
     m = re.match(r'^data\:.+?;base64,(.+)', src)
     if m:
         base_dir = os.path.dirname(view.file_name())
@@ -76,11 +112,30 @@ def convert_from_data_url(view: sublime.View, attr: dict, src: str, dest: str):
         with open(abs_dest, 'wb') as fd:
             fd.write(base64.urlsafe_b64decode(m.group(1)))
 
-        r = utils.attribute_region(attr)
         view.run_command('convert_data_url_replace', {
-            'region': [r.begin(), r.end()],
-            'text': utils.patch_attribute(attr, file_url)
+            'region': [region.begin(), region.end()],
+            'text': file_url
         })
+
+
+def attr_value_region(attr: dict):
+    "Returns clean (unquoted) value region of given attribute"
+    value = attr.get('value', '')
+    if value:
+        start = attr['valueStart']
+        end = attr['valueEnd']
+        if utils.is_quoted(value):
+            start += 1
+            end -= 1
+        return sublime.Region(start, end)
+
+
+def get_url_region(view: sublime.View, css_prop: dict, pos: int):
+    "Returns region of matched `url()` token from given value"
+    for v in css_prop['valueTokens']:
+        m = re.match(r'url\([\'"](.+?)[\'"]\)', view.substr(v)) if v.contains(pos) else None
+        if m:
+            return sublime.Region(v.begin() + m.start(1), v.begin() + m.end(1))
 
 
 def get_ext(data_url: str):

@@ -50,6 +50,7 @@ def update_image_size_css(view: sublime.View, edit: sublime.Edit, pos: int):
             if p['value'].contains(pos):
                 context_prop = p
                 src = get_css_url(view, p, pos)
+                break
 
     if src:
         size = read_image_size(view, src)
