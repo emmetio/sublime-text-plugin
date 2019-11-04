@@ -12,6 +12,8 @@ if platform == 'osx':
     from .osx import _quickjs
 elif platform == 'windows_x64':
     from .win_x64 import _quickjs
+elif platform == 'windows_x32':
+    from .win_x32 import _quickjs
 elif platform == 'linux_x64':
     from .linux_x64 import _quickjs
 else:
