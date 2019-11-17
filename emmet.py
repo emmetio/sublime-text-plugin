@@ -1,83 +1,120 @@
-import sublime
-import concurrent.futures
-import threading
-import json
-import os.path
 import re
+import sublime
+from .py_emmet import expand as expand_abbreviation, extract, Config, \
+    stylesheet_abbreviation, markup_abbreviation, ScannerException
+from .py_emmet.html_matcher import match, balanced_inward, balanced_outward
+from .py_emmet.css_matcher import match as css_match, \
+    balanced_inward as css_balanced_inward \
+    balanced_outward as css_balanced_outward
 from . import syntax
 
-platform = 'osx' if sublime.platform() == 'osx' else '%s_%s' % (sublime.platform(), sublime.arch())
-
-if platform == 'osx':
-    from .osx import _quickjs
-elif platform == 'windows_x64':
-    from .win_x64 import _quickjs
-elif platform == 'windows_x32':
-    from .win_x32 import _quickjs
-elif platform == 'linux_x64':
-    from .linux_x64 import _quickjs
-else:
-    raise RuntimeError('Platform %s (%s) is not currently supported' % (sublime.platform(), sublime.arch()))
-
-
-def _get_js_code():
-    base_path = os.path.abspath(os.path.dirname(__file__))
-    with open(os.path.join(base_path, 'emmet.js'), encoding='UTF-8') as f:
-        src = f.read()
-
-    src += "\nvar {expand, extract, validate, matchHTML, matchCSS, balance, balanceCSS, math, selectItemHTML, selectItemCSS, getOpenTag, getCSSSection} = emmet;"
-    return src
-
-
-def _compile(code):
-    context = _quickjs.Context()
-    context.eval(code)
-    return context
+re_simple = re.compile(r'^([\w!-]+)\.?$')
+known_tags = (
+    'a', 'abbr', 'address', 'area', 'article', 'aside', 'audio',
+    'b', 'base', 'bdi', 'bdo', 'blockquote', 'body', 'br', 'button',
+    'canvas', 'caption', 'cite', 'code', 'col', 'colgroup', 'content',
+    'data', 'datalist', 'dd', 'del', 'details', 'dfn', 'dialog', 'div', 'dl', 'dt',
+    'em', 'embed',
+    'fieldset', 'figcaption', 'figure', 'footer', 'form',
+    'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'head', 'header', 'hr', 'html',
+    'i', 'iframe', 'img', 'input', 'ins',
+    'kbd', 'keygen',
+    'label', 'legend', 'li', 'link',
+    'main', 'map', 'mark', 'menu', 'menuitem', 'meta', 'meter',
+    'nav', 'noscript',
+    'object', 'ol', 'optgroup', 'option', 'output',
+    'p', 'param', 'picture', 'pre', 'progress',
+    'q',
+    'rp', 'rt', 'rtc', 'ruby',
+    's', 'samp', 'script', 'section', 'select', 'shadow', 'slot', 'small', 'source', 'span', 'strong', 'style', 'sub', 'summary', 'sup',
+    'table', 'tbody', 'td', 'template', 'textarea', 'tfoot', 'th', 'thead', 'time', 'title', 'tr', 'track',
+    'u', 'ul', 'var', 'video', 'wbr'
+)
 
 
-threadpool = concurrent.futures.ThreadPoolExecutor(max_workers=1)
-lock = threading.Lock()
+def field(index: int, placeholder: str, **kwargs):
+    "Produces tabstops for editor"
+    if placeholder:
+        return '${%d:%s}' % (index, placeholder)
+    return '${%d}' % index
 
-future = threadpool.submit(_compile, _get_js_code())
-concurrent.futures.wait([future])
-context = future.result()
 
-def expand(abbr, options=None):
+def field_preview(index: int, placeholder: str, **kwargs):
+    return placeholder
+
+
+def escape_text(text: str, **kwargs):
+    "Escapes all `$` in plain text for snippet output"
+    return re.sub(r'\$', '\\$', text)
+
+
+def expand(abbr, config: dict=None):
     "Expands given abbreviation into code snippet"
-    return call_js('expand', abbr, options)
+    is_preview = config and config.get('preview')
+    opt = {}
+    output_opt = {
+        'output.field': field_preview if is_preview else field,
+        'output.text': escape_text,
+        'output.format': not config or not config.get('inline'),
+    }
+
+    if config:
+        opt.update(options)
+        if 'options' in config:
+            output_opt.update(config.get('options'))
+    opt['options'] = output_opt
+
+    return expand_abbreviation(abbr, opt)
 
 
-def extract(line, pos, options=None):
-    "Extracts abbreviation from given line of source code"
-    return call_js('extract', line, pos, options)
-
-
-def validate(abbr, options=None):
+def validate(abbr, config=None):
     """
     Validates given abbreviation: check if it can be properly expanded and detects
     if it's a simple abbreviation (looks like a regular word)
     """
-    return call_js('validate', abbr, options)
+    resolved = Config(config)
+
+    try:
+        if resolved.type == 'stylesheet':
+            stylesheet_abbreviation(abbr, resolved)
+        else:
+            markup_abbreviation(abbr, resolved)
+
+        m = re_simple.match(abbr)
+        return {
+            'valid': True,
+            'simple': abbr == '.' or bool(m),
+            'matched': m.group(1) in known_tags or m.group(1) in config.snippets if m else False
+        }
+
+    except ScannerException as err:
+        return {
+            'valid': False,
+            'error': err.message,
+            'pos': err.pos,
+            'snippet': '%s^' % ('-' % err.pos,) if err.pos is not None else ''
+        }
+
+    return {
+        'valid': False,
+        'error': '',
+        'pos': -1,
+        'snippet': ''
+    }
 
 
-def match(code, pos, options=None):
-    "Finds matching tag pair for given `pos` in `code`"
-    return call_js('matchHTML', code, pos, options)
-
-
-def match_css(code, pos, options=None):
-    "Finds matching selector or property for given `pos` in `code`"
-    return call_js('matchCSS', code, pos, options)
-
-
-def balance(code, pos, direction, xml=False):
+def balance(code: str, pos: int, direction: str, xml=False):
     "Returns list of tags for balancing for given code"
-    return call_js('balance', code, pos, direction, { 'xml': xml })
+    if direction == 'inward':
+        return balanced_inward(code, pos, options)
+    return balanced_outward(code, pos, options)
 
 
-def balance_css(code, pos, direction):
+def balance_css(code: str, pos: int, direction: str):
     "Returns list of selector/property ranges for balancing for given code"
-    return call_js('balanceCSS', code, pos, direction)
+    if direction == 'inward':
+        return css_balanced_inward(code, pos)
+    return css_balanced_outward(code, pos)
 
 
 def select_item(code, pos, is_css=False, is_previous=False):
@@ -216,36 +253,3 @@ def extract_abbreviation(view, loc):
 
 def to_region(rng):
     return sublime.Region(rng[0], rng[1])
-
-######################################
-## QuickJS Runtime
-## https://github.com/PetterS/quickjs
-######################################
-
-
-def call_js(fn, *args):
-    with lock:
-        future = threadpool.submit(_call_js, fn, *args)
-        concurrent.futures.wait([future])
-        return future.result()
-
-
-def _call_js(fn, *args, run_gc=True):
-    try:
-        if isinstance(fn, str):
-            fn = context.get(fn)
-        result = fn(*[convert_arg(a) for a in args])
-        if isinstance(result, _quickjs.Object):
-            result = json.loads(result.json())
-        return result
-    finally:
-        if run_gc:
-            context.gc()
-
-
-def convert_arg(arg):
-    if isinstance(arg, (type(None), str, bool, float, int)):
-        return arg
-    else:
-        # More complex objects are passed through JSON.
-        return context.eval("(" + json.dumps(arg) + ")")
