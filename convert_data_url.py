@@ -1,12 +1,14 @@
-import os
 import re
 import base64
+import os
 import os.path
 import sublime
 import sublime_plugin
 from . import emmet
 from . import syntax
 from . import utils
+from .py_emmet.html_matcher import AttributeToken
+from .py_emmet.action_utils import CSSProperty
 
 mime_types = {
     '.gif' : 'image/gif',
@@ -31,8 +33,8 @@ def convert_html(view: sublime.View, edit: sublime.Edit, pos: int):
     "Convert to/from data:URL for HTML context"
     tag = emmet.tag(utils.get_content(view), pos)
 
-    if tag and tag['name'].lower() == 'img' and 'attributes' in tag:
-        src_attr = next((a for a in tag['attributes'] if a['name'] == 'src'), None)
+    if tag and tag.name.lower() == 'img' and tag.attributes:
+        src_attr = next((a for a in tag.attributes if a.name == 'src'), None)
 
         # Get region of attribute value
         region = src_attr and attr_value_region(src_attr)
@@ -49,9 +51,9 @@ def convert_css(view: sublime.View, edit: sublime.Edit, pos: int):
         return
 
     # Find value token with `url(...)` value under caret
-    for p in section['properties']:
+    for p in section.properties:
         # If value matches caret location, find url(...) token for it
-        if p['value'].contains(pos):
+        if p.value.contains(pos):
             token = get_url_region(view, p, pos)
             if token:
                 toggle_url(view, edit, token)
@@ -91,7 +93,7 @@ def convert_to_data_url(view: sublime.View, edit: sublime.Edit, region: sublime.
     if abs_file:
         data = utils.read_file(abs_file)
         if data and (not max_size or len(data) <= max_size):
-            base, ext = os.path.splitext(abs_file)
+            ext = os.path.splitext(abs_file)[1]
             if ext in mime_types:
                 new_src = 'data:%s;base64,%s' % (mime_types[ext], base64.urlsafe_b64encode(data).decode('utf8'))
                 view.replace(edit, region, new_src)
@@ -118,30 +120,32 @@ def convert_from_data_url(view: sublime.View, region: sublime.Region, dest: str)
         })
 
 
-def attr_value_region(attr: dict):
+def attr_value_region(attr: AttributeToken) -> sublime.Region:
     "Returns clean (unquoted) value region of given attribute"
-    value = attr.get('value', '')
-    if value:
-        start = attr['valueStart']
-        end = attr['valueEnd']
-        if utils.is_quoted(value):
+    if attr.value is not None:
+        start = attr.value_start
+        end = attr.value_end
+        if utils.is_quoted(attr.value):
             start += 1
             end -= 1
         return sublime.Region(start, end)
+    return None
 
 
-def get_url_region(view: sublime.View, css_prop: dict, pos: int):
+def get_url_region(view: sublime.View, css_prop: CSSProperty, pos: int) -> sublime.Region:
     "Returns region of matched `url()` token from given value"
-    for v in css_prop['valueTokens']:
+    for v in css_prop.value_tokens:
         m = re.match(r'url\([\'"](.+?)[\'"]\)', view.substr(v)) if v.contains(pos) else None
         if m:
             return sublime.Region(v.begin() + m.start(1), v.begin() + m.end(1))
+    return None
 
 
 def get_ext(data_url: str):
+    "Returns suggested extension from given data:URL string"
     m = re.match(r'data:(.+?);', data_url)
     if m:
-        for k, v in mime_types.items():
-            if v == m.group(1):
-                return k
+        for key, value in mime_types.items():
+            if value == m.group(1):
+                return key
     return '.jpg'

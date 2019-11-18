@@ -1,2 +1,5 @@
 [MASTER]
 init-hook='import sys; sys.path.append("/Applications/Sublime Text.app/Contents/MacOS")'
+
+max-line-length=120
+good-names=i,j,df,pt,fn,s,ch,m

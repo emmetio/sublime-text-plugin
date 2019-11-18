@@ -2,8 +2,10 @@ import re
 import os.path
 import urllib.request
 import sublime
+from .py_emmet.html_matcher import AttributeToken
+from .py_emmet.action_utils import CSSProperty
 
-def narrow_to_non_space(view, region):
+def narrow_to_non_space(view: sublime.View, region: sublime.Region) -> sublime.Region:
     "Returns copy of region which starts and ends at non-space character"
     begin = region.begin()
     end = region.end()
@@ -21,38 +23,41 @@ def narrow_to_non_space(view, region):
     return sublime.Region(begin, end)
 
 
-def replace_with_snippet(view, edit, region, snippet):
+def replace_with_snippet(view: sublime.View, edit: sublime.Edit, region: sublime.Region, snippet: str):
     "Replaces given region view with snippet contents"
     sel = view.sel()
     sel.clear()
     sel.add(sublime.Region(region.begin(), region.begin()))
     view.replace(edit, region, '')
-    view.run_command('insert_snippet', { 'contents': snippet })
+    view.run_command('insert_snippet', {
+        'contents': snippet
+    })
 
 
-def get_caret(view):
+def get_caret(view: sublime.View) -> int:
     "Returns current caret position for single selection"
     return view.sel()[0].begin()
 
 
-def get_content(view):
+def get_content(view: sublime.View) -> str:
     "Returns contents of given view"
     return view.substr(sublime.Region(0, view.size()))
 
 
-def go_to_pos(view, pos):
+def go_to_pos(view: sublime.View, pos: int):
+    "Scroll editor to given position in code"
     sel = view.sel()
     sel.clear()
     sel.add(sublime.Region(pos, pos))
     view.show(pos)
 
 
-def is_url(file_path):
+def is_url(file_path: str):
     "Check if given file path is an URL"
     return re.match(r'^\w+?://', file_path)
 
 
-def read_file(file_path, size=-1):
+def read_file(file_path: str, size=-1):
     "Reads content of given file. If `size` if given, reads up to `size` bytes"
     if is_url(file_path):
         with urllib.request.urlopen(file_path, timeout=5) as req:
@@ -79,7 +84,7 @@ def locate_file(editor_file: str, file_name: str):
         parent = os.path.dirname(parent)
 
 
-def create_path(parent, file_name):
+def create_path(parent: str, file_name: str):
     """
     Creates absolute path by concatenating `parent` and `file_name`.
     If `parent` points to file, its parent directory is used
@@ -95,28 +100,27 @@ def create_path(parent, file_name):
 
     return result
 
-def attribute_value(attr):
+def attribute_value(attr: AttributeToken):
     "Returns value of given attribute, parsed by Emmet HTML matcher"
-    value = attr.get('value', '')
+    value = attr.value
     if is_quoted(value):
         return value[1:-1]
     return value
 
 
-def patch_attribute(attr, value, name=None):
+def patch_attribute(attr: AttributeToken, value: str, name: str=None):
     "Returns patched version of given HTML attribute, parsed by Emmet HTML matcher"
     if name is None:
-        name = attr['name']
+        name = attr.name
 
     before = ''
     after = ''
 
-    if 'value' in attr:
-        v = attr['value']
-        if is_quoted(v):
+    if attr.value is not None:
+        if is_quoted(attr.value):
             # Quoted value or React-like expression
-            before = v[0]
-            after = v[-1]
+            before = attr.value[0]
+            after = attr.value[-1]
     else:
         # Attribute without value (boolean)
         before = after = '"'
@@ -124,24 +128,25 @@ def patch_attribute(attr, value, name=None):
     return '%s=%s%s%s' % (name, before, value, after)
 
 
-def patch_property(view: sublime.View, prop: dict, value: str, name=None):
-    "Returns patched version of given CSS property, parsed by Emmet HTML matcher"
+def patch_property(view: sublime.View, prop: CSSProperty, value: str, name=None):
+    "Returns patched version of given CSS property, parsed by Emmet CSS matcher"
     if name is None:
-        name = view.substr(prop['name'])
+        name = view.substr(prop.name)
 
-    before = view.substr(sublime.Region(prop['before'], prop['name'].begin()))
-    between = view.substr(sublime.Region(prop['name'].end(), prop['value'].begin()))
-    after = view.substr(sublime.Region(prop['value'].end(), prop['after']))
+    before = view.substr(sublime.Region(prop.before, prop.name.begin()))
+    between = view.substr(sublime.Region(prop.name.end(), prop.value.begin()))
+    after = view.substr(sublime.Region(prop.value.end(), prop.after))
 
-    return before + name + between + value + after
+    return ''.join((before, name, between, value, after))
 
 
-def is_quoted(value):
+def is_quoted(value: str):
     "Check if given value is either quoted or written as expression"
-    return value and ((value[0] in '"\'' and value[0] == value[-1]) or\
+    return value and ((value[0] in '"\'' and value[0] == value[-1]) or \
         (value[0] == '{' and value[-1] == '}'))
 
 
-def attribute_region(attr):
+def attribute_region(attr: AttributeToken):
     "Returns region that covers entire attribute"
-    return sublime.Region(attr['nameStart'], attr.get('valueEnd', attr['nameEnd']))
+    end = attr.value_end if attr.value is not None else attr.name_end
+    return sublime.Region(attr.name_start, end)

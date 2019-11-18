@@ -3,9 +3,12 @@ import sublime
 from .py_emmet import expand as expand_abbreviation, extract, Config, \
     stylesheet_abbreviation, markup_abbreviation, ScannerException
 from .py_emmet.html_matcher import match, balanced_inward, balanced_outward
-from .py_emmet.css_matcher import match as css_match, \
-    balanced_inward as css_balanced_inward \
+from .py_emmet.css_matcher import match as match_css, \
+    balanced_inward as css_balanced_inward, \
     balanced_outward as css_balanced_outward
+from .py_emmet.action_utils import select_item_css, select_item_html, \
+    get_open_tag as tag, get_css_section, SelectItemModel, CSSSection
+from .py_emmet.math_expression import evaluate, extract as extract_math
 from . import syntax
 
 re_simple = re.compile(r'^([\w!-]+)\.?$')
@@ -40,6 +43,7 @@ def field(index: int, placeholder: str, **kwargs):
 
 
 def field_preview(index: int, placeholder: str, **kwargs):
+    "Produces tabstops for abbreviation preview"
     return placeholder
 
 
@@ -48,9 +52,9 @@ def escape_text(text: str, **kwargs):
     return re.sub(r'\$', '\\$', text)
 
 
-def expand(abbr, config: dict=None):
+def expand(abbr: str, config: dict=None):
     "Expands given abbreviation into code snippet"
-    is_preview = config and config.get('preview')
+    is_preview = config and config.get('preview', False)
     opt = {}
     output_opt = {
         'output.field': field_preview if is_preview else field,
@@ -59,7 +63,7 @@ def expand(abbr, config: dict=None):
     }
 
     if config:
-        opt.update(options)
+        opt.update(config)
         if 'options' in config:
             output_opt.update(config.get('options'))
     opt['options'] = output_opt
@@ -67,7 +71,7 @@ def expand(abbr, config: dict=None):
     return expand_abbreviation(abbr, opt)
 
 
-def validate(abbr, config=None):
+def validate(abbr: str, config: dict=None):
     """
     Validates given abbreviation: check if it can be properly expanded and detects
     if it's a simple abbreviation (looks like a regular word)
@@ -103,52 +107,60 @@ def validate(abbr, config=None):
     }
 
 
-def balance(code: str, pos: int, direction: str, xml=False):
+def balance(code: str, pos: int, direction: str, xml=False) -> list:
     "Returns list of tags for balancing for given code"
+    options = { 'xml': xml }
     if direction == 'inward':
         return balanced_inward(code, pos, options)
     return balanced_outward(code, pos, options)
 
 
-def balance_css(code: str, pos: int, direction: str):
+def balance_css(code: str, pos: int, direction: str) -> list:
     "Returns list of selector/property ranges for balancing for given code"
     if direction == 'inward':
         return css_balanced_inward(code, pos)
     return css_balanced_outward(code, pos)
 
 
-def select_item(code, pos, is_css=False, is_previous=False):
+def select_item(code: str, pos: int, is_css=False, is_previous=False) -> SelectItemModel:
     "Returns model for selecting next/previous item"
-    fn = 'selectItemCSS' if is_css else 'selectItemHTML'
-    model = call_js(fn, code, pos, is_previous)
+    if is_css:
+        model = select_item_css(code, pos, is_previous)
+    else:
+        model = select_item_html(code, pos, is_previous)
     if model:
-        model['ranges'] = [to_region(r) for r in model['ranges']]
-        return model
+        model.ranges = [to_region(r) for r in model.ranges]
+    return model
 
 
-def tag(code, pos, options=None):
-    "Find tag that matches given `pos` in `code`"
-    return call_js('getOpenTag', code, pos, options)
-
-
-def css_section(code, pos, properties=False):
+def css_section(code: str, pos: int, properties=False) -> CSSSection:
     "Find enclosing CSS section and returns its ranges with (optionally) parsed properties"
-    section = call_js('getCSSSection', code, pos, properties)
-    if section and section.get('properties'):
+    section = get_css_section(code, pos, properties)
+    if section and section.properties:
         # Convert property ranges to Sublime Regions
-        for p in section.get('properties', []):
-            p['name'] = to_region(p['name'])
-            p['value'] = to_region(p['value'])
-            p['valueTokens'] = [to_region(v) for v in p['valueTokens']]
+        for p in section.properties:
+            p.name = to_region(p.name)
+            p.value = to_region(p.value)
+            p.value_tokens = [to_region(v) for v in p.value_tokens]
 
     return section
 
-def evaluate_math(line, pos, options=None):
+def evaluate_math(code: str, pos: int, options=None):
     "Finds and evaluates math expression at given position in line"
-    return call_js('math', line, pos, options)
+    expr = extract_math(code, pos, options)
+    if expr:
+        try:
+            start, end = expr
+            return {
+                'start': start,
+                'end': end,
+                'result': evaluate(code[start:end])
+            }
+        except:
+            pass
 
 
-def get_tag_context(view, pt, xml=None):
+def get_tag_context(view: sublime.View, pt: int, xml=None) -> dict:
     "Returns matched HTML/XML tag for given point in view"
     content = view.substr(sublime.Region(0, view.size()))
     if xml is None:
@@ -156,12 +168,12 @@ def get_tag_context(view, pt, xml=None):
         syntax_name = syntax.from_pos(view, pt)
         xml = syntax.is_xml(syntax_name)
 
-    tag = match(content, pt, { 'xml': xml })
-    if tag:
-        open_tag = tag.get('open')
-        close_tag = tag.get('close')
+    matched_tag = match(content, pt, { 'xml': xml })
+    if matched_tag:
+        open_tag = matched_tag.open
+        close_tag = matched_tag.close
         ctx = {
-            'name': tag.get('name'),
+            'name': matched_tag.name,
             'attributes': {},
             'open': to_region(open_tag),
         }
@@ -169,9 +181,9 @@ def get_tag_context(view, pt, xml=None):
         if close_tag:
             ctx['close'] = to_region(close_tag)
 
-        for attr in tag['attributes']:
-            name = attr['name']
-            value = attr.get('value')
+        for attr in matched_tag.attributes:
+            name = attr.name
+            value = attr.value
             # unquote value
             if value and (value[0] == '"' or value[0] == "'"):
                 value = value.strip(value[0])
@@ -179,8 +191,10 @@ def get_tag_context(view, pt, xml=None):
 
         return ctx
 
+    return None
 
-def get_css_context(view: sublime.View, pt: int):
+
+def get_css_context(view: sublime.View, pt: int) -> dict:
     "Returns context CSS property name, if any"
     if view.match_selector(pt, 'meta.property-value'):
         # Walk back until we find property name
@@ -190,11 +204,14 @@ def get_css_context(view: sublime.View, pt: int):
             and not view.match_selector(ctx_pos, 'meta.selector'):
             scope_range = view.extract_scope(ctx_pos)
             if view.match_selector(ctx_pos, 'meta.property-name'):
-                return { 'name': view.substr(scope_range) }
+                return {
+                    'name': view.substr(scope_range)
+                }
             ctx_pos = scope_range.begin() - 1
+    return None
 
 
-def get_options(view, pt, with_context=False):
+def get_options(view: sublime.View, pt: int, with_context=False):
     "Returns Emmet options for given character location in view"
     syntax_info = syntax.info(view, pt, 'html')
 
@@ -208,7 +225,7 @@ def get_options(view, pt, with_context=False):
     syntax_info['inline'] = syntax.is_inline(view, pt)
     return syntax_info
 
-def extract_abbreviation(view, loc):
+def extract_abbreviation(view: sublime.View, loc: int):
     """
     Extracts abbreviation from given location in view. Locations could be either
     `int` (a character location in view) or `list`/`tuple`/`sublime.Region`.
@@ -245,11 +262,14 @@ def extract_abbreviation(view, loc):
     abbr_data = extract(text, pt - begin, opt)
 
     if abbr_data:
-        abbr_data['start'] += begin
-        abbr_data['end'] += begin
-        abbr_data['location'] += begin
+        abbr_data.start += begin
+        abbr_data.end += begin
+        abbr_data.location += begin
         return abbr_data, opt
 
+    return None
 
-def to_region(rng):
+
+def to_region(rng: list) -> sublime.Region:
+    "Converts given list range to Sublime region"
     return sublime.Region(rng[0], rng[1])

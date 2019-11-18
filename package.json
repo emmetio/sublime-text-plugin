@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "build": "rollup -c",
+    "pack": "zip -r Emmet.sublime-package *.py emmet.js osx win_x32 win_x64 linux_x64 *.sublime-commands *.sublime-keymap *.sublime-settings",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [

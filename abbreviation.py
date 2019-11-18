@@ -1,4 +1,3 @@
-import re
 import sublime
 import sublime_plugin
 from . import emmet
@@ -8,7 +7,7 @@ from . import syntax
 from . import utils
 
 
-def in_activation_context(view, caret, prev_pos, completion_contex=False):
+def in_activation_context(view, caret, prev_pos, completion_contex=False) -> bool:
     """
     Check that given caret position is inside abbreviation activation context,
     e.g. caret is in location where user expects abbreviation.
@@ -22,24 +21,26 @@ def in_activation_context(view, caret, prev_pos, completion_contex=False):
             # In stylesheet scope, we should either be inside selector block
             # (outside of CSS property) or inside property value but typing CSS color
             return in_scope or is_stylesheet_color(view, prev_pos, caret)
-        elif s_name in ('html', 'xml', 'xsl'):
+        if s_name in ('html', 'xml', 'xsl'):
             # For HTML-like syntaxes, we should detect if we are at abbreviation bound
             return in_scope and is_abbreviation_bound(view, prev_pos)
-        elif s_name == 'jsx':
+        if s_name == 'jsx':
             # In JSX, we rely on prefixed match: we should activate abbreviation
             # only of its prefixed with `<`
             return prev_pos > 0 and view.substr(prev_pos - 1) == '<' or completion_contex
 
         # In all other cases just check if we are in abbreviation scope
         return in_scope
+    return False
 
 
-def is_stylesheet_color(view, begin, end):
-    return view.match_selector(end, 'meta.property-value | punctuation.terminator.rule') and\
+def is_stylesheet_color(view, begin, end) -> bool:
+    "Check if given range is inside CSS color value"
+    return view.match_selector(end, 'meta.property-value | punctuation.terminator.rule') and \
         view.substr(sublime.Region(begin, end)) == '#'
 
 
-def is_abbreviation_bound(view, pt):
+def is_abbreviation_bound(view: sublime.View, pt: int) -> bool:
     "Check if given point in view is a possible abbreviation start"
     line_range = view.line(pt)
     bound_chars = ' \t'
@@ -49,11 +50,12 @@ def is_abbreviation_bound(view, pt):
     return left and right
 
 
-def preview_as_phantom(marker):
-    return marker.type == 'stylesheet'
+def preview_as_phantom(mark: marker.AbbreviationMarker) -> bool:
+    "Should display preview of given marker as phantom?"
+    return mark.type == 'stylesheet'
 
 
-def activate_marker(view, pt):
+def activate_marker(view: sublime.View, pt: int):
     "Explicitly activates abbreviation marker at given location"
     mrk = marker.get(view)
 
@@ -69,7 +71,7 @@ def activate_marker(view, pt):
         preview.toggle(view, mrk, pt, preview_as_phantom(mrk))
 
 
-def update_marker(view, mrk, loc):
+def update_marker(view: sublime.View, mrk: marker.AbbreviationMarker, loc: int):
     abbr_data = emmet.extract_abbreviation(view, loc)
     if abbr_data:
         mrk.update(abbr_data[0])
@@ -78,6 +80,7 @@ def update_marker(view, mrk, loc):
         marker.dispose(view)
 
 def nonpanel(fn):
+    "Method dectorator for running actions in code views only"
     def wrapper(self, view):
         if not view.settings().get('is_widget'):
             fn(self, view)
@@ -92,11 +95,11 @@ class AbbreviationMarkerListener(sublime_plugin.EventListener):
     def on_close(self, view):
         marker.dispose(view)
 
-    def on_activated(self, view):
+    def on_activated(self, view: sublime.View):
         self.last_pos = utils.get_caret(view)
 
     @nonpanel
-    def on_selection_modified(self, view):
+    def on_selection_modified(self, view: sublime.View):
         self.last_pos = utils.get_caret(view)
         mrk = marker.get(view)
 
@@ -107,7 +110,7 @@ class AbbreviationMarkerListener(sublime_plugin.EventListener):
             preview.hide(view)
 
     @nonpanel
-    def on_modified(self, view):
+    def on_modified(self, view: sublime.View):
         last_pos = self.last_pos
         caret = utils.get_caret(view)
         mrk = marker.get(view)
@@ -159,22 +162,22 @@ class AbbreviationMarkerListener(sublime_plugin.EventListener):
             return False
 
         if key == 'has_emmet_abbreviation_mark':
-            return marker.get(view) and True or False
+            return bool(marker.get(view))
 
         return None
 
-    def on_query_completions(self, view, prefix, locations):
+    def on_query_completions(self, view: sublime.View, prefix: str, locations: list):
         # Check if completion list was populated by manually invoking autocomplete popup
         if self.last_command == 'auto_complete':
             # Produce auto-complete option only when completion popup invoked manually
             activate_marker(view, locations[0])
 
-    def on_text_command(self, view, command_name, args):
+    def on_text_command(self, view: sublime.View, command_name: str, args: list):
         self.last_command = command_name
         if command_name == 'commit_completion':
             marker.dispose(view)
 
-    def on_post_text_command(self, view, command_name, args):
+    def on_post_text_command(self, view: sublime.View, command_name: str, args: list):
         if command_name == 'undo':
             # In case of undo, editor may restore previously marked range.
             # If so, restore marker from it
@@ -187,7 +190,7 @@ class AbbreviationMarkerListener(sublime_plugin.EventListener):
 
 
 class EmmetExpandAbbreviation(sublime_plugin.TextCommand):
-    def run(self, edit, **kw):
+    def run(self, edit):
         mrk = marker.get(self.view)
         caret = utils.get_caret(self.view)
 

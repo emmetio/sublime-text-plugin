@@ -1,7 +1,5 @@
 import sublime
 import sublime_plugin
-from . import emmet
-from . import utils
 
 class EmmetIncrementNumber(sublime_plugin.TextCommand):
     def run(self, edit, delta=1):
@@ -79,6 +77,6 @@ def update_number(num: str, delta: float, precision=3):
         if (num[0] == '.' or num[0:2] == '-.') and result[0] == '0':
             result = result[1:]
 
-        return neg and '-{0}'.format(result) or result
+        return '-{0}'.format(result) if neg else result
     except:
         return None

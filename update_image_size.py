@@ -7,6 +7,7 @@ import sublime_plugin
 from . import emmet
 from . import syntax
 from . import utils
+from .py_emmet.action_utils import CSSProperty
 
 class EmmetUpdateImageSize(sublime_plugin.TextCommand):
     def run(self, edit):
@@ -22,10 +23,10 @@ class EmmetUpdateImageSize(sublime_plugin.TextCommand):
 def update_image_size_html(view: sublime.View, edit: sublime.Edit, pos: int):
     "Updates image size in HTML context"
     tag = emmet.tag(utils.get_content(view), pos)
-    if tag and tag['name'].lower() == 'img' and 'attributes' in tag:
-        attrs = dict([(a['name'].lower(), a) for a in tag['attributes']])
+    if tag and tag.name.lower() == 'img' and tag.attributes:
+        attrs = dict([(a.name.lower(), a) for a in tag.attributes])
 
-        if 'src' in attrs and attrs['src'].get('value'):
+        if 'src' in attrs and attrs['src'].value:
             src = utils.attribute_value(attrs['src'])
             size = read_image_size(view, src)
             if size:
@@ -43,11 +44,11 @@ def update_image_size_css(view: sublime.View, edit: sublime.Edit, pos: int):
     context_prop = None
 
     if section:
-        for p in section['properties']:
-            props[view.substr(p['name'])] = p
+        for p in section.properties:
+            props[view.substr(p.name)] = p
 
             # If value matches caret location, find url(...) token for it
-            if p['value'].contains(pos):
+            if p.value.contains(pos):
                 context_prop = p
                 src = get_css_url(view, p, pos)
                 break
@@ -61,16 +62,16 @@ def update_image_size_css(view: sublime.View, edit: sublime.Edit, pos: int):
             print('Unable to determine size of "%s": file is either unsupported or invalid' % src)
 
 
-def get_css_url(view: sublime.View, css_prop: dict, pos: int):
-    for v in css_prop['valueTokens']:
+def get_css_url(view: sublime.View, css_prop: CSSProperty, pos: int):
+    for v in css_prop.value_tokens:
         m = re.match(r'url\([\'"](.+?)[\'"]\)', view.substr(v)) if v.contains(pos) else None
         if m:
             return m.group(1)
 
 
-def get_dpi(file_path):
+def get_dpi(file_path: str):
     "Detects file DPI from given file path"
-    name, ext = os.path.splitext(file_path)
+    name = os.path.splitext(file_path)[0]
 
     # If file name contains DPI suffix like `@2x`, use it to scale down image size
     m = re.search(r'@(\d+(?:\.\d+))x$', name)
@@ -86,7 +87,7 @@ def read_image_size(view: sublime.View, src: str):
 
     if abs_file:
         file_name = os.path.basename(abs_file)
-        name, ext = os.path.splitext(file_name)
+        ext = os.path.splitext(file_name)[1]
         chunk = 2048 if ext.lower() in ('.svg', '.jpg', '.jpeg') else 100
         data = utils.read_file(abs_file, chunk)
         size = get_size(data)
@@ -131,7 +132,7 @@ def patch_html_size(attrs: dict, view: sublime.View, edit: sublime.Edit, width: 
     elif 'src' in attrs:
         # At least 'src' attribute should be available
         attr = attrs['src']
-        pos = attr.get('valueEnd', attr['nameEnd'])
+        pos = attr.value_end if attr.value is not None else attr.name_end
         data = ' %s %s' % (utils.patch_attribute(attr, width, 'width'), utils.patch_attribute(attr, height, 'height'))
         view.insert(edit, pos, data)
 
@@ -144,21 +145,21 @@ def patch_css_size(view: sublime.View, edit: sublime.Edit, props: dict, width: i
 
     if width_prop and height_prop:
         # We have both properties, patch them
-        if width_prop['before'] < height_prop['before']:
-            view.replace(edit, height_prop['value'], height)
-            view.replace(edit, width_prop['value'], width)
+        if width_prop.before < height_prop.before:
+            view.replace(edit, height_prop.value, height)
+            view.replace(edit, width_prop.value, width)
         else:
-            view.replace(edit, width_prop['value'], width)
-            view.replace(edit, height_prop['value'], height)
+            view.replace(edit, width_prop.value, width)
+            view.replace(edit, height_prop.value, height)
     elif width_prop or height_prop:
         # Use existing attribute and replace it with patched variations
         prop = width_prop or height_prop
         data = utils.patch_property(view, prop, width, 'width') + utils.patch_property(view, prop, height, 'height')
-        view.replace(edit, sublime.Region(prop['before'], prop['after']), data)
+        view.replace(edit, sublime.Region(prop.before, prop.after), data)
     elif context_prop:
         # Append to source property
         data = utils.patch_property(view, context_prop, width, 'width') + utils.patch_property(view, context_prop, height, 'height')
-        view.insert(edit, context_prop['after'], data)
+        view.insert(edit, context_prop.after, data)
 
 
 def get_size(data: bytes):
@@ -171,15 +172,18 @@ def get_size(data: bytes):
         # GIFs
         w, h = struct.unpack("<HH", data[6:10])
         return int(w), int(h)
-    elif size >= 24 and data.startswith(b'\211PNG\r\n\032\n') and data[12:16] == b'IHDR':
+
+    if size >= 24 and data.startswith(b'\211PNG\r\n\032\n') and data[12:16] == b'IHDR':
         # PNGs
         w, h = struct.unpack(">LL", data[16:24])
         return int(w), int(h)
-    elif size >= 16 and data.startswith(b'\211PNG\r\n\032\n'):
+
+    if size >= 16 and data.startswith(b'\211PNG\r\n\032\n'):
         # older PNGs
         w, h = struct.unpack(">LL", data[8:16])
         return int(w), int(h)
-    elif size >= 30 and data[:4] == b'RIFF' and data[8:12] == b'WEBP':
+
+    if size >= 30 and data[:4] == b'RIFF' and data[8:12] == b'WEBP':
         # WebP
         webp_type = data[12:16]
         if webp_type == b'VP8 ': # Lossy WebP (old)
@@ -193,16 +197,16 @@ def get_size(data: bytes):
             h = int((data[29] << 16) | (data[28] << 8) | data[27]) + 1
         return w, h
 
-    elif b'<svg' in data:
+    if b'<svg' in data:
         # SVG
         start = data.index(b'<svg')
         end = data.index(b'>', start)
         svg = str(data[start:end + 1], 'utf8')
         w = re.search(r'width=["\'](\d+)', svg)
         h = re.search(r'height=["\'](\d+)', svg)
-        if w and h:
-            return int(w.group(1)), int(h.group(1))
-    elif size >= 2 and data.startswith(b'\377\330'):
+        return int(w.group(1) if w else 0), int(h.group(1) if h else 0)
+
+    if size >= 2 and data.startswith(b'\377\330'):
         # JPEG
         with io.BytesIO(data) as input:
             input.seek(0)

@@ -1,6 +1,6 @@
+import html
 import sublime
 import sublime_plugin
-import html
 from . import emmet
 from . import syntax
 from . import utils
@@ -11,7 +11,7 @@ phantom_key = 'emmet_tag_preview'
 max_preview_len = 100
 
 
-def show_tag_preview(view, pt, text, dest):
+def show_tag_preview(view: sublime.View, pt: int, text: str, dest: int):
     "Displays given tag preview at `pt` location"
     buffer_id = view.buffer_id()
     if buffer_id not in phantoms_by_buffer:
@@ -26,7 +26,7 @@ def show_tag_preview(view, pt, text, dest):
     phantom_set.update(phantoms)
 
 
-def hide_tag_preview(view):
+def hide_tag_preview(view: sublime.View):
     "Hides tag preview in given view"
     buffer_id = view.buffer_id()
 
@@ -35,7 +35,8 @@ def hide_tag_preview(view):
         view.erase_phantoms(phantom_key)
 
 
-def phantom_content(content, dest):
+def phantom_content(content: str, dest: int):
+    "Returns contents for phantom preview"
     return """
     <body>
         <style>
@@ -57,13 +58,14 @@ def phantom_content(content, dest):
     """ % (dest, html.escape(content, False))
 
 
-def go_to_pos(view, pos):
+def go_to_pos(view: sublime.version, pos: int):
+    "Scroll to given location in editor"
     utils.go_to_pos(view, pos)
     hide_tag_preview(view)
 
 
 class EmmetGoToTagPair(sublime_plugin.TextCommand):
-    def run(self, edit):
+    def run(self, edit: sublime.Edit):
         caret = utils.get_caret(self.view)
         if self.view.substr(caret) == '<':
             caret += 1
@@ -79,7 +81,7 @@ class EmmetGoToTagPair(sublime_plugin.TextCommand):
 
 
 class EmmetHideTagPreview(sublime_plugin.TextCommand):
-    def run(self, edit):
+    def run(self, edit: sublime.Edit):
         buffer_id = self.view.buffer_id()
         if buffer_id in previews_by_buffer:
             pt, visible = previews_by_buffer[buffer_id]
@@ -88,14 +90,13 @@ class EmmetHideTagPreview(sublime_plugin.TextCommand):
 
 
 class PreviewTagPair(sublime_plugin.EventListener):
-    def on_query_context(self, view, key, operator, operand, match_all):
+    def on_query_context(self, view: sublime.View, key: str, operator, operand, match_all):
         if key == 'emmet_tag_preview':
             buffer_id = view.buffer_id()
             if buffer_id in previews_by_buffer:
-                pt, visible = previews_by_buffer[buffer_id]
-                return visible
+                return previews_by_buffer[buffer_id][1]
 
-    def on_selection_modified_async(self, view):
+    def on_selection_modified_async(self, view: sublime.View):
         if not view.settings().get('emmet_tag_preview'):
             return
 
@@ -105,13 +106,14 @@ class PreviewTagPair(sublime_plugin.EventListener):
 
         if syntax.is_html(syntax_name):
             ctx = emmet.get_tag_context(view, caret, syntax.is_xml(syntax_name))
-            if ctx and 'close' in ctx and ctx['close'].contains(caret) and not view.visible_region().contains(ctx['open']):
+            if ctx and 'close' in ctx and ctx['close'].contains(caret) and \
+                not view.visible_region().contains(ctx['open']):
                 pos = ctx['close'].b
 
                 # Do not display preview if user forcibly hides it with Esc key
                 # for current location
                 if buffer_id in previews_by_buffer:
-                    pt, visible = previews_by_buffer[buffer_id]
+                    pt = previews_by_buffer[buffer_id][0]
                     if pt == pos:
                         return
 
@@ -125,4 +127,3 @@ class PreviewTagPair(sublime_plugin.EventListener):
         hide_tag_preview(view)
         if buffer_id in previews_by_buffer:
             del previews_by_buffer[buffer_id]
-

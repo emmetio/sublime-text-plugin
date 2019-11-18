@@ -4,7 +4,7 @@ from . import emmet
 from . import utils
 
 class EmmetEvaluateMath(sublime_plugin.TextCommand):
-    def run(self, edit, **kw):
+    def run(self, edit: sublime.Edit):
         caret = utils.get_caret(self.view)
         line = self.view.line(caret)
         expr = emmet.evaluate_math(self.view.substr(line), caret - line.begin())

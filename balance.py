@@ -11,27 +11,25 @@ def push_range(items, region):
         items.append(region)
 
 
-def get_regions(view, pt, syntax_name, direction='outward'):
+def get_regions(view: sublime.View, pt: int, syntax_name: str, direction='outward'):
     "Returns regions for balancing"
     content = utils.get_content(view)
 
     if syntax.is_css(syntax_name):
         regions = emmet.balance_css(content, pt, direction)
-        return [sublime.Region(*r) for r in regions]
+        return [emmet.to_region(r) for r in regions]
 
     result = []
     tags = emmet.balance(content, pt, direction, syntax.is_xml(syntax_name))
 
     for tag in tags:
-        open_tag = tag.get('open')
-        close_tag = tag.get('close')
-        if close_tag:
+        if tag.close:
             # Inner range
-            push_range(result, sublime.Region(open_tag[1], close_tag[0]))
+            push_range(result, sublime.Region(tag.open[1], tag.close[0]))
             # Outer range
-            push_range(result, sublime.Region(open_tag[0], close_tag[1]))
+            push_range(result, sublime.Region(tag.open[0], tag.close[1]))
         else:
-            push_range(result, sublime.Region(open_tag[0], open_tag[1]))
+            push_range(result, sublime.Region(tag.open[0], tag.open[1]))
 
     result.sort(key=lambda v: v.begin(), reverse=direction == 'outward')
     return result
@@ -75,7 +73,7 @@ def balance_outward(view, syntax_name):
         regions = get_regions(view, sel.begin(), syntax_name, 'outward')
         target_region = sel
         for r in regions:
-            if r.contains(sel) and r.b > sel.b:
+            if r.contains(sel) and r.end() > sel.end():
                 target_region = r
                 break
 

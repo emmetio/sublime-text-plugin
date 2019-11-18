@@ -23,7 +23,7 @@ class EmmetToggleComment(sublime_plugin.TextCommand):
         for s in view.sel():
             pt = s.begin()
             syntax_name = syntax.from_pos(view, pt)
-            tokens = syntax.is_css(syntax_name) and css_comment or html_comment
+            tokens = css_comment if syntax.is_css(syntax_name) else html_comment
 
             if view.match_selector(pt, comment_selector):
                 # Caret inside comment, strip it
@@ -34,7 +34,7 @@ class EmmetToggleComment(sublime_plugin.TextCommand):
                 region = get_range_for_comment(view, pt)
                 if region is None:
                     # No tag found, comment line
-                    region = utils.narrow_to_non_space(view.line(pt))
+                    region = utils.narrow_to_non_space(view, view.line(pt))
 
                 # If there are any comments inside region, remove them
                 comments = get_comment_regions(view, region, tokens)
@@ -89,14 +89,14 @@ def get_range_for_comment(view: sublime.View, pt: int):
         m = emmet.match_css(utils.get_content(view), pt)
         if m:
             # TODO CSS might be an inline fragment of another document
-            return sublime.Region(m['start'], m['end'])
+            return sublime.Region(m.start, m.end)
     elif syntax.is_html(syntax_name):
         tag = emmet.get_tag_context(view, pt, syntax.is_xml(syntax_name))
         if tag:
             open_tag = tag.get('open')
             close_tag = tag.get('close')
 
-            return close_tag and open_tag.cover(close_tag) or open_tag
+            return open_tag.cover(close_tag) if close_tag else open_tag
 
 
 def add_comment(view: sublime.View, edit: sublime.Edit, region: sublime.Region, tokens: dict):
@@ -118,7 +118,7 @@ def get_comment_regions(view: sublime.View, region: sublime.Region, tokens: dict
             offset = c_start + len(tokens['start'])
 
             # Find comment end
-            c_end = text.find(tokens['end'] , offset)
+            c_end = text.find(tokens['end'], offset)
             if c_end != -1:
                 offset = c_end + len(tokens['end'])
                 result.append(sublime.Region(start + c_start, start + offset))

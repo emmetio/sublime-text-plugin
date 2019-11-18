@@ -30,22 +30,22 @@ def select_item(view: sublime.View, sel: sublime.Region, is_css=False, is_previo
     pos = sel.begin()
 
     # Check if we are still in calculated model
-    if buffer_id in models_for_buffer:
-        model = models_for_buffer[buffer_id]
-        region = find_region(sel, model['ranges'], is_previous)
+    model = models_for_buffer.get(buffer_id)
+    if model:
+        region = find_region(sel, model.ranges, is_previous)
         if region:
             select(view, region)
             return
 
         # Out of available selection range, move to next tag
-        pos = model['start'] if is_previous else model['end']
+        pos = model.start if is_previous else model.end
 
     # Calculate new model from current editor content
     content = utils.get_content(view)
     model = emmet.select_item(content, pos, is_css, is_previous)
     if model:
         models_for_buffer[buffer_id] = model
-        region = find_region(sel, model['ranges'], is_previous)
+        region = find_region(sel, model.ranges, is_previous)
         if region:
             select(view, region)
             return
@@ -65,7 +65,8 @@ def find_region(sel, regions, reverse=False):
         if r == sel:
             # This range is currently selected, request next
             get_next = True
-        elif candidate is None and (r.contains(sel) or (reverse and r.a <= sel.a) or (not reverse and r.a >= sel.a)):
+        elif candidate is None and (r.contains(sel) or (reverse and r.a <= sel.a) or \
+            (not reverse and r.a >= sel.a)):
             # We should store
             candidate = r
 

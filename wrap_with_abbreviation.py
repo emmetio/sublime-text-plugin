@@ -20,7 +20,7 @@ class EmmetWrapWithAbbreviation(sublime_plugin.TextCommand):
     def get_range(self):
         sel = self.view.sel()[0]
         opt = syntax.info(self.view, sel.begin(), 'html')
-        region = sel.empty() and find_context_tag(self.view, sel.begin(), opt) or sel
+        region = find_context_tag(self.view, sel.begin(), opt) if sel.empty() else sel
         return region
 
     def input(self, *args, **kw):
@@ -34,7 +34,7 @@ class EmmetWrapWithAbbreviation(sublime_plugin.TextCommand):
 
 
 class WrapAbbreviationInputHandler(sublime_plugin.TextInputHandler):
-    def __init__(self, options):
+    def __init__(self, options: dict):
         self.options = options.copy()
         self.options['preview'] = True
 
@@ -44,11 +44,11 @@ class WrapAbbreviationInputHandler(sublime_plugin.TextInputHandler):
     def initial_text(self):
         return last_abbreviation
 
-    def validate(self, text):
+    def validate(self, text: str):
         data = emmet.validate(text, self.options)
         return data and data.get('valid')
 
-    def preview(self, text):
+    def preview(self, text: str):
         abbr = text.strip()
         snippet = None
         if abbr:
@@ -62,7 +62,7 @@ class WrapAbbreviationInputHandler(sublime_plugin.TextInputHandler):
             return sublime.Html(popup_content(snippet))
 
 
-def find_context_tag(view, pt, syntax_info=None):
+def find_context_tag(view: sublime.View, pt: int, syntax_info=None):
     "Finds tag context for given location and returns its range, if found"
     if syntax_info is None:
         syntax_info = syntax.info(view, pt, 'html')
@@ -82,30 +82,30 @@ def find_context_tag(view, pt, syntax_info=None):
 
             if close_tag:
                 r = sublime.Region(open_tag.end(), close_tag.begin())
-                return utils.narrow_to_non_space(view, region)
+                return utils.narrow_to_non_space(view, r)
 
 
-def in_range(region, pt):
-    return pt > region.begin() and pt < region.end()
+def in_range(region: sublime.Region, pt: int):
+    return region.begin() < pt < region.end()
 
 
-def get_content(view, region, lines=False):
+def get_content(view: sublime.View, region: sublime.Region, lines=False):
     "Returns contents of given region, properly de-indented"
     base_line = view.substr(view.line(region.begin()))
     m = re_indent.match(base_line)
-    indent = m and m.group(0) or ''
+    indent = m.group(0) if m else ''
     src_lines = view.substr(region).splitlines()
     dest_lines = []
 
     for line in src_lines:
-        if len(dest_lines) and line.startswith(indent):
+        if dest_lines and line.startswith(indent):
             line = line[len(indent):]
         dest_lines.append(line)
 
-    return lines and dest_lines or '\n'.join(dest_lines)
+    return dest_lines if lines else '\n'.join(dest_lines)
 
 
-def popup_content(content):
+def popup_content(content: str):
     return """
     <body>
         <style>
