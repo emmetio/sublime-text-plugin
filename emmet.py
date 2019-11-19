@@ -88,7 +88,7 @@ def validate(abbr: str, config: dict=None):
         return {
             'valid': True,
             'simple': abbr == '.' or bool(m),
-            'matched': m.group(1) in known_tags or m.group(1) in config.snippets if m else False
+            'matched': m.group(1) in known_tags or m.group(1) in resolved.snippets if m else False
         }
 
     except ScannerException as err:
@@ -96,7 +96,7 @@ def validate(abbr: str, config: dict=None):
             'valid': False,
             'error': err.message,
             'pos': err.pos,
-            'snippet': '%s^' % ('-' % err.pos,) if err.pos is not None else ''
+            'snippet': '%s^' % ('-' * err.pos,) if err.pos is not None else ''
         }
 
     return {
@@ -151,10 +151,12 @@ def evaluate_math(code: str, pos: int, options=None):
     if expr:
         try:
             start, end = expr
+            result = evaluate(code[start:end])
             return {
                 'start': start,
                 'end': end,
-                'result': evaluate(code[start:end])
+                'result': result,
+                'snippet': ('%.4f' % result).rstrip('0').rstrip('.')
             }
         except:
             pass

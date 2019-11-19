@@ -23,7 +23,7 @@ def get(view: sublime.View):
     return markers.get(view.id())
 
 
-def attach(view: sublime.View, marker: AbbreviationMarker):
+def attach(view: sublime.View, marker):
     "Attaches current marker for given view"
     markers[view.id()] = marker
 
@@ -52,7 +52,7 @@ def extract(view: sublime.View, loc: int):
     "Extracts abbreviation from given location and, if it's valid, returns marker for it"
     abbr_data = emmet.extract_abbreviation(view, loc)
     if abbr_data:
-        marker = create(view, abbr_data[0], abbr_data[1])
+        marker = create(view, abbr_data[0])
         if marker.valid:
             attach(view, marker)
             return marker
@@ -69,7 +69,7 @@ class AbbreviationMarker:
         # Do not capture context for large documents since it may reduce performance
         max_doc_size = view.settings().get('emmet_context_size_limit', 0)
         with_context = max_doc_size > 0 and view.size() < max_doc_size
-        self.options = options or emmet.get_options(view, abbr_data['start'], with_context)
+        self.options = options or emmet.get_options(view, abbr_data.start, with_context)
         self.region = None
         self._data = None
         self.update(abbr_data)

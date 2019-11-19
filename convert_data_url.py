@@ -135,7 +135,7 @@ def attr_value_region(attr: AttributeToken) -> sublime.Region:
 def get_url_region(view: sublime.View, css_prop: CSSProperty, pos: int) -> sublime.Region:
     "Returns region of matched `url()` token from given value"
     for v in css_prop.value_tokens:
-        m = re.match(r'url\([\'"](.+?)[\'"]\)', view.substr(v)) if v.contains(pos) else None
+        m = re.match(r'url\([\'"]?(.+?)[\'"]?\)', view.substr(v)) if v.contains(pos) else None
         if m:
             return sublime.Region(v.begin() + m.start(1), v.begin() + m.end(1))
     return None

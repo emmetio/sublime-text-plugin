@@ -10,4 +10,4 @@ class EmmetEvaluateMath(sublime_plugin.TextCommand):
         expr = emmet.evaluate_math(self.view.substr(line), caret - line.begin())
         if expr:
             r = sublime.Region(line.begin() + expr['start'], line.begin() + expr['end'])
-            self.view.replace(edit, r, str(expr['result']))
+            self.view.replace(edit, r, str(expr['snippet']))

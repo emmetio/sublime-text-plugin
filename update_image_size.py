@@ -56,7 +56,6 @@ def update_image_size_css(view: sublime.View, edit: sublime.Edit, pos: int):
     if src:
         size = read_image_size(view, src)
         if size:
-            print('will update size: %dx%d' % size)
             patch_css_size(view, edit, props, size[0], size[1], context_prop)
         else:
             print('Unable to determine size of "%s": file is either unsupported or invalid' % src)
@@ -64,7 +63,7 @@ def update_image_size_css(view: sublime.View, edit: sublime.Edit, pos: int):
 
 def get_css_url(view: sublime.View, css_prop: CSSProperty, pos: int):
     for v in css_prop.value_tokens:
-        m = re.match(r'url\([\'"](.+?)[\'"]\)', view.substr(v)) if v.contains(pos) else None
+        m = re.match(r'url\([\'"]?(.+?)[\'"]?\)', view.substr(v)) if v.contains(pos) else None
         if m:
             return m.group(1)
 
