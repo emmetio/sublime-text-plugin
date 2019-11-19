@@ -1,7 +1,7 @@
 import html
 import sublime
 import sublime_plugin
-from . import emmet
+from . import emmet_sublime as emmet
 from . import syntax
 from . import utils
 

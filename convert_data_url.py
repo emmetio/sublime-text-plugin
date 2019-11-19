@@ -4,11 +4,11 @@ import os
 import os.path
 import sublime
 import sublime_plugin
-from . import emmet
+from . import emmet_sublime as emmet
 from . import syntax
 from . import utils
-from .py_emmet.html_matcher import AttributeToken
-from .py_emmet.action_utils import CSSProperty
+from .emmet.html_matcher import AttributeToken
+from .emmet.action_utils import CSSProperty
 
 mime_types = {
     '.gif' : 'image/gif',

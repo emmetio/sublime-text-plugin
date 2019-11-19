@@ -4,10 +4,10 @@ import struct
 import os.path
 import sublime
 import sublime_plugin
-from . import emmet
+from . import emmet_sublime as emmet
 from . import syntax
 from . import utils
-from .py_emmet.action_utils import CSSProperty
+from .emmet.action_utils import CSSProperty
 
 class EmmetUpdateImageSize(sublime_plugin.TextCommand):
     def run(self, edit):

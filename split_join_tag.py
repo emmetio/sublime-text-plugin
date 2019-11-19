@@ -1,6 +1,6 @@
 import sublime
 import sublime_plugin
-from . import emmet
+from . import emmet_sublime as emmet
 from . import syntax
 
 class EmmetSplitJoinTag(sublime_plugin.TextCommand):

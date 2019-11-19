@@ -1,7 +1,7 @@
 import sublime
 import sublime_plugin
-from . import emmet
-from .py_emmet.extract_abbreviation import ExtractedAbbreviation
+from . import emmet_sublime as emmet
+from .emmet.extract_abbreviation import ExtractedAbbreviation
 
 markers = {}
 abbr_region_id = 'emmet-abbreviation'

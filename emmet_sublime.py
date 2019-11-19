@@ -1,14 +1,14 @@
 import re
 import sublime
-from .py_emmet import expand as expand_abbreviation, extract, Config, \
+from .emmet import expand as expand_abbreviation, extract, Config, \
     stylesheet_abbreviation, markup_abbreviation, ScannerException
-from .py_emmet.html_matcher import match, balanced_inward, balanced_outward
-from .py_emmet.css_matcher import match as match_css, \
+from .emmet.html_matcher import match, balanced_inward, balanced_outward
+from .emmet.css_matcher import match as match_css, \
     balanced_inward as css_balanced_inward, \
     balanced_outward as css_balanced_outward
-from .py_emmet.action_utils import select_item_css, select_item_html, \
+from .emmet.action_utils import select_item_css, select_item_html, \
     get_open_tag as tag, get_css_section, SelectItemModel, CSSSection
-from .py_emmet.math_expression import evaluate, extract as extract_math
+from .emmet.math_expression import evaluate, extract as extract_math
 from . import syntax
 
 re_simple = re.compile(r'^([\w!-]+)\.?$')

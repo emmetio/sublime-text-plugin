@@ -1,6 +1,6 @@
 import sublime
 import sublime_plugin
-from . import emmet
+from . import emmet_sublime
 from . import syntax
 from . import utils
 

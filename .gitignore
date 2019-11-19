@@ -66,3 +66,5 @@ __pycache__
 .DS_Store
 .vscode
 sublime-text-plugins
+*.dist-info
+/emmet
