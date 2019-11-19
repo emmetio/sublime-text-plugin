@@ -1,6 +1,6 @@
 import sublime
 import sublime_plugin
-from . import emmet_sublime
+from . import emmet_sublime as emmet
 from . import syntax
 from . import utils
 
@@ -97,6 +97,7 @@ def get_range_for_comment(view: sublime.View, pt: int):
             close_tag = tag.get('close')
 
             return open_tag.cover(close_tag) if close_tag else open_tag
+    return None
 
 
 def add_comment(view: sublime.View, edit: sublime.Edit, region: sublime.Region, tokens: dict):
@@ -141,3 +142,4 @@ class ToggleCommentListener(sublime_plugin.EventListener):
     def on_text_command(self, view, command_name, args):
         if command_name == 'toggle_comment' and allow_emmet_comments(view):
             return ('emmet_toggle_comment', None)
+        return None

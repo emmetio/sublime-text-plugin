@@ -11,7 +11,7 @@ last_abbreviation = None
 
 class EmmetWrapWithAbbreviation(sublime_plugin.TextCommand):
     def run(self, edit, wrap_abbreviation):
-        global last_abbreviation
+        global last_abbreviation # pylint: disable=global-statement
         if wrap_abbreviation:
             snippet = emmet.expand(wrap_abbreviation, self.options)
             utils.replace_with_snippet(self.view, edit, self.region, snippet)
@@ -23,7 +23,8 @@ class EmmetWrapWithAbbreviation(sublime_plugin.TextCommand):
         region = find_context_tag(self.view, sel.begin(), opt) if sel.empty() else sel
         return region
 
-    def input(self, *args, **kw):
+    def input(self, *args, **kwargs):
+        # pylint: disable=attribute-defined-outside-init
         sel = self.view.sel()[0]
         self.region = self.get_range()
         self.lines = get_content(self.view, self.region, True)

@@ -207,20 +207,19 @@ def get_size(data: bytes):
 
     if size >= 2 and data.startswith(b'\377\330'):
         # JPEG
-        with io.BytesIO(data) as input:
-            input.seek(0)
-            input.read(2)
-            b = input.read(1)
+        with io.BytesIO(data) as inp:
+            inp.seek(0)
+            inp.read(2)
+            b = inp.read(1)
             while (b and ord(b) != 0xDA):
-                while (ord(b) != 0xFF):
-                    b = input.read(1)
-                while (ord(b) == 0xFF):
-                    b = input.read(1)
-                if (ord(b) >= 0xC0 and ord(b) <= 0xC3):
-                    input.read(3)
-                    h, w = struct.unpack(">HH", input.read(4))
+                while ord(b) != 0xFF:
+                    b = inp.read(1)
+                while ord(b) == 0xFF:
+                    b = inp.read(1)
+                if 0xC0 <= ord(b) <= 0xC3:
+                    inp.read(3)
+                    h, w = struct.unpack(">HH", inp.read(4))
                     break
-                else:
-                    input.read(int(struct.unpack(">H", input.read(2))[0]) - 2)
-                b = input.read(1)
+                inp.read(int(struct.unpack(">H", inp.read(2))[0]) - 2)
+                b = inp.read(1)
             return int(w), int(h)

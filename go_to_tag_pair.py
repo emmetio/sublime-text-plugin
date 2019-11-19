@@ -90,7 +90,7 @@ class EmmetHideTagPreview(sublime_plugin.TextCommand):
 
 
 class PreviewTagPair(sublime_plugin.EventListener):
-    def on_query_context(self, view: sublime.View, key: str, operator, operand, match_all):
+    def on_query_context(self, view: sublime.View, key: str, *args):
         if key == 'emmet_tag_preview':
             buffer_id = view.buffer_id()
             if buffer_id in previews_by_buffer:

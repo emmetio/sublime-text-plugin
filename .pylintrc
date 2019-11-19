@@ -3,3 +3,10 @@ init-hook='import sys; sys.path.append("/Applications/Sublime Text.app/Contents/
 
 max-line-length=120
 good-names=i,j,df,pt,fn,s,ch,m
+ignored-argument-names=arg|args|kwargs
+
+disable=
+    invalid-name,
+    missing-docstring,
+    arguments-differ,
+    bare-except
