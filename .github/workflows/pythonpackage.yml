@@ -33,5 +33,5 @@ jobs:
     - name: Upload artifact
       uses: actions/upload-artifact@v1.0.0
       with:
-        name: Emmet.sublime-package
+        name: Sublime Text package
         path: ./Emmet.sublime-package
