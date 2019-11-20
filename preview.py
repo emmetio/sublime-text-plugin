@@ -3,7 +3,7 @@ import html
 import sublime
 
 phantom_sets_by_buffer = {}
-previews_by_buffer = set()
+previews_by_buffer = {}
 
 def plugin_unloaded():
     for wnd in sublime.windows():
@@ -32,8 +32,8 @@ def show(view, marker, as_phantom=False):
             r = sublime.Region(marker.region.end(), marker.region.end())
             phantoms = [sublime.Phantom(r, phantom_content(content), sublime.LAYOUT_INLINE)]
             phantom_set.update(phantoms)
-        else:
-            previews_by_buffer.add(buffer_id)
+        elif not view.is_popup_visible() or previews_by_buffer.get(buffer_id, None) != marker.abbreviation:
+            previews_by_buffer[buffer_id] = marker.abbreviation
             view.show_popup(popup_content(content), sublime.COOPERATE_WITH_AUTO_COMPLETE, marker.region.begin(), 400, 300)
 
 
@@ -42,7 +42,7 @@ def hide(view):
     buffer_id = view.buffer_id()
 
     if buffer_id in previews_by_buffer:
-        previews_by_buffer.remove(buffer_id)
+        del previews_by_buffer[buffer_id]
         view.hide_popup()
 
     if buffer_id in phantom_sets_by_buffer:
@@ -58,7 +58,7 @@ def toggle(view, marker, pos, as_phantom=False):
         hide(view)
 
 def format_snippet(text, class_name=None):
-    class_attr = class_name and (' class="%s"' % class_name) or ''
+    class_attr = (' class="%s"' % class_name) if class_name else ''
     lines = [
         '<div%s style="padding-left: %dpx"><code>%s</code></div>' % (class_attr, indent_size(line, 20), html.escape(line, False)) for line in text.splitlines()
     ]

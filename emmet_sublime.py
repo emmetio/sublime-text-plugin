@@ -2,6 +2,7 @@ import re
 import sublime
 from .emmet import expand as expand_abbreviation, extract, Config, \
     stylesheet_abbreviation, markup_abbreviation, ScannerException
+from .emmet.token_scanner import TokenScannerException
 from .emmet.html_matcher import match, balanced_inward, balanced_outward
 from .emmet.css_matcher import match as match_css, \
     balanced_inward as css_balanced_inward, \
@@ -86,13 +87,15 @@ def validate(abbr: str, config: dict=None):
 
         m = re_simple.match(abbr)
         return {
+            'abbr': abbr,
             'valid': True,
             'simple': abbr == '.' or bool(m),
             'matched': m.group(1) in known_tags or m.group(1) in resolved.snippets if m else False
         }
 
-    except ScannerException as err:
+    except (ScannerException, TokenScannerException) as err:
         return {
+            'abbr': abbr,
             'valid': False,
             'error': err.message,
             'pos': err.pos,
@@ -100,6 +103,7 @@ def validate(abbr: str, config: dict=None):
         }
 
     return {
+        'abbr': abbr,
         'valid': False,
         'error': '',
         'pos': -1,
@@ -213,7 +217,7 @@ def get_css_context(view: sublime.View, pt: int) -> dict:
     return None
 
 
-def get_options(view: sublime.View, pt: int, with_context=False):
+def get_options(view: sublime.View, pt: int, with_context=False) -> dict:
     "Returns Emmet options for given character location in view"
     syntax_info = syntax.info(view, pt, 'html')
 
@@ -227,7 +231,7 @@ def get_options(view: sublime.View, pt: int, with_context=False):
     syntax_info['inline'] = syntax.is_inline(view, pt)
     return syntax_info
 
-def extract_abbreviation(view: sublime.View, loc: int):
+def extract_abbreviation(view: sublime.View, loc: int, opt: dict=None):
     """
     Extracts abbreviation from given location in view. Locations could be either
     `int` (a character location in view) or `list`/`tuple`/`sublime.Region`.
@@ -251,7 +255,9 @@ def extract_abbreviation(view: sublime.View, loc: int):
 
     text = view.substr(region)
     begin = region.begin()
-    opt = get_options(view, pt)
+
+    if opt is None:
+        opt = get_options(view, pt)
 
     if opt['type'] == 'stylesheet':
         # No look-ahead for stylesheets: they do not support brackets syntax

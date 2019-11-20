@@ -7,7 +7,7 @@ from . import syntax
 from . import utils
 
 
-def in_activation_context(view, caret, prev_pos, completion_contex=False) -> bool:
+def in_activation_context(view: sublime.View, caret: int, prev_pos: int, completion_contex=False) -> bool:
     """
     Check that given caret position is inside abbreviation activation context,
     e.g. caret is in location where user expects abbreviation.
@@ -27,7 +27,7 @@ def in_activation_context(view, caret, prev_pos, completion_contex=False) -> boo
         if s_name == 'jsx':
             # In JSX, we rely on prefixed match: we should activate abbreviation
             # only of its prefixed with `<`
-            return prev_pos > 0 and view.substr(prev_pos - 1) == '<' or completion_contex
+            return view.substr(prev_pos - 1) == '<' if prev_pos > 0 else completion_contex
 
         # In all other cases just check if we are in abbreviation scope
         return in_scope
@@ -72,12 +72,19 @@ def activate_marker(view: sublime.View, pt: int):
 
 
 def update_marker(view: sublime.View, mrk: marker.AbbreviationMarker, loc: int):
-    abbr_data = emmet.extract_abbreviation(view, loc)
+    """
+    Updates marker with newly extracted abbreviation from given location.
+    If abbreviation is not fount or invalid, disposes it
+    """
+    abbr_data = emmet.extract_abbreviation(view, loc, mrk.options)
     if abbr_data:
         mrk.update(abbr_data[0])
-    else:
-        # Unable to extract abbreviation or abbreviation is invalid
-        marker.dispose(view)
+        return mrk
+
+    # Unable to extract abbreviation or abbreviation is invalid
+    marker.dispose(view)
+    return None
+
 
 def nonpanel(fn):
     "Method dectorator for running actions in code views only"
@@ -99,7 +106,7 @@ class AbbreviationMarkerListener(sublime_plugin.EventListener):
         self.last_pos = utils.get_caret(view)
 
     @nonpanel
-    def on_selection_modified(self, view: sublime.View):
+    def on_selection_modified_async(self, view: sublime.View):
         self.last_pos = utils.get_caret(view)
         mrk = marker.get(view)
 
@@ -110,47 +117,45 @@ class AbbreviationMarkerListener(sublime_plugin.EventListener):
             preview.hide(view)
 
     @nonpanel
-    def on_modified(self, view: sublime.View):
+    def on_modified_async(self, view: sublime.View):
         last_pos = self.last_pos
         caret = utils.get_caret(view)
         mrk = marker.get(view)
+        self.last_pos = caret
 
         if mrk:
             mrk.validate()
-            if not mrk.valid:
-                # User removed marked abbreviation
-                marker.dispose(view)
-                return
 
-            # Check if modification was made inside marked region
-            prev_inside = mrk.contains(last_pos)
-            next_inside = mrk.contains(caret)
+            # Check if modification was made inside marked region or at marker edges
+            same_line = view.line(caret).contains(mrk.region)
+            modified_before = same_line and caret <= mrk.region.begin()
+            modified_after = same_line and caret >= mrk.region.end()
 
-            if prev_inside and next_inside:
+            if mrk.contains(caret):
                 # Modifications made completely inside abbreviation, should be already validated
                 pass
-            elif prev_inside:
+            elif modified_after:
                 # Modifications made right after marker
                 # To properly track updates, we can't just add a [prev_caret, caret]
                 # substring since user may type `[` which will automatically insert `]`
                 # as a snippet and we won't be able to properly track it.
                 # We should extract abbreviation instead.
-                update_marker(view, mrk, caret)
-            elif next_inside and caret > last_pos:
+                mrk = update_marker(view, mrk, caret)
+            elif modified_before:
                 # Modifications made right before marker, ensure it results
                 # # in valid abbreviation
-                update_marker(view, mrk, (last_pos, mrk.region.end()))
-            elif not next_inside:
+                mrk = update_marker(view, mrk, mrk.region.end())
+            else:
                 # Modifications made outside marker
                 marker.dispose(view)
                 mrk = None
 
-        if not mrk and caret > last_pos and view.settings().get('emmet_auto_mark') and\
+        if not mrk and caret >= last_pos and view.settings().get('emmet_auto_mark') and \
             in_activation_context(view, caret, last_pos):
             mrk = marker.extract(view, caret)
 
 
-    def on_query_context(self, view: sublime.View, key: str, op: str, operand: str, match_all: bool):
+    def on_query_context(self, view: sublime.View, key: str, *args):
         if key == 'emmet_abbreviation':
             # Check if caret is currently inside Emmet abbreviation
             mrk = marker.get(view)

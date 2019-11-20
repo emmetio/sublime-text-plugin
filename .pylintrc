@@ -9,4 +9,5 @@ disable=
     invalid-name,
     missing-docstring,
     arguments-differ,
+    no-self-use,
     bare-except
