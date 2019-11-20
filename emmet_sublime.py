@@ -69,7 +69,11 @@ def expand(abbr: str, config: dict=None):
             output_opt.update(config.get('options'))
     opt['options'] = output_opt
 
-    return expand_abbreviation(abbr, opt)
+    view = sublime.active_window().active_view()
+    if view:
+        global_config = view.settings().get('emmet_config')
+
+    return expand_abbreviation(abbr, opt, global_config)
 
 
 def validate(abbr: str, config: dict=None):
@@ -219,17 +223,17 @@ def get_css_context(view: sublime.View, pt: int) -> dict:
 
 def get_options(view: sublime.View, pt: int, with_context=False) -> dict:
     "Returns Emmet options for given character location in view"
-    syntax_info = syntax.info(view, pt, 'html')
+    config = syntax.info(view, pt, 'html')
 
     # Get element context
     if with_context:
-        if syntax_info['type'] == 'stylesheet':
-            syntax_info['context'] = get_css_context(view, pt)
-        elif syntax.is_html(syntax_info['syntax']):
-            syntax_info['context'] = get_tag_context(view, pt, syntax.is_xml(syntax_info['syntax']))
+        if config['type'] == 'stylesheet':
+            config['context'] = get_css_context(view, pt)
+        elif syntax.is_html(config['syntax']):
+            config['context'] = get_tag_context(view, pt, syntax.is_xml(config['syntax']))
 
-    syntax_info['inline'] = syntax.is_inline(view, pt)
-    return syntax_info
+    config['inline'] = syntax.is_inline(view, pt)
+    return config
 
 def extract_abbreviation(view: sublime.View, loc: int, opt: dict=None):
     """

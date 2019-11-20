@@ -127,7 +127,7 @@ class AbbreviationMarkerListener(sublime_plugin.EventListener):
             mrk.validate()
 
             # Check if modification was made inside marked region or at marker edges
-            same_line = view.line(caret).contains(mrk.region)
+            same_line = mrk.valid and view.line(caret).contains(mrk.region)
             modified_before = same_line and caret <= mrk.region.begin()
             modified_after = same_line and caret >= mrk.region.end()
 

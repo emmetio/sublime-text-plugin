@@ -34,5 +34,20 @@
 	],
 
 	// Max size of file to convert to data:URL. Set to 0 to disable limit
-	"emmet_max_data_url": 20480
+	"emmet_max_data_url": 20480,
+
+	// Config for Emmet
+	// See `UserConfig` interface for supported properties: https://github.com/emmetio/emmet/blob/master/src/config.ts
+	// Example:
+	// "emmet_config": {
+	// 	"markup": {
+	// 		"snippets": {
+	// 			"foo": "foo.bar>baz"
+	// 		},
+	// 		"options": {
+	// 			"output.selfClosingStyle": "xhtml"
+	// 		}
+	// 	}
+	// }
+	"emmet_config": {}
 }
