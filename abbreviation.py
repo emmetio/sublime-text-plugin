@@ -1,3 +1,4 @@
+import time
 import sublime
 import sublime_plugin
 from . import emmet_sublime as emmet
@@ -87,7 +88,7 @@ def update_marker(view: sublime.View, mrk: marker.AbbreviationMarker, loc: int):
 
 
 def nonpanel(fn):
-    "Method dectorator for running actions in code views only"
+    "Method decorator for running actions in code views only"
     def wrapper(self, view):
         if not view.settings().get('is_widget'):
             fn(self, view)
@@ -106,7 +107,7 @@ class AbbreviationMarkerListener(sublime_plugin.EventListener):
         self.last_pos = utils.get_caret(view)
 
     @nonpanel
-    def on_selection_modified_async(self, view: sublime.View):
+    def on_selection_modified(self, view: sublime.View):
         self.last_pos = utils.get_caret(view)
         mrk = marker.get(view)
 
@@ -117,7 +118,15 @@ class AbbreviationMarkerListener(sublime_plugin.EventListener):
             preview.hide(view)
 
     @nonpanel
-    def on_modified_async(self, view: sublime.View):
+    def on_selection_modified_async(self, view: sublime.View):
+        mrk = marker.get(view)
+        if mrk and mrk.region and mrk.options and 'context' not in mrk.options:
+            # Context is not attached due to large document (to reduce typing lag)
+            emmet.attach_context(view, mrk.region.begin(), mrk.options)
+            preview.toggle(view, mrk, utils.get_caret(view), preview_as_phantom(mrk))
+
+    @nonpanel
+    def on_modified(self, view: sublime.View):
         last_pos = self.last_pos
         caret = utils.get_caret(view)
         mrk = marker.get(view)
@@ -153,7 +162,6 @@ class AbbreviationMarkerListener(sublime_plugin.EventListener):
         if not mrk and caret >= last_pos and view.settings().get('emmet_auto_mark') and \
             in_activation_context(view, caret, last_pos):
             mrk = marker.extract(view, caret)
-
 
     def on_query_context(self, view: sublime.View, key: str, *args):
         if key == 'emmet_abbreviation':
@@ -201,6 +209,11 @@ class EmmetExpandAbbreviation(sublime_plugin.TextCommand):
 
         if mrk.contains(caret):
             if mrk.valid:
+                if 'context' not in mrk.options:
+                    # No context captured, might be due to performance optimization
+                    # in large document
+                    emmet.attach_context(self.view, caret, mrk.options)
+
                 snippet = emmet.expand(mrk.abbreviation, mrk.options)
                 utils.replace_with_snippet(self.view, edit, mrk.region, snippet)
 

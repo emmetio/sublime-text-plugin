@@ -178,7 +178,7 @@ def get_tag_context(view: sublime.View, pt: int, xml=None) -> dict:
         syntax_name = syntax.from_pos(view, pt)
         xml = syntax.is_xml(syntax_name)
 
-    matched_tag = match(content, pt, { 'xml': xml })
+    matched_tag = match(content, pt, {'xml': xml})
     if matched_tag:
         open_tag = matched_tag.open
         close_tag = matched_tag.close
@@ -227,12 +227,19 @@ def get_options(view: sublime.View, pt: int, with_context=False) -> dict:
 
     # Get element context
     if with_context:
-        if config['type'] == 'stylesheet':
-            config['context'] = get_css_context(view, pt)
-        elif syntax.is_html(config['syntax']):
-            config['context'] = get_tag_context(view, pt, syntax.is_xml(config['syntax']))
+        attach_context(view, pt, config)
 
     config['inline'] = syntax.is_inline(view, pt)
+    return config
+
+
+def attach_context(view: sublime.View, pt: int, config: dict) -> dict:
+    "Attaches context for given Emmet config"
+    if config['type'] == 'stylesheet':
+        config['context'] = get_css_context(view, pt)
+    elif syntax.is_html(config['syntax']):
+        config['context'] = get_tag_context(view, pt, syntax.is_xml(config['syntax']))
+
     return config
 
 def extract_abbreviation(view: sublime.View, loc: int, opt: dict=None):

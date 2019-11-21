@@ -10,7 +10,7 @@
 
 	// Display open tag preview next to closing tag when caret is inside it
 	// and open tag is not currently visible
-	"emmet_tag_preview": true,
+	"emmet_tag_preview": false,
 
 	// The maximum file size where Emmet will capture HTML tag context for abbreviation.
 	// Tag context is used for resolving implicit tag names in abbreviation
@@ -22,7 +22,7 @@
 	// defined in `emmet_comment_scopes`. When enabled, if you run Toggle Comment action
 	// without selecting any text, Emmet will try to find matching HTML tag pair
 	// for current caret position and comment entire tag instead of current line.
-	// If this option is disabled, you can create keyboard shortcut for 
+	// If this option is disabled, you can create keyboard shortcut for
 	// `emmet_toggle_comment` action.
 	"emmet_comment": true,
 	"emmet_comment_scopes": [
@@ -37,7 +37,7 @@
 	"emmet_max_data_url": 20480,
 
 	// Config for Emmet
-	// See `UserConfig` interface for supported properties: https://github.com/emmetio/emmet/blob/master/src/config.ts
+	// See `GlobalConfig` interface for supported properties: https://github.com/emmetio/emmet/blob/master/src/config.ts
 	// Example:
 	// "emmet_config": {
 	// 	"markup": {
