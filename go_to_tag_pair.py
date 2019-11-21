@@ -89,17 +89,24 @@ class EmmetHideTagPreview(sublime_plugin.TextCommand):
                 previews_by_buffer[buffer_id] = (pt, False)
 
 
+def allow_preview(fn):
+    "Method decorator for running action callbacks for in allowed tag preview context"
+    def wrapper(self, view):
+        settings = view.settings()
+        if not settings.get('is_widget') and settings.get('emmet_tag_preview'):
+            fn(self, view)
+    return wrapper
+
 class PreviewTagPair(sublime_plugin.EventListener):
     def on_query_context(self, view: sublime.View, key: str, *args):
         if key == 'emmet_tag_preview':
             buffer_id = view.buffer_id()
             if buffer_id in previews_by_buffer:
                 return previews_by_buffer[buffer_id][1]
+        return None
 
+    @allow_preview
     def on_selection_modified_async(self, view: sublime.View):
-        if not view.settings().get('emmet_tag_preview'):
-            return
-
         caret = utils.get_caret(view)
         syntax_name = syntax.from_pos(view, caret)
         buffer_id = view.buffer_id()

@@ -172,7 +172,9 @@ def evaluate_math(code: str, pos: int, options=None):
 
 def get_tag_context(view: sublime.View, pt: int, xml=None) -> dict:
     "Returns matched HTML/XML tag for given point in view"
+    ctx = None
     content = view.substr(sublime.Region(0, view.size()))
+
     if xml is None:
         # Autodetect XML dialect
         syntax_name = syntax.from_pos(view, pt)
@@ -199,9 +201,7 @@ def get_tag_context(view: sublime.View, pt: int, xml=None) -> dict:
                 value = value.strip(value[0])
             ctx['attributes'][name] = value
 
-        return ctx
-
-    return None
+    return ctx
 
 
 def get_css_context(view: sublime.View, pt: int) -> dict:
