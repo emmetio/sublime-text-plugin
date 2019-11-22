@@ -24,7 +24,7 @@ jobs:
     - name: Create package
       run: |
         rm ./__init__.py
-        # Copy keymaps for ll platforms (for some reason, Default.sublime-keymap doesn't always works)
+        # Copy keymaps for all platforms (for some reason, Default.sublime-keymap doesn't always works)
         cp ./Default.sublime-keymap ./Default\ \(OSX\).sublime-keymap
         cp ./Default.sublime-keymap ./Default\ \(Windows\).sublime-keymap
         cp ./Default.sublime-keymap ./Default\ \(Linux\).sublime-keymap
