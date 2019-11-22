@@ -30,6 +30,8 @@ jobs:
         python tools/registry.py > registry.json
     - name: GH Release
       uses: softprops/action-gh-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         files: |
           Emmet.zip
