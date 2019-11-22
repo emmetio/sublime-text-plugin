@@ -30,6 +30,17 @@ ul#nav>li.item$*4>a{Item $}
 
 [Read more about Emmet features](https://docs.emmet.io)
 
+## Installation
+
+Due to development stage, this package must be installed from custom repository:
+
+1. In Sublime Text, open `Command Palette`, find and run `Package Control: Add Repository` command
+2. Enter the following URL into dialog and hit Enter: https://github.com/emmetio/sublime-text-plugin/releases/latest/download/registry.json
+3. From `Command Palette`, run `Package Control: Install Package` command.
+4. In opened packages list, find `Emmet2` package and install it
+
+If you’re unable to find `Emmet2` package on last step or installed package doesn’t work as expected, restart Sublime Text and try again
+
 ## Expanding abbreviation
 
 If you used [previous version](https://github.com/sergeche/emmet-sublime) of Emmet plugin, you already know how to expand abbreviations: type something like `ul>li.items*4` and hit <kbd>Tab</kbd> or <kbd>Ctrl-E</kbd>. While this approach generally works, it has lots of downsides:
