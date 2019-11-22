@@ -17,7 +17,7 @@ now = datetime.utcnow()
 registry = {
     "schema_version": "3.0.0",
     "packages": [{
-        "name": "Emmet 2.0",
+        "name": "Emmet2",
         "details": "https://github.com/emmetio/sublime-text-plugin",
         "releases": [{
             "version": version,
