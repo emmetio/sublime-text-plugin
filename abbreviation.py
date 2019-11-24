@@ -1,4 +1,3 @@
-import time
 import sublime
 import sublime_plugin
 from . import emmet_sublime as emmet
@@ -207,7 +206,11 @@ class EmmetExpandAbbreviation(sublime_plugin.TextCommand):
         mrk = marker.get(self.view)
         caret = utils.get_caret(self.view)
 
-        if mrk.contains(caret):
+        if not mrk:
+            # No marker, try to extract abbreviation for current context
+            mrk = marker.extract(self.view, caret)
+
+        if mrk and mrk.contains(caret):
             if mrk.valid:
                 if 'context' not in mrk.options:
                     # No context captured, might be due to performance optimization
