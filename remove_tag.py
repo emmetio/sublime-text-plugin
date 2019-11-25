@@ -22,15 +22,15 @@ def remove_tag(view: sublime.View, edit: sublime.Edit, tag: dict):
             # Gracefully remove open and close tags and tweak indentation on tag contents
             view.erase(edit, sublime.Region(inner_region.end(), close_tag.end()))
 
-            start_line = view.line(open_tag.begin())
-            base_indent = get_line_indent(view, start_line)
+            base_indent = get_line_indent(view, open_tag.begin())
+            inner_indent = get_line_indent(view, inner_region.begin())
             inner_lines = view.lines(inner_region)[1:]
             inner_lines.reverse()
 
             for line in inner_lines:
-                indent = get_line_indent(view, line)
-                indent_region = sublime.Region(line.begin(), line.begin() + len(indent))
-                view.replace(edit, indent_region, base_indent)
+                indent_region = sublime.Region(line.begin(), line.begin() + len(inner_indent))
+                if view.substr(indent_region).isspace():
+                    view.replace(edit, indent_region, base_indent)
 
             view.erase(edit, sublime.Region(open_tag.begin(), inner_region.begin()))
         else:
@@ -39,7 +39,9 @@ def remove_tag(view: sublime.View, edit: sublime.Edit, tag: dict):
         view.erase(edit, tag['open'])
 
 def get_line_indent(view: sublime.View, line: sublime.Region) -> str:
-    "Returns indentation for given line"
+    "Returns indentation for given line or line found from given character location"
+    if isinstance(line, int):
+        line = view.line(line)
     pos = line.begin()
     end = line.end()
     while pos < end and view.substr(pos).isspace():
