@@ -2,7 +2,6 @@ import re
 import sublime
 import sublime_plugin
 from . import emmet_sublime as emmet
-from . import preview
 from . import utils
 
 re_indent = re.compile(r'^\s+')
@@ -23,16 +22,19 @@ class EmmetWrapWithAbbreviation(sublime_plugin.TextCommand):
 
         self.options = emmet.get_options(self.view, sel.begin(), True)
         self.region = get_wrap_region(self.view, sel, self.options)
-        self.lines = get_content(self.view, self.region, True)
-        self.options['text'] = self.lines
+        lines = get_content(self.view, self.region, True)
+        self.options['text'] = lines
+        preview = len(self.region) < self.view.settings().get('emmet_wrap_size_preview', -1)
 
-        return WrapAbbreviationInputHandler(self.options)
+        return WrapAbbreviationInputHandler(self.view, self.region, self.options, preview)
 
 
 class WrapAbbreviationInputHandler(sublime_plugin.TextInputHandler):
-    def __init__(self, options: dict):
+    def __init__(self, view: sublime.View, region: sublime.Region, options: dict, preview=False):
+        self.view = view
+        self.region = region
         self.options = options.copy()
-        self.options['preview'] = True
+        self.instant_preview = preview
 
     def placeholder(self):
         return 'Enter abbreviation'
@@ -44,18 +46,40 @@ class WrapAbbreviationInputHandler(sublime_plugin.TextInputHandler):
         data = emmet.validate(text, self.options)
         return data and data.get('valid')
 
+    def cancel(self):
+        undo_preview(self.view)
+
+    def confirm(self, text: str):
+        undo_preview(self.view)
+
     def preview(self, text: str):
         abbr = text.strip()
         snippet = None
+
+        undo_preview(self.view)
+
         if abbr:
             try:
                 result = emmet.expand(abbr, self.options)
-                snippet = preview.format_snippet(result)
+                if self.instant_preview:
+                    self.view.run_command('emmet_wrap_with_abbreviation_preview', {
+                        'region': (self.region.begin(), self.region.end()),
+                        'result': result
+                    })
             except:
                 snippet = '<div class="error">Invalid abbreviation</div>'
 
         if snippet:
             return sublime.Html(popup_content(snippet))
+
+        return None
+
+
+class EmmetWrapWithAbbreviationPreview(sublime_plugin.TextCommand):
+    "Internal commant to preview abbreviation in text"
+    def run(self, edit: sublime.Edit, region: tuple, result: str):
+        r = sublime.Region(*region)
+        utils.replace_with_snippet(self.view, edit, r, result)
 
 
 def in_range(region: sublime.Region, pt: int):
@@ -111,3 +135,9 @@ def get_wrap_region(view: sublime.View, sel: sublime.Region, options: dict) -> s
             return utils.narrow_to_non_space(view, r)
 
     return sel
+
+
+def undo_preview(view: sublime.View):
+    last_command = view.command_history(0, True)[0]
+    if last_command == 'emmet_wrap_with_abbreviation_preview':
+        view.run_command('undo')

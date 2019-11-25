@@ -18,6 +18,9 @@
 	// requires full document scan
 	"emmet_context_size_limit": 102400,
 
+	// The maximum selection size for instant preview of Wrap with Abbreviation action.
+	"emmet_wrap_size_preview": 10240,
+
 	// Override default Toggle Comment with Emmet variation for specified syntax scopes
 	// defined in `emmet_comment_scopes`. When enabled, if you run Toggle Comment action
 	// without selecting any text, Emmet will try to find matching HTML tag pair
