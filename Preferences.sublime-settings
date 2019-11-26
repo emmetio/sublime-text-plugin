@@ -2,6 +2,9 @@
 	// Automatically mark Emmet abbreviation when typing text
 	"emmet_auto_mark": true,
 
+	// Preview captured abbreviations
+	"emmet_abbreviation_preview": true,
+
 	// Expand Emmet abbreviation with tab key when in abbreviation marker
 	"emmet_tab_expand": true,
 
