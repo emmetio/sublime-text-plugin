@@ -32,6 +32,8 @@ ul#nav>li.item$*4>a{Item $}
 
 ## Installation
 
+> Please remove old Emmet plugin (https://packagecontrol.io/packages/Emmet) first, otherwise new plugin won’t work.
+
 Due to development stage, this package must be installed from custom repository:
 
 1. In Sublime Text, open `Command Palette`, find and run `Package Control: Add Repository` command
