@@ -107,6 +107,9 @@ class AbbreviationMarkerListener(sublime_plugin.EventListener):
 
     @nonpanel
     def on_selection_modified(self, view: sublime.View):
+        if not view.settings().get('emmet_abbreviation_preview', False):
+            return
+
         self.last_pos = utils.get_caret(view)
         mrk = marker.get(view)
 
