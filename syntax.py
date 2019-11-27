@@ -1,46 +1,13 @@
-"""
-Syntax-related methods
-"""
+import sublime
 
-# Editor scope to Emmet syntax mapping
-syntax_scopes = {
-    'html': 'text.html - source - meta.attribute-with-value.style',
-    'xml': 'text.xml - text.xml.xsl',
-    'xsl': 'text.xml.xsl',
-    'jsx': 'source.js.jsx',
-    'haml': 'source.haml',
-    'jade': 'text.jade | source.pyjade',
-    'pug': 'text.pug | source.pypug',
-    'slim': 'text.slim',
-
-    'css': 'source.css | meta.attribute-with-value.style.html string.quoted',
-    'sass': 'source.sass',
-    'scss': 'source.scss',
-    'less': 'source.less',
-    'stylus': 'source.stylus',
-    'sss': 'source.sss'
-}
-
-# List of scopes with inline context
-inline_scopes = [
-    'meta.attribute-with-value.style.html'
-]
-
-# List of scope selectors where abbreviation marker should be activated,
-# e.g. plugin will mark text that user types as abbreviation
-marker_activation_scopes = [
-    'text - (entity, punctuation.definition.tag.end) - comment',
-    'source - meta.selector - meta.property-value - meta.property-name - string - punctuation - comment',
-    # Inline CSS
-    'text.html meta.attribute-with-value.style string.quoted'
-]
+__doc__ = "Syntax-related methods"
 
 markup_syntaxes = ['html', 'xml', 'xsl', 'jsx', 'haml', 'jade', 'pug', 'slim']
 stylesheet_syntaxes = ['css', 'scss', 'sass', 'less', 'sss', 'stylus', 'postcss']
 xml_syntaxes = ['xml', 'xsl', 'jsx']
 html_syntaxes = ['html']
 
-def info(view, pt, fallback=None):
+def info(view: sublime.View, pt: int, fallback=None):
     """
     Returns Emmet syntax info for given location in view.
     Syntax info is an abbreviation type (either 'markup' or 'stylesheet') and syntax
@@ -58,51 +25,59 @@ def info(view, pt, fallback=None):
         }
 
 
-def from_pos(view, pt):
+def from_pos(view: sublime.View, pt: int):
     "Returns Emmet syntax for given location in view"
-    for name, sel in syntax_scopes.items():
-        if view.match_selector(pt, sel):
-            return name
+    scopes = view.settings().get('emmet_syntax_scopes', {})
+    if scopes:
+        for name, sel in scopes.items():
+            if view.match_selector(pt, sel):
+                return name
 
     return None
 
 
-def is_xml(syntax):
+def is_xml(syntax: str):
     "Check if given syntax is XML dialect"
     return syntax in xml_syntaxes
 
 
-def is_html(syntax):
+def is_html(syntax: str):
     "Check if given syntax is HTML dialect (including XML)"
     return syntax in html_syntaxes or is_xml(syntax)
 
 
-def is_supported(syntax):
+def is_supported(syntax: str):
     "Check if given syntax name is supported by Emmet"
     return syntax in markup_syntaxes or syntax in stylesheet_syntaxes
 
 
-def is_css(syntax):
+def is_css(syntax: str):
     """
     Check if given syntax is a CSS dialect. Note that it’s not the same as stylesheet
     syntax: for example, SASS is a stylesheet but not CSS dialect (but SCSS is)
     """
     return syntax in ('css', 'scss', 'less')
 
-def is_inline(view, pt):
+def is_inline(view: sublime.View, pt: int):
     "Check if abbreviation in given location must be expanded as single line"
-    return matches_selector(view, pt, inline_scopes)
+    scopes = view.settings().get('emmet_inline_scopes', [])
+    return matches_selector(view, pt, scopes)
 
 
-def in_activation_scope(view, pt):
+def in_activation_scope(view: sublime.View, pt: int):
     """
     Check if given location in view can be used for abbreviation marker activation.
     Note that this method implies that caret is in Emmet-supported syntax
     """
-    return matches_selector(view, pt, marker_activation_scopes)
+    ignore = view.settings().get('emmet_ignore_scopes', [])
+    if matches_selector(view, pt, ignore):
+        return False
+
+    scopes = view.settings().get('emmet_abbreviation_scopes', [])
+    return matches_selector(view, pt, scopes)
 
 
-def matches_selector(view, pt, selectors):
+def matches_selector(view: sublime.View, pt: int, selectors: list):
     "Check if given location in view one of the given selectors"
     for sel in selectors:
         if view.match_selector(pt, sel):

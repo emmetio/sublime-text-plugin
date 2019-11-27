@@ -5,6 +5,44 @@
 	// Preview captured abbreviations
 	"emmet_abbreviation_preview": true,
 
+	// Editor scope to Emmet syntax mapping
+	"emmet_syntax_scopes": {
+		"html": "text.html - source - meta.attribute-with-value.style",
+		"xml": "text.xml - text.xml.xsl",
+		"xsl": "text.xml.xsl",
+		"jsx": "source.js.jsx",
+		"haml": "source.haml",
+		"jade": "text.jade | source.pyjade",
+		"pug": "text.pug | source.pypug",
+		"slim": "text.slim",
+
+		"css": "source.css | meta.attribute-with-value.style.html string.quoted",
+		"sass": "source.sass",
+		"scss": "source.scss",
+		"less": "source.less",
+		"stylus": "source.stylus",
+		"sss": "source.sss",
+	},
+
+	// List of scopes with inline context
+	"emmet_inline_scopes": [
+		"meta.attribute-with-value.style.html"
+	],
+
+	// List of scope selectors where abbreviation marker should be activated,
+	// e.g. plugin will mark text that user types as abbreviation
+	"emmet_abbreviation_scopes": [
+		"text - (entity, punctuation.definition.tag.end) - comment",
+		"source - meta.selector - meta.property-value - meta.property-name - string - punctuation - comment",
+		// Inline CSS
+		"text.html meta.attribute-with-value.style string.quoted"
+	],
+
+	// List of scopes where Emmet abbreviations should not be be captured.
+	// If avy of the following scopes matches, `emmet_abbreviation_scopes`
+	// will be ignored
+	"emmet_ignore_scopes": [],
+
 	// Expand Emmet abbreviation with tab key when in abbreviation marker
 	"emmet_tab_expand": true,
 
