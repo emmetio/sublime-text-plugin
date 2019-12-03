@@ -80,6 +80,7 @@ class EmmetWrapWithAbbreviationPreview(sublime_plugin.TextCommand):
     def run(self, edit: sublime.Edit, region: tuple, result: str):
         r = sublime.Region(*region)
         utils.replace_with_snippet(self.view, edit, r, result)
+        self.view.show_at_center(r.begin())
 
 
 def in_range(region: sublime.Region, pt: int):
