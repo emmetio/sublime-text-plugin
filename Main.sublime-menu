@@ -7,15 +7,9 @@
 		"children": [{
 			"caption": "Emmet2",
 			"children": [{
-				"command": "open_file",
-				"args": { "file": "${packages}/Emmet2/Preferences.sublime-settings" },
-				"caption": "Settings – Default"
-			}, {
-				"command": "open_file",
-				"args": { "file": "${packages}/User/Preferences.sublime-settings" },
-				"caption": "Settings – User"
-			}, {
-				"caption": "-"
+				"command": "edit_settings",
+				"args": { "base_file": "${packages}/Emmet2/Preferences.sublime-settings" },
+				"caption": "Settings"
 			}]
 		}]
 	}]
