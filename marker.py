@@ -4,6 +4,7 @@ from . import emmet_sublime as emmet
 from .emmet.extract_abbreviation import ExtractedAbbreviation
 
 markers = {}
+phantom_sets_by_buffer = {}
 abbr_region_id = 'emmet-abbreviation'
 
 def plugin_unloaded():
@@ -14,12 +15,13 @@ def plugin_unloaded():
 
 
 class AbbreviationMarker:
-    def __init__(self, view: sublime.View, abbr_data: ExtractedAbbreviation, options: dict=None):
+    def __init__(self, view: sublime.View, abbr_data: ExtractedAbbreviation, forced: bool=False, options: dict=None):
         self.view = view
         self.abbr_data = None
         # Do not capture context for large documents since it may reduce performance
         max_doc_size = view.settings().get('emmet_context_size_limit', 0)
         with_context = max_doc_size > 0 and view.size() < max_doc_size
+        self.forced = forced
         self.options = options or emmet.get_options(view, abbr_data.start, with_context)
         self.region = None
         self._data = None
@@ -91,10 +93,12 @@ class AbbreviationMarker:
         if region is None:
             region = get_region(self.view)
 
-        if region and not region.empty():
+        print('validate abbr data %s, forced? %s' % (region, self.forced))
+
+        if self.forced or (region and not region.empty()):
             prefix = self.options.get('prefix', '')
             abbr = self.view.substr(region)[len(prefix):]
-            self._data = emmet.validate(abbr, self.options)
+            self._data = emmet.validate(abbr, self.options) if abbr else None
             self.abbr_data.abbreviation = abbr
             self.region = region
             self.mark()
@@ -114,19 +118,35 @@ class AbbreviationMarker:
     def mark(self):
         "Marks abbreviation in view with current state"
         clear_region(self.view)
-        if self.region:
-            scope = '%s.emmet' % ('entity' if self.valid else 'error',)
-            self.view.add_regions(abbr_region_id, [self.region], scope, '',
-                sublime.DRAW_SOLID_UNDERLINE | sublime.DRAW_NO_FILL | sublime.DRAW_NO_OUTLINE)
+        if self.region is not None:
+            scope = '%s.emmet' % ('entity' if self.valid or self.forced else 'error',)
+            mark_opt = sublime.DRAW_SOLID_UNDERLINE | sublime.DRAW_NO_FILL | sublime.DRAW_NO_OUTLINE
+            self.view.add_regions(abbr_region_id, [self.region], scope, '', mark_opt)
+
+            if self.forced:
+                phantom_set = get_phantom_set(self.view)
+                phantom_region = sublime.Region(self.region.begin(), self.region.begin())
+                phantoms = [sublime.Phantom(phantom_region, phantom_content('>'), sublime.LAYOUT_INLINE)]
+                phantom_set.update(phantoms)
 
     def reset(self):
         "Resets current marker"
         clear_region(self.view)
+
+        buffer_id = self.view.buffer_id()
+        if buffer_id in phantom_sets_by_buffer:
+            del phantom_sets_by_buffer[buffer_id]
+            self.view.erase_phantoms(abbr_region_id)
+
         self.region = self.abbr_data = self._data = None
 
     def contains(self, pt):
         "Check if current abbreviation range contains given point"
-        return self.region and self.region.contains(pt)
+        if self.region is None:
+            return False
+
+        # For empty regions, check if given point is equal to region start
+        return self.region.contains(pt) if self.region else self.region.begin() == pt
 
     def snippet(self):
         "Returns expanded preview of current abbreviation"
@@ -149,10 +169,17 @@ class AbbreviationMarker:
 
         return None
 
+def enter(view: sublime.View, pos: int) -> AbbreviationMarker:
+    "Enters explicit abbreviation mode"
+    abbr_data = ExtractedAbbreviation('', pos, pos, pos)
+    mrk = AbbreviationMarker(view, abbr_data, True)
+    attach(view, mrk)
+    return mrk
 
-def create(view: sublime.View, abbr_data: ExtractedAbbreviation, options=None) -> AbbreviationMarker:
+
+def create(view: sublime.View, abbr_data: ExtractedAbbreviation, forced: bool=False, options=None) -> AbbreviationMarker:
     "Creates abbreviation marker"
-    return AbbreviationMarker(view, abbr_data, options)
+    return AbbreviationMarker(view, abbr_data, forced, options)
 
 
 def get(view: sublime.View) -> AbbreviationMarker:
@@ -198,6 +225,33 @@ def extract(view: sublime.View, loc: int) -> AbbreviationMarker:
         marker.reset()
     return None
 
+
+def get_phantom_set(view: sublime.View) -> sublime.PhantomSet:
+    buffer_id = view.buffer_id()
+    if buffer_id not in phantom_sets_by_buffer:
+        phantom_set = sublime.PhantomSet(view, abbr_region_id)
+        phantom_sets_by_buffer[buffer_id] = phantom_set
+    else:
+        phantom_set = phantom_sets_by_buffer[buffer_id]
+
+    return phantom_set
+
+
+def phantom_content(content):
+    return """
+    <body>
+        <style>
+            body {
+                background-color: var(--greenish);
+                color: #fff;
+                border-radius: 3px;
+                padding: 1px 3px;
+                position: relative;
+            }
+        </style>
+        <div class="main">%s</div>
+    </body>
+    """ % content
 
 class EmmetClearAbbreviationMarker(sublime_plugin.TextCommand):
     def run(self, edit):

@@ -134,6 +134,14 @@ class AbbreviationMarkerListener(sublime_plugin.EventListener):
         mrk = marker.get(view)
         self.last_pos = caret
 
+        if mrk and mrk.forced:
+            # User in forced abbreviation mode: try to put everything user types
+            # into marker, even if it’s invalid
+            print('caret: %d, last caret: %d, region: %s' % (caret, last_pos, mrk.region))
+            same_line = view.line(caret).contains(mrk.region)
+            if same_line and (mrk.region.contains(caret) or mrk.region.contains(last_pos)):
+                changed_region = sublime.Region(min(caret, last_pos), max(caret, last_pos))
+                mrk.validate(mrk.region.cover(changed_region))
         if mrk:
             mrk.validate()
 
@@ -154,7 +162,7 @@ class AbbreviationMarkerListener(sublime_plugin.EventListener):
                 mrk = update_marker(view, mrk, caret)
             elif modified_before:
                 # Modifications made right before marker, ensure it results
-                # # in valid abbreviation
+                # in valid abbreviation
                 mrk = update_marker(view, mrk, mrk.region.end())
             else:
                 # Modifications made outside marker
@@ -224,3 +232,15 @@ class EmmetExpandAbbreviation(sublime_plugin.TextCommand):
                 utils.replace_with_snippet(self.view, edit, mrk.region, snippet)
 
             marker.dispose(self.view)
+
+class EmmetEnterAbbreviation(sublime_plugin.TextCommand):
+    def run(self, edit: sublime.Edit):
+        caret = utils.get_caret(self.view)
+        mrk = marker.get(self.view)
+        has_caret = mrk and mrk.contains(caret)
+
+        if mrk:
+            mrk.reset()
+
+        if not has_caret:
+            marker.enter(self.view, caret)

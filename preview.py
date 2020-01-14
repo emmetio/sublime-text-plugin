@@ -52,7 +52,7 @@ def hide(view):
 
 def toggle(view, marker, pos, as_phantom=False):
     "Toggle Emmet abbreviation preview display for given marker and location"
-    if marker.contains(pos) and (not marker.simple or marker.type == 'stylesheet'):
+    if marker.contains(pos) and marker.abbreviation and (not marker.simple or marker.type == 'stylesheet'):
         show(view, marker, as_phantom)
     else:
         hide(view)
