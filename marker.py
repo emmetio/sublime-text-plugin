@@ -4,8 +4,8 @@ from . import emmet_sublime as emmet
 from .emmet.extract_abbreviation import ExtractedAbbreviation
 
 markers = {}
-phantom_sets_by_buffer = {}
 abbr_region_id = 'emmet-abbreviation'
+prefix_region_id = 'emmet-prefix'
 
 def plugin_unloaded():
     "Lifecycle hook when plugin is unloaded"
@@ -15,16 +15,20 @@ def plugin_unloaded():
 
 
 class AbbreviationMarker:
-    def __init__(self, view: sublime.View, abbr_data: ExtractedAbbreviation, forced: bool=False, options: dict=None):
+    def __init__(self, view: sublime.View, abbr_data: ExtractedAbbreviation, options: dict=None):
         self.view = view
         self.abbr_data = None
         # Do not capture context for large documents since it may reduce performance
         max_doc_size = view.settings().get('emmet_context_size_limit', 0)
         with_context = max_doc_size > 0 and view.size() < max_doc_size
-        self.forced = forced
         self.options = options or emmet.get_options(view, abbr_data.start, with_context)
         self.region = None
         self._data = None
+
+        if abbr_data.start != abbr_data.location:
+            prefix_region = sublime.Region(abbr_data.start, abbr_data.location)
+            self.view.add_regions(prefix_region_id, [prefix_region], 'markup.bold', '', sublime.DRAW_NO_OUTLINE)
+
         self.update(abbr_data)
 
     def __del__(self):
@@ -69,6 +73,19 @@ class AbbreviationMarker:
         return self._data.get('matched', False) if self._data else False
 
     @property
+    def forced(self):
+        """
+        Check if current abbreviation marker is forced, e.g. user explicitly
+        entered abbreviation mode
+        """
+        return self.abbr_data.location != self.abbr_data.start if self.abbr_data else None
+
+    @property
+    def full_region(self):
+        "Returns full marker region, including prefix"
+        return sublime.Region(self.abbr_data.start, self.abbr_data.location)
+
+    @property
     def error(self):
         "Check if currently extracted abbreviation can’t be expanded"
         return self._data and self._data.get('error')
@@ -85,59 +102,32 @@ class AbbreviationMarker:
 
     def update(self, abbr_data: ExtractedAbbreviation):
         "Updated marked data from given extracted abbreviation"
+        print('update data %s' % abbr_data)
         self.abbr_data = abbr_data
-        self.validate(sublime.Region(abbr_data.start, abbr_data.end))
+        self.validate(sublime.Region(abbr_data.location, abbr_data.end))
 
-    def validate(self, region: sublime.Region=None):
+    def validate(self, region: sublime.Region):
         "Validates currently marked abbreviation"
-        if region is None:
-            region = get_region(self.view)
-
-        print('validate abbr data %s, forced? %s' % (region, self.forced))
-
-        if self.forced or (region and not region.empty()):
-            prefix = self.options.get('prefix', '')
-            abbr = self.view.substr(region)[len(prefix):]
-            self._data = emmet.validate(abbr, self.options) if abbr else None
-            self.abbr_data.abbreviation = abbr
-            self.region = region
-            self.mark()
-        else:
-            self.reset()
-
+        abbr = self.view.substr(region)
+        print('validating %s: %s' % (region, abbr))
+        self._data = emmet.validate(abbr, self.options) if abbr else None
+        self.abbr_data.abbreviation = abbr
+        self.region = region
+        self.mark()
         return self.valid
-
-    def _validate_region(self, region: sublime.Region):
-        "Validates abbreviation found in given region in current view"
-        if region and not region.empty():
-            prefix = self.options.get('prefix', '')
-            abbr = self.view.substr(region)[len(prefix):]
-            return emmet.validate(abbr, self.options)
-        return None
 
     def mark(self):
         "Marks abbreviation in view with current state"
         clear_region(self.view)
         if self.region is not None:
-            scope = '%s.emmet' % ('entity' if self.valid or self.forced else 'error',)
+            # scope = 'region.greenish markup.bold %s' % ('entity' if self.valid or self.forced else 'error',)
+            scope = 'keyword.operator'
             mark_opt = sublime.DRAW_SOLID_UNDERLINE | sublime.DRAW_NO_FILL | sublime.DRAW_NO_OUTLINE
             self.view.add_regions(abbr_region_id, [self.region], scope, '', mark_opt)
-
-            if self.forced:
-                phantom_set = get_phantom_set(self.view)
-                phantom_region = sublime.Region(self.region.begin(), self.region.begin())
-                phantoms = [sublime.Phantom(phantom_region, phantom_content('>'), sublime.LAYOUT_INLINE)]
-                phantom_set.update(phantoms)
 
     def reset(self):
         "Resets current marker"
         clear_region(self.view)
-
-        buffer_id = self.view.buffer_id()
-        if buffer_id in phantom_sets_by_buffer:
-            del phantom_sets_by_buffer[buffer_id]
-            self.view.erase_phantoms(abbr_region_id)
-
         self.region = self.abbr_data = self._data = None
 
     def contains(self, pt):
@@ -169,17 +159,22 @@ class AbbreviationMarker:
 
         return None
 
-def enter(view: sublime.View, pos: int) -> AbbreviationMarker:
+def enter(view: sublime.View, edit: sublime.Edit, pos: int) -> AbbreviationMarker:
     "Enters explicit abbreviation mode"
-    abbr_data = ExtractedAbbreviation('', pos, pos, pos)
-    mrk = AbbreviationMarker(view, abbr_data, True)
+    prefix = '>'
+
+    # Insert fake prefix at given location to indicate we are in explicit
+    # abbreviation mode
+    view.insert(edit, pos, prefix)
+    abbr_data = ExtractedAbbreviation(prefix, pos + len(prefix), pos, pos + len(prefix))
+    mrk = AbbreviationMarker(view, abbr_data)
     attach(view, mrk)
     return mrk
 
 
-def create(view: sublime.View, abbr_data: ExtractedAbbreviation, forced: bool=False, options=None) -> AbbreviationMarker:
+def create(view: sublime.View, abbr_data: ExtractedAbbreviation, options=None) -> AbbreviationMarker:
     "Creates abbreviation marker"
-    return AbbreviationMarker(view, abbr_data, forced, options)
+    return AbbreviationMarker(view, abbr_data, options)
 
 
 def get(view: sublime.View) -> AbbreviationMarker:
@@ -204,12 +199,13 @@ def dispose(view: sublime.View):
 def get_region(view: sublime.View) -> sublime.Region:
     "Returns range of currently marked abbreviation in given view, if any"
     regions = view.get_regions(abbr_region_id)
-    return regions[0] if regions else None
+    return regions[-1] if regions else None
 
 
 def clear_region(view: sublime.View):
     "Removes any abbreviation markers from given view"
     view.erase_regions(abbr_region_id)
+    view.erase_regions(prefix_region_id)
 
 
 def extract(view: sublime.View, loc: int) -> AbbreviationMarker:
@@ -226,33 +222,14 @@ def extract(view: sublime.View, loc: int) -> AbbreviationMarker:
     return None
 
 
-def get_phantom_set(view: sublime.View) -> sublime.PhantomSet:
-    buffer_id = view.buffer_id()
-    if buffer_id not in phantom_sets_by_buffer:
-        phantom_set = sublime.PhantomSet(view, abbr_region_id)
-        phantom_sets_by_buffer[buffer_id] = phantom_set
-    else:
-        phantom_set = phantom_sets_by_buffer[buffer_id]
-
-    return phantom_set
-
-
-def phantom_content(content):
-    return """
-    <body>
-        <style>
-            body {
-                background-color: var(--greenish);
-                color: #fff;
-                border-radius: 3px;
-                padding: 1px 3px;
-                position: relative;
-            }
-        </style>
-        <div class="main">%s</div>
-    </body>
-    """ % content
-
 class EmmetClearAbbreviationMarker(sublime_plugin.TextCommand):
     def run(self, edit):
+        view_id = self.view.id()
+        if view_id in markers:
+            marker = markers[view_id]
+            if marker.forced:
+                # If abbreviation marker is forced, we should remove
+                # marker with its contents
+                self.view.erase(edit, marker.full_region)
+
         dispose(self.view)

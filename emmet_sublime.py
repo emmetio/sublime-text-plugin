@@ -83,28 +83,28 @@ def validate(abbr: str, config: dict=None):
     """
     resolved = Config(config)
 
-    try:
-        if resolved.type == 'stylesheet':
-            stylesheet_abbreviation(abbr, resolved)
-        else:
-            markup_abbreviation(abbr, resolved)
+    if abbr:
+        try:
+            if resolved.type == 'stylesheet':
+                stylesheet_abbreviation(abbr, resolved)
+            else:
+                markup_abbreviation(abbr, resolved)
 
-        m = re_simple.match(abbr)
-        return {
-            'abbr': abbr,
-            'valid': True,
-            'simple': abbr == '.' or bool(m),
-            'matched': m.group(1) in known_tags or m.group(1) in resolved.snippets if m else False
-        }
-
-    except (ScannerException, TokenScannerException) as err:
-        return {
-            'abbr': abbr,
-            'valid': False,
-            'error': err.message,
-            'pos': err.pos,
-            'snippet': '%s^' % ('-' * err.pos,) if err.pos is not None else ''
-        }
+            m = re_simple.match(abbr)
+            return {
+                'abbr': abbr,
+                'valid': True,
+                'simple': abbr == '.' or bool(m),
+                'matched': m.group(1) in known_tags or m.group(1) in resolved.snippets if m else False
+            }
+        except (ScannerException, TokenScannerException) as err:
+            return {
+                'abbr': abbr,
+                'valid': False,
+                'error': err.message,
+                'pos': err.pos,
+                'snippet': '%s^' % ('-' * err.pos,) if err.pos is not None else ''
+            }
 
     return {
         'abbr': abbr,

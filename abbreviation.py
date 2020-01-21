@@ -142,32 +142,32 @@ class AbbreviationMarkerListener(sublime_plugin.EventListener):
             if same_line and (mrk.region.contains(caret) or mrk.region.contains(last_pos)):
                 changed_region = sublime.Region(min(caret, last_pos), max(caret, last_pos))
                 mrk.validate(mrk.region.cover(changed_region))
-        if mrk:
-            mrk.validate()
+        # if mrk:
+        #     mrk.validate()
 
-            # Check if modification was made inside marked region or at marker edges
-            same_line = mrk.valid and view.line(caret).contains(mrk.region)
-            modified_before = same_line and caret <= mrk.region.begin()
-            modified_after = same_line and caret >= mrk.region.end()
+        #     # Check if modification was made inside marked region or at marker edges
+        #     same_line = mrk.valid and view.line(caret).contains(mrk.region)
+        #     modified_before = same_line and caret <= mrk.region.begin()
+        #     modified_after = same_line and caret >= mrk.region.end()
 
-            if mrk.contains(caret):
-                # Modifications made completely inside abbreviation, should be already validated
-                pass
-            elif modified_after:
-                # Modifications made right after marker
-                # To properly track updates, we can't just add a [prev_caret, caret]
-                # substring since user may type `[` which will automatically insert `]`
-                # as a snippet and we won't be able to properly track it.
-                # We should extract abbreviation instead.
-                mrk = update_marker(view, mrk, caret)
-            elif modified_before:
-                # Modifications made right before marker, ensure it results
-                # in valid abbreviation
-                mrk = update_marker(view, mrk, mrk.region.end())
-            else:
-                # Modifications made outside marker
-                marker.dispose(view)
-                mrk = None
+        #     if mrk.contains(caret):
+        #         # Modifications made completely inside abbreviation, should be already validated
+        #         pass
+        #     elif modified_after:
+        #         # Modifications made right after marker
+        #         # To properly track updates, we can't just add a [prev_caret, caret]
+        #         # substring since user may type `[` which will automatically insert `]`
+        #         # as a snippet and we won't be able to properly track it.
+        #         # We should extract abbreviation instead.
+        #         mrk = update_marker(view, mrk, caret)
+        #     elif modified_before:
+        #         # Modifications made right before marker, ensure it results
+        #         # in valid abbreviation
+        #         mrk = update_marker(view, mrk, mrk.region.end())
+        #     else:
+        #         # Modifications made outside marker
+        #         marker.dispose(view)
+        #         mrk = None
 
         if not mrk and caret >= last_pos and view.settings().get('emmet_auto_mark') and \
             in_activation_context(view, caret, last_pos):
@@ -229,7 +229,7 @@ class EmmetExpandAbbreviation(sublime_plugin.TextCommand):
                     emmet.attach_context(self.view, caret, mrk.options)
 
                 snippet = emmet.expand(mrk.abbreviation, mrk.options)
-                utils.replace_with_snippet(self.view, edit, mrk.region, snippet)
+                utils.replace_with_snippet(self.view, edit, mrk.full_region, snippet)
 
             marker.dispose(self.view)
 
@@ -243,4 +243,4 @@ class EmmetEnterAbbreviation(sublime_plugin.TextCommand):
             mrk.reset()
 
         if not has_caret:
-            marker.enter(self.view, caret)
+            marker.enter(self.view, edit, caret)
