@@ -35,6 +35,7 @@ class AbbreviationMarker:
     def region(self, value):
         self._region = value
         abbr = self.value
+        print('update region %s: %s' % (value, abbr))
 
         if abbr:
             self._data = emmet.validate(abbr, self.options)
@@ -152,14 +153,14 @@ class AbbreviationMarker:
 
         return None
 
-    def toggle_preview(self, pos: int, as_phantom=False):
+    def toggle_preview(self, pos: int, as_phantom=None):
         "Toggles abbreviation preview depending on its state and given location"
         if self.contains(pos) and self.value and (not self.simple or self.type == 'stylesheet'):
             self.show_preview(as_phantom)
         else:
             self.hide_preview()
 
-    def show_preview(self, as_phantom=False):
+    def show_preview(self, as_phantom=None):
         "Displays expanded preview of current abbreviation"
         content = None
 
@@ -171,6 +172,11 @@ class AbbreviationMarker:
         if not content:
             self.hide_preview()
             return
+
+        if as_phantom is None:
+            # By default, display preview for CSS abbreviation as phantom to not
+            # interfere with default autocomplete popup
+            as_phantom = self.type == 'stylesheet'
 
         if as_phantom:
             if self._popup_visible:
@@ -262,10 +268,12 @@ def create(view: sublime.View, region: sublime.Region) -> AbbreviationMarker:
     abbreviation is treated as forced
     """
     forced = False
+    print('create marker for %s' % str(region))
     if isinstance(region, int):
         # If location is passed, create abbreviation as forced
         forced = True
         region = sublime.Region(region, region)
+        print('marker is forced')
     marker = AbbreviationMarker(view, region, forced)
     markers[view.buffer_id()] = marker
     return marker
@@ -282,6 +290,13 @@ def dispose(marker: AbbreviationMarker):
     if buff_id in markers:
         del markers[buff_id]
     marker.dispose()
+
+
+def dispose_in_view(view: sublime.View):
+    "Disposes abbreviation markers in given view, if any"
+    marker = get(view)
+    if marker:
+        dispose(marker)
 
 
 def format_snippet(text, class_name=None):
