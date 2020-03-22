@@ -76,7 +76,7 @@ class WrapAbbreviationInputHandler(sublime_plugin.TextInputHandler):
 
 
 class EmmetWrapWithAbbreviationPreview(sublime_plugin.TextCommand):
-    "Internal commant to preview abbreviation in text"
+    "Internal command to preview abbreviation in text"
     def run(self, edit: sublime.Edit, region: tuple, result: str):
         r = sublime.Region(*region)
         utils.replace_with_snippet(self.view, edit, r, result)
