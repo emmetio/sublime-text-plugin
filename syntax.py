@@ -58,6 +58,10 @@ def is_css(syntax: str):
     """
     return syntax in ('css', 'scss', 'less')
 
+def is_jsx(syntax: str):
+    "Check if given syntax is JSX"
+    return syntax == 'jsx'
+
 def is_inline(view: sublime.View, pt: int):
     "Check if abbreviation in given location must be expanded as single line"
     scopes = view.settings().get('emmet_inline_scopes', [])

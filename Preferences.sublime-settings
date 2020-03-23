@@ -5,6 +5,10 @@
 	// Preview captured abbreviations
 	"emmet_abbreviation_preview": true,
 
+	// Track Emmet abbreviation as-you-type and display it’s preview. Works
+	// in supported syntaxes only
+	"emmet_abbreviation_tracking": "true",
+
 	// Editor scope to Emmet syntax mapping
 	"emmet_syntax_scopes": {
 		"html": "text.html - source - meta.attribute-with-value.style",

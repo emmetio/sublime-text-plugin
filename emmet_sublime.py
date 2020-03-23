@@ -35,6 +35,9 @@ known_tags = (
     'u', 'ul', 'var', 'video', 'wbr'
 )
 
+# Cache for storing internal Emmet data
+# TODO invalidate on editor settings change
+emmet_cache = {}
 
 def field(index: int, placeholder: str, **kwargs):
     "Produces tabstops for editor"
@@ -56,7 +59,7 @@ def escape_text(text: str, **kwargs):
 def expand(abbr: str, config: dict=None):
     "Expands given abbreviation into code snippet"
     is_preview = config and config.get('preview', False)
-    opt = {}
+    opt = {'cache': emmet_cache}
     output_opt = {
         'output.field': field_preview if is_preview else field,
         'output.text': escape_text,
@@ -230,6 +233,7 @@ def get_options(view: sublime.View, pt: int, with_context=False) -> dict:
         attach_context(view, pt, config)
 
     config['inline'] = syntax.is_inline(view, pt)
+    config['jsx'] = syntax.is_jsx(config['syntax'])
     return config
 
 
