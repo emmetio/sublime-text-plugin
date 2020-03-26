@@ -8,6 +8,14 @@
         ]
     },
     {
+        "keys": ["enter"],
+        "command": "emmet_expand_abbreviation",
+        "context": [
+            { "key": "has_emmet_forced_abbreviation_mark" },
+            { "key": "emmet_abbreviation" }
+        ]
+    },
+    {
         "keys": ["shift+tab"],
         "command": "next_field",
         "context": [
@@ -20,7 +28,8 @@
         "keys": ["escape"],
         "command": "emmet_clear_abbreviation_marker",
         "context": [
-            { "key": "has_emmet_abbreviation_mark" }
+            { "key": "has_emmet_abbreviation_mark" },
+            { "key": "auto_complete_visible", "operator": "equal", "operand": false }
         ]
     },
     {

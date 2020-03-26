@@ -4,7 +4,8 @@ from . import utils
 cache = {}
 
 class RegionTracker:
-    __slots__ = ('last_pos', 'last_length', 'region', 'forced', 'config', 'abbreviation')
+    __slots__ = ('last_pos', 'last_length', 'region', 'forced', 'config',
+                 'abbreviation', 'forced_indicator')
 
     def __init__(self, start: int, pos: int, length: int, forced=False):
         self.last_pos = pos
@@ -13,6 +14,7 @@ class RegionTracker:
         self.region = sublime.Region(start, pos)
         self.config = None
         self.abbreviation = None
+        self.forced_indicator = None
 
 
 def handle_change(view: sublime.View):
@@ -35,7 +37,7 @@ def handle_change(view: sublime.View):
     tracker.last_length = length
     tracker.last_pos = pos
 
-    print('tracker >> handle delta %d' % delta)
+    print('tracker >> handle delta %d, last pos: %d, pos: %d' % (delta, last_pos, pos))
 
     if delta < 0:
         # Removed some content
@@ -43,7 +45,7 @@ def handle_change(view: sublime.View):
             # Updated content at the abbreviation edge
             region.a += delta
             region.b += delta
-        elif region.a < last_pos <= region.b and last_pos != pos:
+        elif region.a < last_pos <= region.b:
             region.b += delta
     elif delta > 0:
         # Inserted content
@@ -55,6 +57,7 @@ def handle_change(view: sublime.View):
     if region.b < region.a or (region.a == region.b and not tracker.forced):
         stop_tracking(view)
     else:
+        print('new tracker region is %s' % tracker.region)
         return tracker
 
 
