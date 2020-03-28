@@ -8,6 +8,10 @@
         "command": "emmet_enter_abbreviation"
     },
     {
+        "caption": "Emmet: Enter Abbreviation Mode",
+        "command": "emmet_enter_abbreviation"
+    },
+    {
         "caption": "Emmet: Wrap with Abbreviation",
         "command": "emmet_wrap_with_abbreviation"
     },
