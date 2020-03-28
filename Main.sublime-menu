@@ -8,7 +8,7 @@
 			"caption": "Emmet2",
 			"children": [{
 				"command": "edit_settings",
-				"args": { "base_file": "${packages}/Emmet2/Preferences.sublime-settings" },
+				"args": { "base_file": "${packages}/Emmet2/Emmet.sublime-settings" },
 				"caption": "Settings"
 			}]
 		}]

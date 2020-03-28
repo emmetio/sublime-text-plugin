@@ -92,8 +92,7 @@ class EmmetHideTagPreview(sublime_plugin.TextCommand):
 def allow_preview(fn):
     "Method decorator for running action callbacks for in allowed tag preview context"
     def wrapper(self, view):
-        settings = view.settings()
-        if not settings.get('is_widget') and settings.get('emmet_tag_preview'):
+        if not view.settings().get('is_widget') and emmet.get_settings('tag_preview'):
             fn(self, view)
     return wrapper
 

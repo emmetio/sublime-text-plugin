@@ -7,6 +7,20 @@ stylesheet_syntaxes = ['css', 'scss', 'sass', 'less', 'sss', 'stylus', 'postcss'
 xml_syntaxes = ['xml', 'xsl', 'jsx']
 html_syntaxes = ['html']
 
+# NB: avoid circular reference for `emmet_sublime` module,
+# create own settings instance
+settings = None
+
+def get_settings(key: str, default=None):
+    "Returns value of given Emmet setting"
+    global settings
+
+    if settings is None:
+        settings = sublime.load_settings('Emmet.sublime-settings')
+
+    return settings.get(key, default)
+
+
 def info(view: sublime.View, pt: int, fallback=None):
     """
     Returns Emmet syntax info for given location in view.
@@ -27,7 +41,7 @@ def info(view: sublime.View, pt: int, fallback=None):
 
 def from_pos(view: sublime.View, pt: int):
     "Returns Emmet syntax for given location in view"
-    scopes = view.settings().get('emmet_syntax_scopes', {})
+    scopes = get_settings('syntax_scopes', {})
     if scopes:
         for name, sel in scopes.items():
             if view.match_selector(pt, sel):
@@ -58,9 +72,13 @@ def is_css(syntax: str):
     """
     return syntax in ('css', 'scss', 'less')
 
+def is_jsx(syntax: str):
+    "Check if given syntax is JSX"
+    return syntax == 'jsx'
+
 def is_inline(view: sublime.View, pt: int):
     "Check if abbreviation in given location must be expanded as single line"
-    scopes = view.settings().get('emmet_inline_scopes', [])
+    scopes = get_settings('inline_scopes', [])
     return matches_selector(view, pt, scopes)
 
 
@@ -69,11 +87,11 @@ def in_activation_scope(view: sublime.View, pt: int):
     Check if given location in view can be used for abbreviation marker activation.
     Note that this method implies that caret is in Emmet-supported syntax
     """
-    ignore = view.settings().get('emmet_ignore_scopes', [])
+    ignore = get_settings('ignore_scopes', [])
     if matches_selector(view, pt, ignore):
         return False
 
-    scopes = view.settings().get('emmet_abbreviation_scopes', [])
+    scopes = get_settings('abbreviation_scopes', [])
     return matches_selector(view, pt, scopes)
 
 

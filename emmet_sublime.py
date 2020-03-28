@@ -12,29 +12,21 @@ from .emmet.action_utils import select_item_css, select_item_html, \
 from .emmet.math_expression import evaluate, extract as extract_math
 from . import syntax
 
-re_simple = re.compile(r'^([\w!-]+)\.?$')
-known_tags = (
-    'a', 'abbr', 'address', 'area', 'article', 'aside', 'audio',
-    'b', 'base', 'bdi', 'bdo', 'blockquote', 'body', 'br', 'button',
-    'canvas', 'caption', 'cite', 'code', 'col', 'colgroup', 'content',
-    'data', 'datalist', 'dd', 'del', 'details', 'dfn', 'dialog', 'div', 'dl', 'dt',
-    'em', 'embed',
-    'fieldset', 'figcaption', 'figure', 'footer', 'form',
-    'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'head', 'header', 'hr', 'html',
-    'i', 'iframe', 'img', 'input', 'ins',
-    'kbd', 'keygen',
-    'label', 'legend', 'li', 'link',
-    'main', 'map', 'mark', 'menu', 'menuitem', 'meta', 'meter',
-    'nav', 'noscript',
-    'object', 'ol', 'optgroup', 'option', 'output',
-    'p', 'param', 'picture', 'pre', 'progress',
-    'q',
-    'rp', 'rt', 'rtc', 'ruby',
-    's', 'samp', 'script', 'section', 'select', 'shadow', 'slot', 'small', 'source', 'span', 'strong', 'style', 'sub', 'summary', 'sup',
-    'table', 'tbody', 'td', 'template', 'textarea', 'tfoot', 'th', 'thead', 'time', 'title', 'tr', 'track',
-    'u', 'ul', 'var', 'video', 'wbr'
-)
+JSX_PREFIX = '<'
 
+# Cache for storing internal Emmet data
+emmet_cache = {}
+settings = None
+
+def get_settings(key: str, default=None):
+    "Returns value of given Emmet setting"
+    global settings
+
+    if settings is None:
+        settings = sublime.load_settings('Emmet.sublime-settings')
+        settings.add_on_change('config', handle_settings_change)
+
+    return settings.get(key, default)
 
 def field(index: int, placeholder: str, **kwargs):
     "Produces tabstops for editor"
@@ -56,7 +48,7 @@ def escape_text(text: str, **kwargs):
 def expand(abbr: str, config: dict=None):
     "Expands given abbreviation into code snippet"
     is_preview = config and config.get('preview', False)
-    opt = {}
+    opt = {'cache': emmet_cache}
     output_opt = {
         'output.field': field_preview if is_preview else field,
         'output.text': escape_text,
@@ -71,48 +63,9 @@ def expand(abbr: str, config: dict=None):
 
     view = sublime.active_window().active_view()
     if view:
-        global_config = view.settings().get('emmet_config')
+        global_config = get_settings('config')
 
     return expand_abbreviation(abbr, opt, global_config)
-
-
-def validate(abbr: str, config: dict=None):
-    """
-    Validates given abbreviation: check if it can be properly expanded and detects
-    if it's a simple abbreviation (looks like a regular word)
-    """
-    resolved = Config(config)
-
-    try:
-        if resolved.type == 'stylesheet':
-            stylesheet_abbreviation(abbr, resolved)
-        else:
-            markup_abbreviation(abbr, resolved)
-
-        m = re_simple.match(abbr)
-        return {
-            'abbr': abbr,
-            'valid': True,
-            'simple': abbr == '.' or bool(m),
-            'matched': m.group(1) in known_tags or m.group(1) in resolved.snippets if m else False
-        }
-
-    except (ScannerException, TokenScannerException) as err:
-        return {
-            'abbr': abbr,
-            'valid': False,
-            'error': err.message,
-            'pos': err.pos,
-            'snippet': '%s^' % ('-' * err.pos,) if err.pos is not None else ''
-        }
-
-    return {
-        'abbr': abbr,
-        'valid': False,
-        'error': '',
-        'pos': -1,
-        'snippet': ''
-    }
 
 
 def balance(code: str, pos: int, direction: str, xml=False) -> list:
@@ -230,6 +183,9 @@ def get_options(view: sublime.View, pt: int, with_context=False) -> dict:
         attach_context(view, pt, config)
 
     config['inline'] = syntax.is_inline(view, pt)
+    if syntax.is_jsx(config['syntax']):
+        config['prefix'] = JSX_PREFIX
+        config['jsx'] = True
     return config
 
 
@@ -275,9 +231,6 @@ def extract_abbreviation(view: sublime.View, loc: int, opt: dict=None):
         # and enabled look-ahead produces false matches
         opt['lookAhead'] = False
 
-    if opt['syntax'] == 'jsx':
-        opt['prefix'] = view.settings().get('emmet_jsx_prefix', None)
-
     abbr_data = extract(text, pt - begin, opt)
 
     if abbr_data:
@@ -292,3 +245,8 @@ def extract_abbreviation(view: sublime.View, loc: int, opt: dict=None):
 def to_region(rng: list) -> sublime.Region:
     "Converts given list range to Sublime region"
     return sublime.Region(rng[0], rng[1])
+
+
+def handle_settings_change():
+    global emmet_cache
+    emmet_cache = {}

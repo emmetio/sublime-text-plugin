@@ -79,7 +79,7 @@ class ConvertDataUrlReplace(sublime_plugin.TextCommand):
 
 
 def convert_to_data_url(view: sublime.View, edit: sublime.Edit, region: sublime.Region):
-    max_size = view.settings().get('emmet_max_data_url', 0)
+    max_size = emmet.get_settings('max_data_url', 0)
     src = view.substr(region)
 
     if utils.is_url(src):

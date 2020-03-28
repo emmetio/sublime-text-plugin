@@ -1,6 +1,8 @@
 import re
 import sublime
 import sublime_plugin
+from .emmet.abbreviation import parse as markup_parse
+from .emmet.css_abbreviation import parse as stylesheet_parse
 from . import emmet_sublime as emmet
 from . import utils
 
@@ -24,7 +26,7 @@ class EmmetWrapWithAbbreviation(sublime_plugin.TextCommand):
         self.region = get_wrap_region(self.view, sel, self.options)
         lines = get_content(self.view, self.region, True)
         self.options['text'] = lines
-        preview = len(self.region) < self.view.settings().get('emmet_wrap_size_preview', -1)
+        preview = len(self.region) < emmet.get_settings('wrap_size_preview', -1)
 
         return WrapAbbreviationInputHandler(self.view, self.region, self.options, preview)
 
@@ -43,8 +45,14 @@ class WrapAbbreviationInputHandler(sublime_plugin.TextInputHandler):
         return last_abbreviation
 
     def validate(self, text: str):
-        data = emmet.validate(text, self.options)
-        return data and data.get('valid')
+        try:
+            if self.options.get('type') == 'stylesheet':
+                stylesheet_parse(text, self.options)
+            else:
+                markup_parse(text, self.options)
+            return True
+        except:
+            return False
 
     def cancel(self):
         undo_preview(self.view)
@@ -76,7 +84,7 @@ class WrapAbbreviationInputHandler(sublime_plugin.TextInputHandler):
 
 
 class EmmetWrapWithAbbreviationPreview(sublime_plugin.TextCommand):
-    "Internal commant to preview abbreviation in text"
+    "Internal command to preview abbreviation in text"
     def run(self, edit: sublime.Edit, region: tuple, result: str):
         r = sublime.Region(*region)
         utils.replace_with_snippet(self.view, edit, r, result)

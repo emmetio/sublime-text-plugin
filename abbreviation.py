@@ -1,246 +1,274 @@
+import re
 import sublime
 import sublime_plugin
-from . import emmet_sublime as emmet
-from . import preview
-from . import marker
 from . import syntax
+from . import tracker
 from . import utils
+from . import emmet_sublime as emmet
+
+re_valid_abbr_end = re.compile(r'[a-z0-9*$.#!@>^+\)\]\}]')
+re_jsx_abbr_start = re.compile(r'^[a-zA-Z.#\[\(]$')
+re_word_bound = re.compile(r'^[\s>;"\']?[a-zA-Z.#!@\[\(]$')
+pairs = {
+    '{': '}',
+    '[': ']',
+    '(': ')'
+}
+
+def allow_tracking(view: sublime.View, pos: int) -> bool:
+    "Check if abbreviation tracking is allowed in editor at given location"
+    return is_enabled(view) and syntax.in_activation_scope(view, pos)
 
 
-def in_activation_context(view: sublime.View, caret: int, prev_pos: int, completion_contex=False) -> bool:
-    """
-    Check that given caret position is inside abbreviation activation context,
-    e.g. caret is in location where user expects abbreviation.
-    """
-    syntax_info = syntax.info(view, caret)
-
-    if syntax_info:
-        s_name = syntax_info['syntax']
-        in_scope = syntax.in_activation_scope(view, caret)
-        if syntax_info['type'] == 'stylesheet':
-            # In stylesheet scope, we should either be inside selector block
-            # (outside of CSS property) or inside property value but typing CSS color
-            return in_scope or is_stylesheet_color(view, prev_pos, caret)
-        if s_name in ('html', 'xml', 'xsl'):
-            # For HTML-like syntaxes, we should detect if we are at abbreviation bound
-            return in_scope and is_abbreviation_bound(view, prev_pos)
-        if s_name == 'jsx':
-            # In JSX, we rely on prefixed match: we should activate abbreviation
-            # only of its prefixed with `<`
-            return view.substr(prev_pos - 1) == '<' if prev_pos > 0 else completion_contex
-
-        # In all other cases just check if we are in abbreviation scope
-        return in_scope
-    return False
+def is_enabled(view: sublime.View) -> bool:
+    "Check if Emmet abbreviation tracking is enabled"
+    return emmet.get_settings('auto_mark', False)
 
 
-def is_stylesheet_color(view, begin, end) -> bool:
-    "Check if given range is inside CSS color value"
-    return view.match_selector(end, 'meta.property-value | punctuation.terminator.rule') and \
-        view.substr(sublime.Region(begin, end)) == '#'
-
-
-def is_abbreviation_bound(view: sublime.View, pt: int) -> bool:
-    "Check if given point in view is a possible abbreviation start"
-    line_range = view.line(pt)
-    bound_chars = ' \t'
-    left = line_range.begin() == pt or view.substr(pt - 1) in bound_chars or\
-        view.match_selector(pt - 1, 'punctuation.definition.tag.end.html')
-    right = line_range.end() != pt and view.substr(pt) not in bound_chars
-    return left and right
-
-
-def preview_as_phantom(mark: marker.AbbreviationMarker) -> bool:
-    "Should display preview of given marker as phantom?"
-    return mark.type == 'stylesheet'
-
-
-def activate_marker(view: sublime.View, pt: int):
-    "Explicitly activates abbreviation marker at given location"
-    mrk = marker.get(view)
-
-    if mrk and not mrk.contains(pt):
-        marker.dispose(view)
-        mrk = None
-
-    if not mrk and syntax.in_activation_scope(view, pt):
-        # Try to extract abbreviation from given location
-        mrk = marker.extract(view, pt)
-
-    if mrk and mrk.valid:
-        preview.toggle(view, mrk, pt, preview_as_phantom(mrk))
-
-
-def update_marker(view: sublime.View, mrk: marker.AbbreviationMarker, loc: int):
-    """
-    Updates marker with newly extracted abbreviation from given location.
-    If abbreviation is not fount or invalid, disposes it
-    """
-    abbr_data = emmet.extract_abbreviation(view, loc, mrk.options)
-    if abbr_data:
-        mrk.update(abbr_data[0])
-        return mrk
-
-    # Unable to extract abbreviation or abbreviation is invalid
-    marker.dispose(view)
-    return None
-
-
-def nonpanel(fn):
+def main_view(fn):
     "Method decorator for running actions in code views only"
+
     def wrapper(self, view):
         if not view.settings().get('is_widget'):
             fn(self, view)
+
     return wrapper
-
-
-class AbbreviationMarkerListener(sublime_plugin.EventListener):
-    def __init__(self):
-        self.last_pos = -1
-        self.last_command = None
-
-    def on_close(self, view):
-        marker.dispose(view)
-
-    def on_activated(self, view: sublime.View):
-        self.last_pos = utils.get_caret(view)
-
-    @nonpanel
-    def on_selection_modified(self, view: sublime.View):
-        if not view.settings().get('emmet_abbreviation_preview', False):
-            return
-
-        self.last_pos = utils.get_caret(view)
-        mrk = marker.get(view)
-
-        if mrk:
-            # Caret is inside marked abbreviation, display preview
-            preview.toggle(view, mrk, self.last_pos, preview_as_phantom(mrk))
-        else:
-            preview.hide(view)
-
-    @nonpanel
-    def on_selection_modified_async(self, view: sublime.View):
-        mrk = marker.get(view)
-        if mrk and mrk.region and mrk.options and 'context' not in mrk.options:
-            # Context is not attached due to large document (to reduce typing lag)
-            emmet.attach_context(view, mrk.region.begin(), mrk.options)
-            preview.toggle(view, mrk, utils.get_caret(view), preview_as_phantom(mrk))
-
-    @nonpanel
-    def on_modified(self, view: sublime.View):
-        last_pos = self.last_pos
-        caret = utils.get_caret(view)
-        mrk = marker.get(view)
-        self.last_pos = caret
-
-        if mrk and mrk.forced:
-            # User in forced abbreviation mode: try to put everything user types
-            # into marker, even if it’s invalid
-            print('caret: %d, last caret: %d, region: %s' % (caret, last_pos, mrk.region))
-            same_line = view.line(caret).contains(mrk.region)
-            if same_line and (mrk.region.contains(caret) or mrk.region.contains(last_pos)):
-                changed_region = sublime.Region(min(caret, last_pos), max(caret, last_pos))
-                mrk.validate(mrk.region.cover(changed_region))
-        if mrk:
-            mrk.validate()
-
-            # Check if modification was made inside marked region or at marker edges
-            same_line = mrk.valid and view.line(caret).contains(mrk.region)
-            modified_before = same_line and caret <= mrk.region.begin()
-            modified_after = same_line and caret >= mrk.region.end()
-
-            if mrk.contains(caret):
-                # Modifications made completely inside abbreviation, should be already validated
-                pass
-            elif modified_after:
-                # Modifications made right after marker
-                # To properly track updates, we can't just add a [prev_caret, caret]
-                # substring since user may type `[` which will automatically insert `]`
-                # as a snippet and we won't be able to properly track it.
-                # We should extract abbreviation instead.
-                mrk = update_marker(view, mrk, caret)
-            elif modified_before:
-                # Modifications made right before marker, ensure it results
-                # in valid abbreviation
-                mrk = update_marker(view, mrk, mrk.region.end())
-            else:
-                # Modifications made outside marker
-                marker.dispose(view)
-                mrk = None
-
-        if not mrk and caret >= last_pos and view.settings().get('emmet_auto_mark') and \
-            in_activation_context(view, caret, last_pos):
-            mrk = marker.extract(view, caret)
-
-    def on_query_context(self, view: sublime.View, key: str, *args):
-        if key == 'emmet_abbreviation':
-            # Check if caret is currently inside Emmet abbreviation
-            mrk = marker.get(view)
-            if mrk:
-                for s in view.sel():
-                    if mrk.contains(s):
-                        return True
-
-            return False
-
-        if key == 'has_emmet_abbreviation_mark':
-            return bool(marker.get(view))
-
-        return None
-
-    def on_query_completions(self, view: sublime.View, prefix: str, locations: list):
-        # Check if completion list was populated by manually invoking autocomplete popup
-        if self.last_command == 'auto_complete':
-            # Produce auto-complete option only when completion popup invoked manually
-            activate_marker(view, locations[0])
-
-    def on_text_command(self, view: sublime.View, command_name: str, args: list):
-        self.last_command = command_name
-        if command_name == 'commit_completion':
-            marker.dispose(view)
-
-    def on_post_text_command(self, view: sublime.View, command_name: str, args: list):
-        if command_name == 'undo':
-            # In case of undo, editor may restore previously marked range.
-            # If so, restore marker from it
-            r = marker.get_region(view)
-            if r:
-                marker.clear_region(view)
-                mrk = marker.extract(view, r)
-                if mrk:
-                    preview.toggle(view, mrk, utils.get_caret(view), preview_as_phantom(mrk))
 
 
 class EmmetExpandAbbreviation(sublime_plugin.TextCommand):
     def run(self, edit):
-        mrk = marker.get(self.view)
         caret = utils.get_caret(self.view)
+        trk = tracker.get_tracker(self.view)
 
-        if not mrk:
-            # No marker, try to extract abbreviation for current context
-            mrk = marker.extract(self.view, caret)
+        if trk and trk.region.contains(caret):
+            if trk.abbreviation and 'error' not in trk.abbreviation:
+                snippet = expand_abbreviation(self.view, trk)
+                utils.replace_with_snippet(self.view, edit, trk.region, snippet)
 
-        if mrk and mrk.contains(caret):
-            if mrk.valid:
-                if 'context' not in mrk.options:
-                    # No context captured, might be due to performance optimization
-                    # in large document
-                    emmet.attach_context(self.view, caret, mrk.options)
+            tracker.stop_tracking(self.view)
 
-                snippet = emmet.expand(mrk.abbreviation, mrk.options)
-                utils.replace_with_snippet(self.view, edit, mrk.region, snippet)
 
-            marker.dispose(self.view)
+class EmmetExtractAbbreviation(sublime_plugin.TextCommand):
+    def run(self, edit):
+        trk = suggest_abbreviation_tracker(self.view, utils.get_caret(self.view))
+        if trk:
+            trk.show_preview(self.view)
+
 
 class EmmetEnterAbbreviation(sublime_plugin.TextCommand):
-    def run(self, edit: sublime.Edit):
-        caret = utils.get_caret(self.view)
-        mrk = marker.get(self.view)
-        has_caret = mrk and mrk.contains(caret)
+    def run(self, edit):
+        trk = tracker.get_tracker(self.view)
+        tracker.stop_tracking(self.view, edit)
+        if trk and trk.forced:
+            # Already have forced abbreviation: act as toggler
+            return
 
-        if mrk:
-            mrk.reset()
+        primary_sel = self.view.sel()[0]
+        trk = tracker.start_tracking(self.view, primary_sel.begin(), primary_sel.end(), forced=True)
+        if not primary_sel.empty():
+            trk.show_preview(self.view)
+            sel = self.view.sel()
+            sel.clear()
+            sel.add(sublime.Region(primary_sel.end(), primary_sel.end()))
 
-        if not has_caret:
-            marker.enter(self.view, caret)
+
+class EmmetClearAbbreviationMarker(sublime_plugin.TextCommand):
+    def run(self, edit):
+        tracker.stop_tracking(self.view, edit)
+
+
+class AbbreviationMarkerListener(sublime_plugin.EventListener):
+    def __init__(self):
+        self.last_pos_tracker = {}
+        self.pending_completions_request = False
+
+    @main_view
+    def on_close(self, view: sublime.View):
+        tracker.stop_tracking(view)
+        key = view.id()
+        if key in self.last_pos_tracker:
+            del self.last_pos_tracker[key]
+
+    @main_view
+    def on_activated(self, view: sublime.View):
+        tracker.handle_selection_change(view)
+        self.last_pos_tracker[view.id()] = utils.get_caret(view)
+
+    @main_view
+    def on_selection_modified(self, view: sublime.View):
+        if not is_enabled(view):
+            return
+
+        trk = tracker.handle_selection_change(view)
+        caret = utils.get_caret(view)
+
+        # print('sel modified at %d' % caret)
+
+        if trk and trk.abbreviation and trk.region.contains(caret):
+            trk.show_preview(view)
+        elif trk:
+            trk.hide_preview(view)
+
+        self.last_pos_tracker[view.id()] = caret
+
+    @main_view
+    def on_modified(self, view: sublime.View):
+        key = view.id()
+        pos = utils.get_caret(view)
+        last_pos = self.last_pos_tracker.get(key)
+        # print('track change %d → %d' % (last_pos, pos))
+
+        trk = tracker.handle_change(view)
+        if not trk and last_pos is not None and allow_tracking(view, last_pos) and last_pos == pos - 1:
+            trk = start_abbreviation_tracking(view, pos)
+
+        if trk and should_stop_tracking(trk, pos):
+            # print('got tracker at %s, validate "%s"' % (trk.region, view.substr(trk.region)))
+            tracker.stop_tracking(view)
+
+        self.last_pos_tracker[key] = pos
+
+    def on_query_context(self, view: sublime.View, key: str, *args):
+        if key == 'emmet_abbreviation':
+            # Check if caret is currently inside Emmet abbreviation
+            trk = tracker.get_tracker(view)
+            if trk:
+                for s in view.sel():
+                    if trk.region.contains(s):
+                        return trk.forced or (trk.abbreviation and 'error' not in trk.abbreviation)
+
+            return False
+
+        if key == 'emmet_tab_expand':
+            return emmet.get_settings('tab_expand', False)
+
+        if key == 'has_emmet_abbreviation_mark':
+            return bool(tracker.get_tracker(view))
+
+        if key == 'has_emmet_forced_abbreviation_mark':
+            trk = tracker.get_tracker(view)
+            return trk.forced if trk else False
+
+        return None
+
+    def on_query_completions(self, view: sublime.View, prefix: str, locations: list):
+        pos = locations[0]
+        if self.pending_completions_request:
+            self.pending_completions_request = False
+
+            trk = suggest_abbreviation_tracker(view, pos)
+            if trk:
+                abbr_str = view.substr(trk.region)
+                snippet = expand_abbreviation(view, trk)
+                return [('%s\tEmmet' % abbr_str, snippet)]
+
+    def on_text_command(self, view: sublime.View, command_name: str, args: list):
+        if command_name == 'auto_complete' and is_enabled(view):
+            self.pending_completions_request = True
+        elif command_name == 'commit_completion':
+            tracker.stop_tracking(view)
+
+    def on_post_text_command(self, view: sublime.View, command_name: str, args: list):
+        if command_name == 'auto_complete':
+            self.pending_completions_request = False
+        elif command_name == 'undo':
+            # In case of undo, editor may restore previously marked range.
+            # If so, restore marker from it
+            trk = restore_tracker(view)
+            if trk:
+                trk.show_preview(view)
+
+
+def should_stop_tracking(trk: tracker.RegionTracker, pos: int) -> bool:
+    if trk.forced:
+        # Never reset forced abbreviation: it’s up to user how to handle it
+        return False
+
+    if not trk.abbreviation or re.search(r'[\n\r]', trk.abbreviation['abbr']):
+        # — Stop tracking if abbreviation is empty
+        # — Never allow new lines in auto-tracked abbreviation
+        return True
+
+    # Reset if user entered invalid character at the end of abbreviation
+    return 'error' in trk.abbreviation and trk.region.end() == pos
+
+
+def start_abbreviation_tracking(view: sublime.View, pos: int) -> tracker.RegionTracker:
+    "Check if we can start abbreviation tracking at given location in editor"
+    # Start tracking only if user starts abbreviation typing: entered first
+    # character at the word bound
+    # NB: get last 2 characters: first should be a word bound (or empty),
+    # second must be abbreviation start
+    prefix_region = sublime.Region(max(0, pos - 2), pos)
+    prefix = view.substr(prefix_region)
+    start = -1
+    end = pos
+    offset = 0
+
+    # print('check prefix "%s"' % prefix)
+    if syntax.from_pos(view, pos) == 'jsx':
+        # In JSX, abbreviations for completions should be prefixed
+        if len(prefix) == 2 and prefix[0] == emmet.JSX_PREFIX and re_jsx_abbr_start.match(prefix[1]):
+            start = pos - 2
+            offset = len(emmet.JSX_PREFIX)
+    elif re_word_bound.match(prefix):
+        start = pos - 1
+
+    if start >= 0:
+        last_ch = prefix[-1]
+        if last_ch in pairs:
+            # Check if there’s paired character
+            next_char_region = sublime.Region(pos, min(pos + 1, view.size()))
+            if view.substr(next_char_region) == pairs[last_ch]:
+                end += 1
+
+        # Do not capture context for large documents since it may reduce performance
+        max_doc_size = emmet.get_settings('context_size_limit', 0)
+        with_context = max_doc_size > 0 and view.size() < max_doc_size
+        config = emmet.get_options(view, start, with_context)
+
+        return tracker.start_tracking(view, start, end, offset=offset, config=config)
+
+def suggest_abbreviation_tracker(view: sublime.View, pos: int) -> tracker.RegionTracker:
+    "Tries to extract abbreviation from given position and returns tracker for it, if available"
+    if not allow_tracking(view, pos):
+        return None
+
+    trk = tracker.get_tracker(view)
+    if trk and not trk.region.contains(pos):
+        tracker.stop_tracking(view)
+        trk = None
+
+    if not trk:
+        # Try to extract abbreviation from current location
+        config = emmet.get_options(view, pos, True)
+        abbr, _ = emmet.extract_abbreviation(view, pos, config)
+        if abbr:
+            offset = abbr.location - abbr.start
+            return tracker.start_tracking(view, abbr.start, abbr.end, config=config, offset=offset)
+
+
+def restore_tracker(view: sublime.View):
+    "Tries to restore abbreviation tracker from given view"
+    marked_list = view.get_regions(tracker.ABBR_REGION_ID)
+    if marked_list and not tracker.get_tracker(view):
+        # No tracker but marked region: restore tracker from it
+        r = marked_list[0]
+        config = emmet.get_options(view, r.begin(), True)
+        offset = len(config.get('prefix', ''))
+        return tracker.start_tracking(view, r.begin(), r.end(), config=config, offset=offset)
+
+
+def expand_abbreviation(view: sublime.View, trk: tracker.RegionTracker) -> str:
+    "Expands abbreviation from given tracker"
+    if 'context' not in trk.config:
+        # No context captured, might be due to performance optimization
+        # in large document
+        emmet.attach_context(view, trk.region.begin(), trk.config)
+
+    return emmet.expand(trk.abbreviation['abbr'], trk.config)
+
+def plugin_unloaded():
+    for wnd in sublime.windows():
+        for view in wnd.views():
+            tracker.stop_tracking(view)
