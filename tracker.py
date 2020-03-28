@@ -3,6 +3,8 @@ import html
 import sublime
 from . import utils
 from . import emmet_sublime as emmet
+from . import html_highlight
+from . import syntax
 from .emmet import ScannerException
 from .emmet.token_scanner import TokenScannerException
 from .emmet.abbreviation import parse as markup_parse, Abbreviation as MarkupAbbreviation
@@ -118,9 +120,18 @@ class RegionTracker:
             pass
         if 'error' in self.abbreviation:
             # Display error snippet
-            content = '<div class="error">%s</div>' % format_snippet(self.abbreviation['error']['snippet'])
+            snippet = html.escape(self.abbreviation['error']['snippet'], False)
+            content = '<div class="error">%s</div>' % snippet
         elif self.forced or as_phantom or not self.abbreviation['simple']:
-            content = format_snippet(self.abbreviation['preview'])
+            snippet = self.abbreviation['preview']
+            if self.config['type'] != 'stylesheet':
+                if syntax.is_html(self.config['syntax']):
+                    snippet = html_highlight.highlight(snippet)
+                else:
+                    snippet = html.escape(snippet, False)
+                content = '<div class="markup-preview">%s</div>' % format_snippet(snippet)
+            else:
+                content = format_snippet(snippet)
 
         if not content:
             self.hide_preview(view)
@@ -236,15 +247,18 @@ def stop_tracking(view: sublime.View, edit: sublime.Edit = None):
 
 
 def preview_popup_html(content: str):
+    style = html_highlight.styles()
     return """
     <body id="emmet-preview-popup">
         <style>
             body { line-height: 1.5rem; }
             .error { color: red }
+            .markup-preview { font-size: 11px; line-height: 1.3rem; }
+            %s
         </style>
         <div>%s</div>
     </body>
-    """ % content
+    """ % (style, content)
 
 
 def preview_phantom_html(content: str):
@@ -283,10 +297,10 @@ def forced_indicator(content: str):
         """ % content
 
 
-def format_snippet(text, class_name=None):
+def format_snippet(text: str, class_name=None):
     class_attr = (' class="%s"' % class_name) if class_name else ''
     line_html = '<div%s style="padding-left: %dpx"><code>%s</code></div>'
-    lines = [line_html % (class_attr, indent_size(line, 20), html.escape(line, False)) for line in text.splitlines()]
+    lines = [line_html % (class_attr, indent_size(line, 20), line) for line in text.splitlines()]
 
     return '\n'.join(lines)
 
