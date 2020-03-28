@@ -15,8 +15,18 @@ from . import syntax
 JSX_PREFIX = '<'
 
 # Cache for storing internal Emmet data
-# TODO invalidate on editor settings change
 emmet_cache = {}
+settings = None
+
+def get_settings(key: str, default=None):
+    "Returns value of given Emmet setting"
+    global settings
+
+    if settings is None:
+        settings = sublime.load_settings('Emmet.sublime-settings')
+        settings.add_on_change('config', handle_settings_change)
+
+    return settings.get(key, default)
 
 def field(index: int, placeholder: str, **kwargs):
     "Produces tabstops for editor"
@@ -53,7 +63,7 @@ def expand(abbr: str, config: dict=None):
 
     view = sublime.active_window().active_view()
     if view:
-        global_config = view.settings().get('emmet_config')
+        global_config = get_settings('config')
 
     return expand_abbreviation(abbr, opt, global_config)
 
@@ -235,3 +245,8 @@ def extract_abbreviation(view: sublime.View, loc: int, opt: dict=None):
 def to_region(rng: list) -> sublime.Region:
     "Converts given list range to Sublime region"
     return sublime.Region(rng[0], rng[1])
+
+
+def handle_settings_change():
+    global emmet_cache
+    emmet_cache = {}

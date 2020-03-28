@@ -22,7 +22,7 @@ def allow_tracking(view: sublime.View, pos: int) -> bool:
 
 def is_enabled(view: sublime.View) -> bool:
     "Check if Emmet abbreviation tracking is enabled"
-    return view.settings().get('emmet_auto_mark', False)
+    return emmet.get_settings('auto_mark', False)
 
 
 def main_view(fn):
@@ -139,6 +139,9 @@ class AbbreviationMarkerListener(sublime_plugin.EventListener):
 
             return False
 
+        if key == 'emmet_tab_expand':
+            return emmet.get_settings('tab_expand', False)
+
         if key == 'has_emmet_abbreviation_mark':
             return bool(tracker.get_tracker(view))
 
@@ -220,7 +223,7 @@ def start_abbreviation_tracking(view: sublime.View, pos: int) -> tracker.RegionT
                 end += 1
 
         # Do not capture context for large documents since it may reduce performance
-        max_doc_size = view.settings().get('emmet_context_size_limit', 0)
+        max_doc_size = emmet.get_settings('context_size_limit', 0)
         with_context = max_doc_size > 0 and view.size() < max_doc_size
         config = emmet.get_options(view, start, with_context)
 

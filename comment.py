@@ -130,8 +130,8 @@ def get_comment_regions(view: sublime.View, region: sublime.Region, tokens: dict
 
 def allow_emmet_comments(view: sublime.View):
     "Check if Emmet's Toggle Comment action can be applied at current view"
-    if view.settings().get('emmet_comment'):
-        selectors = view.settings().get('emmet_comment_scopes', [])
+    if emmet.get_settings('comment'):
+        selectors = emmet.get_settings('comment_scopes', [])
         caret = utils.get_caret(view)
         return syntax.matches_selector(view, caret, selectors)
 

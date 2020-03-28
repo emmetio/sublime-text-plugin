@@ -4,7 +4,7 @@
         "command": "emmet_expand_abbreviation",
         "context": [
             { "key": "emmet_abbreviation" },
-            { "key": "setting.emmet_tab_expand" }
+            { "key": "emmet_tab_expand" }
         ]
     },
     {
@@ -21,7 +21,7 @@
         "context": [
             { "key": "has_next_field" },
             { "key": "emmet_abbreviation" },
-            { "key": "setting.emmet_tab_expand" }
+            { "key": "emmet_tab_expand" }
         ]
     },
     {

@@ -1,14 +1,14 @@
 {
 	// Automatically mark Emmet abbreviation when typing text: marked abbreviation
 	// is highlighted with green underline.
-	// Works in limited syntaxes only, see `emmet_abbreviation_scopes` option
-	"emmet_auto_mark": true,
+	// Works in limited syntaxes only, see `abbreviation_scopes` option
+	"auto_mark": true,
 
 	// Preview captured abbreviations
-	"emmet_abbreviation_preview": true,
+	"abbreviation_preview": true,
 
 	// Editor scope to Emmet syntax mapping
-	"emmet_syntax_scopes": {
+	"syntax_scopes": {
 		"html": "text.html - source - meta.attribute-with-value.style",
 		"xml": "text.xml - text.xml.xsl",
 		"xsl": "text.xml.xsl",
@@ -27,13 +27,13 @@
 	},
 
 	// List of scopes with inline context
-	"emmet_inline_scopes": [
+	"inline_scopes": [
 		"meta.attribute-with-value.style.html"
 	],
 
 	// List of scope selectors where abbreviation marker should be activated,
 	// e.g. plugin will mark text that user types as abbreviation
-	"emmet_abbreviation_scopes": [
+	"abbreviation_scopes": [
 		"text - (source, entity, punctuation.definition.tag.end) - comment",
 		"source meta.property-list",
 		"source - meta.selector - meta.property-value - meta.property-name - string - punctuation - comment",
@@ -42,34 +42,34 @@
 	],
 
 	// List of scopes where Emmet abbreviations should not be be captured.
-	// If avy of the following scopes matches, `emmet_abbreviation_scopes`
+	// If avy of the following scopes matches, `abbreviation_scopes`
 	// will be ignored
-	"emmet_ignore_scopes": [],
+	"ignore_scopes": [],
 
 	// Expand Emmet abbreviation with Tab key when in abbreviation marker
-	"emmet_tab_expand": true,
+	"tab_expand": true,
 
 	// Display open tag preview next to closing tag when caret is inside it
 	// and open tag is not currently visible
-	"emmet_tag_preview": false,
+	"tag_preview": false,
 
 	// The maximum file size where Emmet will capture HTML tag context for abbreviation.
 	// Tag context is used for resolving implicit tag names in abbreviation
 	// (e.g. `.item` should expand to `<li class="item">` inside `<ul>` tag), but
 	// requires full document scan
-	"emmet_context_size_limit": 102400,
+	"context_size_limit": 102400,
 
 	// The maximum selection size for instant preview of Wrap with Abbreviation action.
-	"emmet_wrap_size_preview": 10240,
+	"wrap_size_preview": 10240,
 
 	// Override default Toggle Comment with Emmet variation for specified syntax scopes
-	// defined in `emmet_comment_scopes`. When enabled, if you run Toggle Comment action
+	// defined in `comment_scopes`. When enabled, if you run Toggle Comment action
 	// without selecting any text, Emmet will try to find matching HTML tag pair
 	// for current caret position and comment entire tag instead of current line.
 	// If this option is disabled, you can create keyboard shortcut for
-	// `emmet_toggle_comment` action.
-	"emmet_comment": true,
-	"emmet_comment_scopes": [
+	// `toggle_comment` action.
+	"comment": true,
+	"comment_scopes": [
 		"text.html - source",
 		"text.xml",
 		"source.css",
@@ -78,12 +78,12 @@
 	],
 
 	// Max size of file to convert to data:URL. Set to 0 to disable limit
-	"emmet_max_data_url": 20480,
+	"max_data_url": 20480,
 
 	// Config for Emmet
 	// See `GlobalConfig` interface for supported properties: https://github.com/emmetio/emmet/blob/master/src/config.ts
 	// Example:
-	// "emmet_config": {
+	// "config": {
 	// 	"markup": {
 	// 		"snippets": {
 	// 			"foo": "foo.bar>baz"
@@ -93,5 +93,5 @@
 	// 		}
 	// 	}
 	// }
-	"emmet_config": {}
+	"config": {}
 }

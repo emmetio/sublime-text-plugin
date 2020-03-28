@@ -103,7 +103,7 @@ class RegionTracker:
 
     def show_preview(self, view: sublime.View, as_phantom=None):
         "Displays expanded preview of abbreviation in current tracker in given view"
-        if not view.settings().get('emmet_abbreviation_preview', True):
+        if not emmet.get_settings('abbreviation_preview', True):
             return
 
         content = None
