@@ -14,8 +14,8 @@ ABBR_PREVIEW_ID = 'emmet-abbreviation-preview'
 
 class RegionTracker:
     __slots__ = ('last_pos', 'last_length', 'region', 'forced', 'config',
-                 'abbreviation', 'forced_indicator', '_has_popup_preview',
-                 '_phantom_preview')
+                 'abbreviation', 'forced_indicator', 'offset',
+                 '_has_popup_preview', '_phantom_preview')
 
     def __init__(self, start: int, pos: int, length: int, forced=False):
         self.last_pos = pos
@@ -24,6 +24,7 @@ class RegionTracker:
         self.region = sublime.Region(start, pos)
         self.config = {}
         self.abbreviation = {}
+        self.offset = 0
         self.forced_indicator = None
         self._has_popup_preview = False
         self._phantom_preview = None
@@ -43,8 +44,9 @@ class RegionTracker:
 
     def update_abbreviation(self, view: sublime.View):
         "Updates abbreviation data from current tracker"
-        # TODO consider prefix in JSX
         abbr = view.substr(self.region)
+        if self.offset:
+            abbr = abbr[self.offset:]
 
         if not self.config:
             self.config = emmet.get_options(view, self.region.a, True)
@@ -212,6 +214,7 @@ def start_tracking(view: sublime.View, start: int, pos: int, **kwargs) -> Region
     """
     tracker = RegionTracker(start, pos, view.size(), kwargs.get('forced', False))
     tracker.config = kwargs.get('config')
+    tracker.offset = kwargs.get('offset', 0)
     tracker.update_abbreviation(view)
     tracker.mark(view)
     cache[view.id()] = tracker

@@ -15,9 +15,6 @@ pairs = {
     '(': ')'
 }
 
-JSX_PREFIX = '<'
-ABBR_REGION_ID = 'emmet-abbreviation'
-
 def allow_tracking(view: sublime.View, pos: int) -> bool:
     "Check if abbreviation tracking is allowed in editor at given location"
     return is_enabled(view) and syntax.in_activation_scope(view, pos)
@@ -172,28 +169,28 @@ class AbbreviationMarkerListener(sublime_plugin.EventListener):
         if command_name == 'auto_complete' and is_enabled(view):
             self.pending_completions_request = True
         elif command_name == 'commit_completion':
-            print('commit completion %s' % repr(args))
             tracker.stop_tracking(view)
 
     def on_post_text_command(self, view: sublime.View, command_name: str, args: list):
         if command_name == 'auto_complete':
             self.pending_completions_request = False
+        elif command_name == 'undo':
+            # In case of undo, editor may restore previously marked range.
+            # If so, restore marker from it
+            trk = restore_tracker(view)
+            if trk:
+                trk.show_preview(view)
 
-    # def on_post_text_command(self, view: sublime.View, command_name: str, args: list):
-    #     if command_name == 'undo':
-    #         # In case of undo, editor may restore previously marked range.
-    #         # If so, restore marker from it
-    #         print('undo; has range? %s' % (bool(view.get_regions(ABBR_REGION_ID))))
 
 def should_stop_tracking(trk: tracker.RegionTracker, pos: int) -> bool:
     if trk.forced:
         # Never reset forced abbreviation: it’s up to user how to handle it
         return False
 
-    if re.search(r'[\n\r]', trk.abbreviation['abbr']):
-        # Never allow new lines in auto-tracked abbreviation
+    if not trk.abbreviation or re.search(r'[\n\r]', trk.abbreviation['abbr']):
+        # — Stop tracking if abbreviation is empty
+        # — Never allow new lines in auto-tracked abbreviation
         return True
-
 
     # Reset if user entered invalid character at the end of abbreviation
     return 'error' in trk.abbreviation and trk.region.end() == pos
@@ -214,12 +211,14 @@ def start_abbreviation_tracking(view: sublime.View, pos: int) -> tracker.RegionT
     prefix = view.substr(prefix_region)
     start = -1
     end = pos
+    offset = 0
 
     # print('check prefix "%s"' % prefix)
     if syntax.from_pos(view, pos) == 'jsx':
         # In JSX, abbreviations for completions should be prefixed
-        if len(prefix) == 2 and prefix[0] == JSX_PREFIX and re_jsx_abbr_start.match(prefix[1]):
+        if len(prefix) == 2 and prefix[0] == emmet.JSX_PREFIX and re_jsx_abbr_start.match(prefix[1]):
             start = pos - 2
+            offset = len(emmet.JSX_PREFIX)
     elif re_word_bound.match(prefix):
         start = pos - 1
 
@@ -231,7 +230,7 @@ def start_abbreviation_tracking(view: sublime.View, pos: int) -> tracker.RegionT
             if view.substr(next_char_region) == pairs[last_ch]:
                 end += 1
 
-        return tracker.start_tracking(view, start, end)
+        return tracker.start_tracking(view, start, end, offset=offset)
 
 def suggest_abbreviation_tracker(view: sublime.View, pos: int) -> tracker.RegionTracker:
     "Tries to extract abbreviation from given position and returns tracker for it, if available"
@@ -248,7 +247,19 @@ def suggest_abbreviation_tracker(view: sublime.View, pos: int) -> tracker.Region
         config = emmet.get_options(view, pos, True)
         abbr, _ = emmet.extract_abbreviation(view, pos, config)
         if abbr:
-            return tracker.start_tracking(view, abbr.start, abbr.end, config=config)
+            offset = abbr.location - abbr.start
+            return tracker.start_tracking(view, abbr.start, abbr.end, config=config, offset=offset)
+
+
+def restore_tracker(view: sublime.View):
+    "Tries to restore abbreviation tracker from given view"
+    marked_list = view.get_regions(tracker.ABBR_REGION_ID)
+    if marked_list and not tracker.get_tracker(view):
+        # No tracker but marked region: restore tracker from it
+        r = marked_list[0]
+        config = emmet.get_options(view, r.begin(), True)
+        offset = len(config.get('prefix', ''))
+        return tracker.start_tracking(view, r.begin(), r.end(), config=config, offset=offset)
 
 
 def plugin_unloaded():

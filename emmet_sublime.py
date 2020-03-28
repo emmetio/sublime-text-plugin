@@ -12,6 +12,8 @@ from .emmet.action_utils import select_item_css, select_item_html, \
 from .emmet.math_expression import evaluate, extract as extract_math
 from . import syntax
 
+JSX_PREFIX = '<'
+
 re_simple = re.compile(r'^([\w!-]+)\.?$')
 known_tags = (
     'a', 'abbr', 'address', 'area', 'article', 'aside', 'audio',
@@ -233,7 +235,9 @@ def get_options(view: sublime.View, pt: int, with_context=False) -> dict:
         attach_context(view, pt, config)
 
     config['inline'] = syntax.is_inline(view, pt)
-    config['jsx'] = syntax.is_jsx(config['syntax'])
+    if syntax.is_jsx(config['syntax']):
+        config['prefix'] = JSX_PREFIX
+        config['jsx'] = True
     return config
 
 
