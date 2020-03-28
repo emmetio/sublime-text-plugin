@@ -10,10 +10,12 @@ from .emmet.css_abbreviation import parse as stylesheet_parse
 
 cache = {}
 ABBR_REGION_ID = 'emmet-abbreviation'
+ABBR_PREVIEW_ID = 'emmet-abbreviation-preview'
 
 class RegionTracker:
     __slots__ = ('last_pos', 'last_length', 'region', 'forced', 'config',
-                 'abbreviation', 'forced_indicator')
+                 'abbreviation', 'forced_indicator', '_has_popup_preview',
+                 '_phantom_preview')
 
     def __init__(self, start: int, pos: int, length: int, forced=False):
         self.last_pos = pos
@@ -23,6 +25,8 @@ class RegionTracker:
         self.config = {}
         self.abbreviation = {}
         self.forced_indicator = None
+        self._has_popup_preview = False
+        self._phantom_preview = None
 
     def shift(self, offset: int):
         "Shifts tracker location by given offset"
@@ -99,36 +103,33 @@ class RegionTracker:
         "Displays expanded preview of abbreviation in current tracker in given view"
         content = None
 
+        if as_phantom is None:
+            # By default, display preview for CSS abbreviation as phantom to not
+            # interfere with default autocomplete popup
+            as_phantom = self.config and self.config['type'] == 'stylesheet'
+
         if not self.abbreviation:
             # No parsed abbreviation: empty region
             pass
         if 'error' in self.abbreviation:
             # Display error snippet
             content = '<div class="error">%s</div>' % format_snippet(self.abbreviation['error']['snippet'])
-        elif self.forced or not self.abbreviation['simple']:
+        elif self.forced or as_phantom or not self.abbreviation['simple']:
             content = format_snippet(self.abbreviation['preview'])
 
         if not content:
             self.hide_preview(view)
             return
 
-        if as_phantom is None:
-            # By default, display preview for CSS abbreviation as phantom to not
-            # interfere with default autocomplete popup
-            as_phantom = self.config['type'] == 'stylesheet'
-
         if as_phantom:
-            pass
-            # TODO support phantoms
-            # view.hide_popup()
+            if not self._phantom_preview:
+                self._phantom_preview = sublime.PhantomSet(view, ABBR_PREVIEW_ID)
 
-            # if not self._preview:
-            #     self._preview = sublime.PhantomSet(self.view, abbr_preview_id)
-
-            # r = sublime.Region(self.region.end(), self.region.end())
-            # phantoms = [sublime.Phantom(r, self.preview_phantom_html(content), sublime.LAYOUT_INLINE)]
-            # self._preview.update(phantoms)
+            r = sublime.Region(self.region.end(), self.region.end())
+            phantoms = [sublime.Phantom(r, preview_phantom_html(content), sublime.LAYOUT_INLINE)]
+            self._phantom_preview.update(phantoms)
         else:
+            self._has_popup_preview = True
             view.show_popup(
                 preview_popup_html(content),
                 flags=sublime.COOPERATE_WITH_AUTO_COMPLETE,
@@ -138,13 +139,12 @@ class RegionTracker:
 
     def hide_preview(self, view: sublime.View):
         "Hides preview of current abbreviation in given view"
-        # TODO since `hide_popup()` hides any visible popup, we should check if
-        # abbreviation preview is displayed for given view
-        view.hide_popup()
-        # TODO clear phantoms
-        # if self._preview:
-        #     self.view.erase_phantoms(abbr_preview_id)
-        #     self._preview = None
+        if self._has_popup_preview:
+            view.hide_popup()
+            self._has_popup_preview = False
+        if self._phantom_preview:
+            view.erase_phantoms(ABBR_PREVIEW_ID)
+            self._phantom_preview = None
 
 
 def handle_change(view: sublime.View):
@@ -246,7 +246,7 @@ def preview_phantom_html(content: str):
     <body id="emmet-preview-phantom">
         <style>
             body {
-                background-color: var(--orangish);
+                background-color: var(--greenish);
                 color: #fff;
                 border-radius: 3px;
                 padding: 1px 3px;

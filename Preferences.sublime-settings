@@ -37,6 +37,7 @@
 	// e.g. plugin will mark text that user types as abbreviation
 	"emmet_abbreviation_scopes": [
 		"text - (source, entity, punctuation.definition.tag.end) - comment",
+		"source meta.property-list",
 		"source - meta.selector - meta.property-value - meta.property-name - string - punctuation - comment",
 		// Inline CSS
 		"text.html meta.attribute-with-value.style string.quoted"

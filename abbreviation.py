@@ -91,12 +91,14 @@ class AbbreviationMarkerListener(sublime_plugin.EventListener):
         self.last_pos_tracker = {}
         self.pending_completions_request = False
 
+    @main_view
     def on_close(self, view: sublime.View):
         tracker.stop_tracking(view)
         key = view.id()
         if key in self.last_pos_tracker:
             del self.last_pos_tracker[key]
 
+    @main_view
     def on_activated(self, view: sublime.View):
         tracker.handle_selection_change(view)
         self.last_pos_tracker[view.id()] = utils.get_caret(view)
