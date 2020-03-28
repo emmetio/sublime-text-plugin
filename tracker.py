@@ -103,6 +103,9 @@ class RegionTracker:
 
     def show_preview(self, view: sublime.View, as_phantom=None):
         "Displays expanded preview of abbreviation in current tracker in given view"
+        if not view.settings().get('emmet_abbreviation_preview', True):
+            return
+
         content = None
 
         if as_phantom is None:
@@ -169,7 +172,7 @@ def handle_change(view: sublime.View):
     tracker.last_length = length
     tracker.last_pos = pos
 
-    print('tracker >> handle delta %d, last pos: %d, pos: %d' % (delta, last_pos, pos))
+    # print('tracker >> handle delta %d, last pos: %d, pos: %d' % (delta, last_pos, pos))
 
     if delta < 0:
         # Removed some content
@@ -186,7 +189,7 @@ def handle_change(view: sublime.View):
     if not tracker.is_valid_range():
         stop_tracking(view)
     else:
-        print('new tracker region is %s' % tracker.region)
+        # print('new tracker region is %s' % tracker.region)
         tracker.update_abbreviation(view)
         tracker.mark(view)
         return tracker

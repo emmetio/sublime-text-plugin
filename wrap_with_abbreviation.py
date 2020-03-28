@@ -1,6 +1,8 @@
 import re
 import sublime
 import sublime_plugin
+from .emmet.abbreviation import parse as markup_parse
+from .emmet.css_abbreviation import parse as stylesheet_parse
 from . import emmet_sublime as emmet
 from . import utils
 
@@ -43,8 +45,14 @@ class WrapAbbreviationInputHandler(sublime_plugin.TextInputHandler):
         return last_abbreviation
 
     def validate(self, text: str):
-        data = emmet.validate(text, self.options)
-        return data and data.get('valid')
+        try:
+            if self.options.get('type') == 'stylesheet':
+                stylesheet_parse(text, self.options)
+            else:
+                markup_parse(text, self.options)
+            return True
+        except:
+            return False
 
     def cancel(self):
         undo_preview(self.view)

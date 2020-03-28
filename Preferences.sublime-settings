@@ -1,13 +1,11 @@
 {
-	// Automatically mark Emmet abbreviation when typing text
+	// Automatically mark Emmet abbreviation when typing text: marked abbreviation
+	// is highlighted with green underline.
+	// Works in limited syntaxes only, see `emmet_abbreviation_scopes` option
 	"emmet_auto_mark": true,
 
 	// Preview captured abbreviations
 	"emmet_abbreviation_preview": true,
-
-	// Track Emmet abbreviation as-you-type and display it’s preview. Works
-	// in supported syntaxes only
-	"emmet_abbreviation_tracking": "true",
 
 	// Editor scope to Emmet syntax mapping
 	"emmet_syntax_scopes": {
@@ -48,11 +46,8 @@
 	// will be ignored
 	"emmet_ignore_scopes": [],
 
-	// Expand Emmet abbreviation with tab key when in abbreviation marker
+	// Expand Emmet abbreviation with Tab key when in abbreviation marker
 	"emmet_tab_expand": true,
-
-	// Prefix for JSX context to start abbreviation matching
-	"emmet_jsx_prefix": "<",
 
 	// Display open tag preview next to closing tag when caret is inside it
 	// and open tag is not currently visible

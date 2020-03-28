@@ -14,29 +14,6 @@ from . import syntax
 
 JSX_PREFIX = '<'
 
-re_simple = re.compile(r'^([\w!-]+)\.?$')
-known_tags = (
-    'a', 'abbr', 'address', 'area', 'article', 'aside', 'audio',
-    'b', 'base', 'bdi', 'bdo', 'blockquote', 'body', 'br', 'button',
-    'canvas', 'caption', 'cite', 'code', 'col', 'colgroup', 'content',
-    'data', 'datalist', 'dd', 'del', 'details', 'dfn', 'dialog', 'div', 'dl', 'dt',
-    'em', 'embed',
-    'fieldset', 'figcaption', 'figure', 'footer', 'form',
-    'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'head', 'header', 'hr', 'html',
-    'i', 'iframe', 'img', 'input', 'ins',
-    'kbd', 'keygen',
-    'label', 'legend', 'li', 'link',
-    'main', 'map', 'mark', 'menu', 'menuitem', 'meta', 'meter',
-    'nav', 'noscript',
-    'object', 'ol', 'optgroup', 'option', 'output',
-    'p', 'param', 'picture', 'pre', 'progress',
-    'q',
-    'rp', 'rt', 'rtc', 'ruby',
-    's', 'samp', 'script', 'section', 'select', 'shadow', 'slot', 'small', 'source', 'span', 'strong', 'style', 'sub', 'summary', 'sup',
-    'table', 'tbody', 'td', 'template', 'textarea', 'tfoot', 'th', 'thead', 'time', 'title', 'tr', 'track',
-    'u', 'ul', 'var', 'video', 'wbr'
-)
-
 # Cache for storing internal Emmet data
 # TODO invalidate on editor settings change
 emmet_cache = {}
@@ -79,45 +56,6 @@ def expand(abbr: str, config: dict=None):
         global_config = view.settings().get('emmet_config')
 
     return expand_abbreviation(abbr, opt, global_config)
-
-
-def validate(abbr: str, config: dict=None):
-    """
-    Validates given abbreviation: check if it can be properly expanded and detects
-    if it's a simple abbreviation (looks like a regular word)
-    """
-    resolved = Config(config)
-
-    if abbr:
-        try:
-            if resolved.type == 'stylesheet':
-                stylesheet_abbreviation(abbr, resolved)
-            else:
-                markup_abbreviation(abbr, resolved)
-
-            m = re_simple.match(abbr)
-            return {
-                'abbr': abbr,
-                'valid': True,
-                'simple': abbr == '.' or bool(m),
-                'matched': m.group(1) in known_tags or m.group(1) in resolved.snippets if m else False
-            }
-        except (ScannerException, TokenScannerException) as err:
-            return {
-                'abbr': abbr,
-                'valid': False,
-                'error': err.message,
-                'pos': err.pos,
-                'snippet': '%s^' % ('-' * err.pos,) if err.pos is not None else ''
-            }
-
-    return {
-        'abbr': abbr,
-        'valid': False,
-        'error': '',
-        'pos': -1,
-        'snippet': ''
-    }
 
 
 def balance(code: str, pos: int, direction: str, xml=False) -> list:
@@ -282,9 +220,6 @@ def extract_abbreviation(view: sublime.View, loc: int, opt: dict=None):
         # No look-ahead for stylesheets: they do not support brackets syntax
         # and enabled look-ahead produces false matches
         opt['lookAhead'] = False
-
-    if opt['syntax'] == 'jsx':
-        opt['prefix'] = view.settings().get('emmet_jsx_prefix', None)
 
     abbr_data = extract(text, pt - begin, opt)
 

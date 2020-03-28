@@ -22,7 +22,7 @@ def allow_tracking(view: sublime.View, pos: int) -> bool:
 
 def is_enabled(view: sublime.View) -> bool:
     "Check if Emmet abbreviation tracking is enabled"
-    return view.settings().get('emmet_abbreviation_tracking', False)
+    return view.settings().get('emmet_auto_mark', False)
 
 
 def main_view(fn):
@@ -42,12 +42,7 @@ class EmmetExpandAbbreviation(sublime_plugin.TextCommand):
 
         if trk and trk.region.contains(caret):
             if trk.abbreviation and 'error' not in trk.abbreviation:
-                if 'context' not in trk.config:
-                    # No context captured, might be due to performance optimization
-                    # in large document
-                    emmet.attach_context(self.view, caret, trk.config)
-
-                snippet = emmet.expand(trk.abbreviation['abbr'], trk.config)
+                snippet = expand_abbreviation(self.view, trk)
                 utils.replace_with_snippet(self.view, edit, trk.region, snippet)
 
             tracker.stop_tracking(self.view)
@@ -70,7 +65,6 @@ class EmmetEnterAbbreviation(sublime_plugin.TextCommand):
 
         primary_sel = self.view.sel()[0]
         trk = tracker.start_tracking(self.view, primary_sel.begin(), primary_sel.end(), forced=True)
-        print('create tracker')
         if not primary_sel.empty():
             trk.show_preview(self.view)
             sel = self.view.sel()
@@ -162,7 +156,7 @@ class AbbreviationMarkerListener(sublime_plugin.EventListener):
             trk = suggest_abbreviation_tracker(view, pos)
             if trk:
                 abbr_str = view.substr(trk.region)
-                snippet = emmet.expand(trk.abbreviation['abbr'], trk.config)
+                snippet = expand_abbreviation(view, trk)
                 return [('%s\tEmmet' % abbr_str, snippet)]
 
     def on_text_command(self, view: sublime.View, command_name: str, args: list):
@@ -196,11 +190,6 @@ def should_stop_tracking(trk: tracker.RegionTracker, pos: int) -> bool:
     return 'error' in trk.abbreviation and trk.region.end() == pos
 
 
-def is_invalid_abbr(abbr: str):
-    # Check if given abbreviation cannot be valid
-    return bool(re.match(r'[\n\r]', abbr))
-
-
 def start_abbreviation_tracking(view: sublime.View, pos: int) -> tracker.RegionTracker:
     "Check if we can start abbreviation tracking at given location in editor"
     # Start tracking only if user starts abbreviation typing: entered first
@@ -230,7 +219,12 @@ def start_abbreviation_tracking(view: sublime.View, pos: int) -> tracker.RegionT
             if view.substr(next_char_region) == pairs[last_ch]:
                 end += 1
 
-        return tracker.start_tracking(view, start, end, offset=offset)
+        # Do not capture context for large documents since it may reduce performance
+        max_doc_size = view.settings().get('emmet_context_size_limit', 0)
+        with_context = max_doc_size > 0 and view.size() < max_doc_size
+        config = emmet.get_options(view, start, with_context)
+
+        return tracker.start_tracking(view, start, end, offset=offset, config=config)
 
 def suggest_abbreviation_tracker(view: sublime.View, pos: int) -> tracker.RegionTracker:
     "Tries to extract abbreviation from given position and returns tracker for it, if available"
@@ -261,6 +255,15 @@ def restore_tracker(view: sublime.View):
         offset = len(config.get('prefix', ''))
         return tracker.start_tracking(view, r.begin(), r.end(), config=config, offset=offset)
 
+
+def expand_abbreviation(view: sublime.View, trk: tracker.RegionTracker) -> str:
+    "Expands abbreviation from given tracker"
+    if 'context' not in trk.config:
+        # No context captured, might be due to performance optimization
+        # in large document
+        emmet.attach_context(view, trk.region.begin(), trk.config)
+
+    return emmet.expand(trk.abbreviation['abbr'], trk.config)
 
 def plugin_unloaded():
     for wnd in sublime.windows():
