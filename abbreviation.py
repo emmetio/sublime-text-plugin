@@ -190,7 +190,22 @@ def should_stop_tracking(trk: tracker.RegionTracker, pos: int) -> bool:
         return True
 
     # Reset if user entered invalid character at the end of abbreviation
-    return 'error' in trk.abbreviation and trk.region.end() == pos
+    # or at the edge of auto-inserted paried character like `)` or `]`
+    if 'error' in trk.abbreviation:
+        pairs_end = pairs.values()
+        abbr = trk.abbreviation['abbr']
+        start = trk.region.begin()
+        target_pos = trk.region.end()
+        while target_pos > start:
+            if abbr[target_pos - start - 1] in pairs_end:
+                target_pos -= 1
+            else:
+                break
+
+        return target_pos == pos
+
+    return False
+
 
 
 def start_abbreviation_tracking(view: sublime.View, pos: int) -> tracker.RegionTracker:

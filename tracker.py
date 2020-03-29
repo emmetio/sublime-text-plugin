@@ -315,4 +315,4 @@ def is_simple_markup_abbreviation(abbr: MarkupAbbreviation) -> bool:
     Check if given parsed markup abbreviation is simple. A simple abbreviation
     may not be displayed to user as preview to reduce distraction
     """
-    return len(abbr.children) == 1 and not abbr.children[0].children
+    return not abbr.children or (len(abbr.children) == 1 and not abbr.children[0].children)
