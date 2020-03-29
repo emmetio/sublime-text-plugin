@@ -1,3 +1,9 @@
+## v0.2.1
+
+* Improved typing experience: detect unwanted abbreviations in some common cases.
+* Improved error snippet for invalid abbreviation
+* Disabled Emmet commenting by default
+
 ## v0.2.0
 
 * Complete rewrite of abbreviation tracker (detect abbreviation as-you-type). It should be less annoying: display expanded preview only if abbreviation contains more than one element.
