@@ -68,7 +68,7 @@
 	// for current caret position and comment entire tag instead of current line.
 	// If this option is disabled, you can create keyboard shortcut for
 	// `toggle_comment` action.
-	"comment": true,
+	"comment": false,
 	"comment_scopes": [
 		"text.html - source",
 		"text.xml",
