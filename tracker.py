@@ -81,7 +81,7 @@ class RegionTracker:
                 'error': {
                     'message': err.message,
                     'pos': err.pos,
-                    'snippet': '%s^' % ('-' * err.pos, ) if err.pos is not None else ''
+                    'pointer': '%s^' % ('-' * err.pos, ) if err.pos is not None else ''
                 }
             }
 
@@ -120,8 +120,9 @@ class RegionTracker:
             pass
         if 'error' in self.abbreviation:
             # Display error snippet
-            snippet = html.escape(self.abbreviation['error']['snippet'], False)
-            content = '<div class="error">%s</div>' % snippet
+            err = self.abbreviation['error']
+            snippet = html.escape( re.sub(r'\s+at\s\d+$', '', err['message']), False)
+            content = '<div class="error pointer">%s</div><div class="error message">%s</div>' % (err['pointer'], snippet)
         elif self.forced or as_phantom or not self.abbreviation['simple']:
             snippet = self.abbreviation['preview']
             if self.config['type'] != 'stylesheet':
@@ -253,6 +254,7 @@ def preview_popup_html(content: str):
         <style>
             body { line-height: 1.5rem; }
             .error { color: red }
+            .error.message { font-size: 11px; line-height: 1.3rem; }
             .markup-preview { font-size: 11px; line-height: 1.3rem; }
             %s
         </style>
