@@ -1,1 +1,1 @@
-py-emmet~=1.0.7
+py-emmet~=1.0.9
