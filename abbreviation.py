@@ -139,9 +139,6 @@ class AbbreviationMarkerListener(sublime_plugin.EventListener):
 
             return False
 
-        if key == 'emmet_tab_expand':
-            return emmet.get_settings('tab_expand', False)
-
         if key == 'has_emmet_abbreviation_mark':
             return bool(tracker.get_tracker(view))
 

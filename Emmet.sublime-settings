@@ -4,10 +4,10 @@
 	// Works in limited syntaxes only, see `abbreviation_scopes` option
 	"auto_mark": true,
 
-	// Preview captured abbreviations
+	// Preview captured abbreviations, works only if `auto_mark` is enabled
 	"abbreviation_preview": true,
 
-	// Scope for abbreviation region highlighting
+	// Scope for marked abbreviation region highlighting
 	"marker_scope": "region.accent",
 
 	// Editor scope to Emmet syntax mapping
@@ -26,7 +26,7 @@
 		"scss": "source.scss",
 		"less": "source.less",
 		"stylus": "source.stylus",
-		"sss": "source.sss",
+		"sss": "source.sss"
 	},
 
 	// List of scopes with inline context
@@ -49,9 +49,6 @@
 	// If avy of the following scopes matches, `abbreviation_scopes`
 	// will be ignored
 	"ignore_scopes": [],
-
-	// Expand Emmet abbreviation with Tab key when in abbreviation marker
-	"tab_expand": true,
 
 	// Display open tag preview next to closing tag when caret is inside it
 	// and open tag is not currently visible
