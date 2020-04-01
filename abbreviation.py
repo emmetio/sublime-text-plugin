@@ -192,6 +192,10 @@ def should_stop_tracking(trk: tracker.RegionTracker, pos: int) -> bool:
     # Reset if user entered invalid character at the end of abbreviation
     # or at the edge of auto-inserted paried character like `)` or `]`
     if 'error' in trk.abbreviation:
+        if trk.region.end() == pos:
+            # Last entered character is invalid
+            return True
+
         pairs_end = pairs.values()
         abbr = trk.abbreviation['abbr']
         start = trk.region.begin()
