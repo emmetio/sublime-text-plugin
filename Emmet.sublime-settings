@@ -7,6 +7,9 @@
 	// Preview captured abbreviations
 	"abbreviation_preview": true,
 
+	// Scope for abbreviation region highlighting
+	"marker_scope": "region.accent",
+
 	// Editor scope to Emmet syntax mapping
 	"syntax_scopes": {
 		"html": "text.html - source - meta.attribute-with-value.style",

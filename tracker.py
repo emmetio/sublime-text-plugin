@@ -87,7 +87,7 @@ class RegionTracker:
 
     def mark(self, view: sublime.View):
         "Marks tracker in given view"
-        scope = 'region.greenish'
+        scope = emmet.get_settings('marker_scope', 'region.accent')
         mark_opt = sublime.DRAW_SOLID_UNDERLINE | sublime.DRAW_NO_FILL | sublime.DRAW_NO_OUTLINE
         view.erase_regions(ABBR_REGION_ID)
         view.add_regions(ABBR_REGION_ID, [self.region], scope, '', mark_opt)
