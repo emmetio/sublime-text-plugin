@@ -119,7 +119,7 @@ class AbbreviationMarkerListener(sublime_plugin.EventListener):
         # print('track change %d → %d' % (last_pos, pos))
 
         trk = tracker.handle_change(view)
-        if not trk and last_pos is not None and allow_tracking(view, last_pos) and last_pos == pos - 1:
+        if not trk and last_pos is not None and last_pos == pos - 1 and allow_tracking(view, last_pos):
             trk = start_abbreviation_tracking(view, pos)
 
         if trk and should_stop_tracking(trk, pos):
@@ -225,8 +225,8 @@ def start_abbreviation_tracking(view: sublime.View, pos: int) -> tracker.RegionT
     offset = 0
 
     # print('check prefix "%s"' % prefix)
-    if syntax.from_pos(view, pos) == 'jsx':
-        # In JSX, abbreviations for completions should be prefixed
+    if syntax.is_jsx(syntax.from_pos(view, pos)):
+        # In JSX, abbreviations should be prefixed
         if len(prefix) == 2 and prefix[0] == emmet.JSX_PREFIX and re_jsx_abbr_start.match(prefix[1]):
             start = pos - 2
             offset = len(emmet.JSX_PREFIX)
