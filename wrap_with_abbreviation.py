@@ -126,7 +126,7 @@ def popup_content(content: str):
 def get_wrap_region(view: sublime.View, sel: sublime.Region, options: dict) -> sublime.Region:
     "Returns region to wrap with abbreviation"
     if sel.empty() and options.get('context'):
-        # If there’s no selection than user wants to wrap current tag container
+        # No selection means user wants to wrap current tag container
         ctx = options['context']
         pt = sel.begin()
 
