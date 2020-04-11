@@ -1,3 +1,8 @@
+## v0.2.4
+
+* Support TSX syntax.
+* Minor tweaks and improvements in abbreviation activation scopes.
+
 ## v0.2.1
 
 * Improved typing experience: detect unwanted abbreviations in some common cases.
