@@ -317,4 +317,9 @@ def is_simple_markup_abbreviation(abbr: MarkupAbbreviation) -> bool:
     Check if given parsed markup abbreviation is simple. A simple abbreviation
     may not be displayed to user as preview to reduce distraction
     """
-    return not abbr.children or (len(abbr.children) == 1 and not abbr.children[0].children)
+    if len(abbr.children) == 1 and not abbr.children[0].children:
+        first = abbr.children[0];
+        # XXX silly check for common snippets like `!`. Should read contents
+        # of expanded abbreviation instead
+        return not first.name or first.name.isalpha()
+    return not abbr.children
