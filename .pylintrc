@@ -10,4 +10,5 @@ disable=
     missing-docstring,
     arguments-differ,
     no-self-use,
-    bare-except
+    bare-except,
+    too-few-public-methods

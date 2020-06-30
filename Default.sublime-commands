@@ -100,5 +100,9 @@
     {
         "caption": "Emmet: Convert data:URL",
         "command": "emmet_convert_data_url"
+    },
+    {
+        "caption": "Emmet: Get context",
+        "command": "emmet_get_context"
     }
 ]

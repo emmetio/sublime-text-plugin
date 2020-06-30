@@ -5,6 +5,17 @@ import sublime
 from .emmet.html_matcher import AttributeToken
 from .emmet.action_utils import CSSProperty
 
+pairs = {
+    '{': '}',
+    '[': ']',
+    '(': ')'
+}
+
+pairs_end = {}
+for k, v in pairs.items():
+    pairs_end[v] = k
+
+
 def narrow_to_non_space(view: sublime.View, region: sublime.Region) -> sublime.Region:
     "Returns copy of region which starts and ends at non-space character"
     begin = region.begin()
