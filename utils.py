@@ -161,3 +161,13 @@ def attribute_region(attr: AttributeToken):
     "Returns region that covers entire attribute"
     end = attr.value_end if attr.value is not None else attr.name_end
     return sublime.Region(attr.name_start, end)
+
+
+def has_new_line(text: str) -> bool:
+    "Check if given text contains newline character"
+    return '\n' in text or '\r' in text
+
+
+def to_region(rng: list) -> sublime.Region:
+    "Converts given list range to Sublime region"
+    return sublime.Region(rng[0], rng[1])

@@ -5,6 +5,7 @@ from .emmet.abbreviation import parse as markup_parse
 from .emmet.css_abbreviation import parse as stylesheet_parse
 from . import emmet_sublime as emmet
 from . import utils
+from .config import get_config
 
 re_indent = re.compile(r'^\s+')
 last_abbreviation = None
@@ -22,7 +23,7 @@ class EmmetWrapWithAbbreviation(sublime_plugin.TextCommand):
         # pylint: disable=attribute-defined-outside-init
         sel = self.view.sel()[0]
 
-        self.options = emmet.get_options(self.view, sel.begin(), True)
+        self.options = get_config(self.view, sel.begin())
         self.region = get_wrap_region(self.view, sel, self.options)
         lines = get_content(self.view, self.region, True)
         self.options['text'] = lines

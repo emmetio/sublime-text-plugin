@@ -1,3 +1,4 @@
+import re
 import sublime
 
 __doc__ = "Syntax-related methods"
@@ -35,8 +36,17 @@ def info(view: sublime.View, pt: int, fallback=None):
     if syntax:
         return {
             'syntax':  syntax,
-            'type': syntax in stylesheet_syntaxes and 'stylesheet' or 'markup'
+            'type': get_type(syntax)
         }
+
+
+def doc_syntax(view: sublime.View) -> str:
+    "Returns current document syntax"
+    syntax = view.settings().get('syntax', '')
+    syntax = re.split(r'[\\\/]', syntax)[-1]
+    if '.' in syntax:
+        syntax = syntax.split('.')[0]
+    return syntax.lower()
 
 
 def from_pos(view: sublime.View, pt: int):
@@ -48,6 +58,11 @@ def from_pos(view: sublime.View, pt: int):
                 return name
 
     return None
+
+
+def get_type(syntax: str) -> str:
+    "Returns type of Emmet abbreviation for given syntax"
+    return 'stylesheet' if syntax in stylesheet_syntaxes else 'markup'
 
 
 def is_xml(syntax: str):
