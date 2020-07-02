@@ -1,5 +1,5 @@
 import sublime_plugin
-from . import utils
+from .utils import get_caret, go_to_pos
 
 def find_new_edit_point(view, pos, inc):
     doc_size = view.size()
@@ -28,8 +28,8 @@ def find_new_edit_point(view, pos, inc):
 
 class EmmetGoToEditPoint(sublime_plugin.TextCommand):
     def run(self, edit, previous=False):
-        caret = utils.get_caret(self.view)
+        caret = get_caret(self.view)
         delta = -1 if previous else 1
         pt = find_new_edit_point(self.view, caret + delta, delta)
         if pt is not None:
-            utils.go_to_pos(self.view, pt)
+            go_to_pos(self.view, pt)

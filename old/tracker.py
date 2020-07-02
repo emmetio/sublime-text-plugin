@@ -318,7 +318,7 @@ def is_simple_markup_abbreviation(abbr: MarkupAbbreviation) -> bool:
     may not be displayed to user as preview to reduce distraction
     """
     if len(abbr.children) == 1 and not abbr.children[0].children:
-        first = abbr.children[0];
+        first = abbr.children[0]
         # XXX silly check for common snippets like `!`. Should read contents
         # of expanded abbreviation instead
         return not first.name or first.name.isalpha()

@@ -72,7 +72,12 @@
 	// for current caret position and comment entire tag instead of current line.
 	// If this option is disabled, you can create keyboard shortcut for
 	// `toggle_comment` action.
-	"comment": false,
+    "comment": false,
+
+    // Outputs everything between `[` and `]` only if specified attribute name
+    // (written in UPPERCASE) exists in element. Attribute name is replaced with
+    // actual value. Use `\n` to add a newline.
+    "comment_template": "\n<!-- /[#ID][.CLASS] -->",
 	"comment_scopes": [
 		"text.html - source",
 		"text.xml",
@@ -82,7 +87,29 @@
 	],
 
 	// Max size of file to convert to data:URL. Set to 0 to disable limit
-	"max_data_url": 20480,
+    "max_data_url": 20480,
+
+    // Output code style
+    // Defines how self-closing tags (like `<img>` or `<br>`) and boolean attributes
+    // (like `disabled`) will look in generated code.
+    // Possible values are "html", "xhtml", "xml"
+    "markup_style": "html",
+
+    // Attribute value quotes, "double" or "single"
+    "attribute_quotes": "double",
+
+    // Enable BEM support.
+    // When enabled, Emmet will treat class names starting with `-`` as element
+    // and with `_` as modifier in BEM (https://en.bem.info) notation.
+    // These class names will inherit block name from current or ancestor element.
+    // For example, the abbreviation `ul.nav.nav_secondary>li.nav__item` can be
+    // shortened to `ul.nav._secondary>li.-item` with this option enabled.
+    "bem": false,
+
+    // When enabled, tries to shorten generated HEX color values for CSS abbreviations.
+    // For example, `c#0` abbreviation can be expanded either to `color: #000;`
+    // or `color: #000000;`
+    "short_hex": true,
 
 	// Config for Emmet
 	// See `GlobalConfig` interface for supported properties: https://github.com/emmetio/emmet/blob/master/src/config.ts

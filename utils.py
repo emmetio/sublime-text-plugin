@@ -5,6 +5,17 @@ import sublime
 from .emmet.html_matcher import AttributeToken
 from .emmet.action_utils import CSSProperty
 
+pairs = {
+    '{': '}',
+    '[': ']',
+    '(': ')'
+}
+
+pairs_end = {}
+for k, v in pairs.items():
+    pairs_end[v] = k
+
+
 def narrow_to_non_space(view: sublime.View, region: sublime.Region) -> sublime.Region:
     "Returns copy of region which starts and ends at non-space character"
     begin = region.begin()
@@ -150,3 +161,13 @@ def attribute_region(attr: AttributeToken):
     "Returns region that covers entire attribute"
     end = attr.value_end if attr.value is not None else attr.name_end
     return sublime.Region(attr.name_start, end)
+
+
+def has_new_line(text: str) -> bool:
+    "Check if given text contains newline character"
+    return '\n' in text or '\r' in text
+
+
+def to_region(rng: list) -> sublime.Region:
+    "Converts given list range to Sublime region"
+    return sublime.Region(rng[0], rng[1])

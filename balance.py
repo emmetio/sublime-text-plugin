@@ -17,7 +17,7 @@ def get_regions(view: sublime.View, pt: int, syntax_name: str, direction='outwar
 
     if syntax.is_css(syntax_name):
         regions = emmet.balance_css(content, pt, direction)
-        return [emmet.to_region(r) for r in regions]
+        return [utils.to_region(r) for r in regions]
 
     result = []
     tags = emmet.balance(content, pt, direction, syntax.is_xml(syntax_name))

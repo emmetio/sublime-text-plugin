@@ -11,33 +11,10 @@ from .emmet.action_utils import select_item_css, select_item_html, \
     get_open_tag as tag, get_css_section, SelectItemModel, CSSSection
 from .emmet.math_expression import evaluate, extract as extract_math
 from . import syntax
+from .config import get_settings, get_config
+from .utils import to_region
 
 JSX_PREFIX = '<'
-
-# Cache for storing internal Emmet data
-emmet_cache = {}
-settings = None
-
-def get_settings(key: str, default=None):
-    "Returns value of given Emmet setting"
-    global settings
-
-    if settings is None:
-        settings = sublime.load_settings('Emmet.sublime-settings')
-        settings.add_on_change('config', handle_settings_change)
-
-    return settings.get(key, default)
-
-def field(index: int, placeholder: str, **kwargs):
-    "Produces tabstops for editor"
-    if placeholder:
-        return '${%d:%s}' % (index, placeholder)
-    return '${%d}' % index
-
-
-def field_preview(index: int, placeholder: str, **kwargs):
-    "Produces tabstops for abbreviation preview"
-    return placeholder
 
 
 def escape_text(text: str, **kwargs):
@@ -45,27 +22,8 @@ def escape_text(text: str, **kwargs):
     return re.sub(r'\$', '\\$', text)
 
 
-def expand(abbr: str, config: dict=None):
-    "Expands given abbreviation into code snippet"
-    is_preview = config and config.get('preview', False)
-    opt = {'cache': emmet_cache}
-    output_opt = {
-        'output.field': field_preview if is_preview else field,
-        'output.text': escape_text,
-        'output.format': not config or not config.get('inline'),
-    }
-
-    if config:
-        opt.update(config)
-        if 'options' in config:
-            output_opt.update(config.get('options'))
-    opt['options'] = output_opt
-
-    view = sublime.active_window().active_view()
-    if view:
-        global_config = get_settings('config')
-
-    return expand_abbreviation(abbr, opt, global_config)
+def expand(abbr: str, config: dict):
+    return expand_abbreviation(abbr, config, get_settings('config'))
 
 
 def balance(code: str, pos: int, direction: str, xml=False) -> list:
@@ -157,48 +115,7 @@ def get_tag_context(view: sublime.View, pt: int, xml=None) -> dict:
     return ctx
 
 
-def get_css_context(view: sublime.View, pt: int) -> dict:
-    "Returns context CSS property name, if any"
-    if view.match_selector(pt, 'meta.property-value'):
-        # Walk back until we find property name
-        scope_range = view.extract_scope(pt)
-        ctx_pos = scope_range.begin() - 1
-        while ctx_pos >= 0 and not view.match_selector(ctx_pos, 'section.property-list') \
-            and not view.match_selector(ctx_pos, 'meta.selector'):
-            scope_range = view.extract_scope(ctx_pos)
-            if view.match_selector(ctx_pos, 'meta.property-name'):
-                return {
-                    'name': view.substr(scope_range)
-                }
-            ctx_pos = scope_range.begin() - 1
-    return None
-
-
-def get_options(view: sublime.View, pt: int, with_context=False) -> dict:
-    "Returns Emmet options for given character location in view"
-    config = syntax.info(view, pt, 'html')
-
-    # Get element context
-    if with_context:
-        attach_context(view, pt, config)
-
-    config['inline'] = syntax.is_inline(view, pt)
-    if syntax.is_jsx(config['syntax']):
-        config['prefix'] = JSX_PREFIX
-        config['jsx'] = True
-    return config
-
-
-def attach_context(view: sublime.View, pt: int, config: dict) -> dict:
-    "Attaches context for given Emmet config"
-    if config['type'] == 'stylesheet':
-        config['context'] = get_css_context(view, pt)
-    elif syntax.is_html(config['syntax']):
-        config['context'] = get_tag_context(view, pt, syntax.is_xml(config['syntax']))
-
-    return config
-
-def extract_abbreviation(view: sublime.View, loc: int, opt: dict=None):
+def extract_abbreviation(view: sublime.View, loc: int, config: Config = None):
     """
     Extracts abbreviation from given location in view. Locations could be either
     `int` (a character location in view) or `list`/`tuple`/`sublime.Region`.
@@ -223,30 +140,22 @@ def extract_abbreviation(view: sublime.View, loc: int, opt: dict=None):
     text = view.substr(region)
     begin = region.begin()
 
-    if opt is None:
-        opt = get_options(view, pt)
+    if config is None:
+        config = get_config(view, pt)
 
-    if opt['type'] == 'stylesheet':
+    abbr_data = extract(text, pt - begin, {
+        'type': config.type,
         # No look-ahead for stylesheets: they do not support brackets syntax
         # and enabled look-ahead produces false matches
-        opt['lookAhead'] = False
-
-    abbr_data = extract(text, pt - begin, opt)
+        'lookAhead': config.type != 'stylesheet',
+        'prefix': JSX_PREFIX if syntax.is_jsx(config.syntax) else None
+    })
 
     if abbr_data:
         abbr_data.start += begin
         abbr_data.end += begin
         abbr_data.location += begin
-        return abbr_data, opt
+        return abbr_data
 
     return None
 
-
-def to_region(rng: list) -> sublime.Region:
-    "Converts given list range to Sublime region"
-    return sublime.Region(rng[0], rng[1])
-
-
-def handle_settings_change():
-    global emmet_cache
-    emmet_cache = {}

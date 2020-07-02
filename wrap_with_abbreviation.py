@@ -1,10 +1,14 @@
 import re
 import sublime
 import sublime_plugin
+from .emmet.config import Config
 from .emmet.abbreviation import parse as markup_parse
 from .emmet.css_abbreviation import parse as stylesheet_parse
+from .config import get_config
+from .context import get_html_context
 from . import emmet_sublime as emmet
 from . import utils
+from . import syntax
 
 re_indent = re.compile(r'^\s+')
 last_abbreviation = None
@@ -13,7 +17,7 @@ class EmmetWrapWithAbbreviation(sublime_plugin.TextCommand):
     def run(self, edit, wrap_abbreviation):
         global last_abbreviation # pylint: disable=global-statement
         if wrap_abbreviation:
-            snippet = emmet.expand(wrap_abbreviation, self.options)
+            snippet = emmet.expand(wrap_abbreviation, self.config)
             utils.replace_with_snippet(self.view, edit, self.region, snippet)
             last_abbreviation = wrap_abbreviation
 
@@ -22,20 +26,20 @@ class EmmetWrapWithAbbreviation(sublime_plugin.TextCommand):
         # pylint: disable=attribute-defined-outside-init
         sel = self.view.sel()[0]
 
-        self.options = emmet.get_options(self.view, sel.begin(), True)
-        self.region = get_wrap_region(self.view, sel, self.options)
+        self.config = get_wrap_config(self.view, sel.begin())
+        self.region = get_wrap_region(self.view, sel, self.config)
         lines = get_content(self.view, self.region, True)
-        self.options['text'] = lines
+        self.config.user_config['text'] = lines
         preview = len(self.region) < emmet.get_settings('wrap_size_preview', -1)
 
-        return WrapAbbreviationInputHandler(self.view, self.region, self.options, preview)
+        return WrapAbbreviationInputHandler(self.view, self.region, self.config, preview)
 
 
 class WrapAbbreviationInputHandler(sublime_plugin.TextInputHandler):
-    def __init__(self, view: sublime.View, region: sublime.Region, options: dict, preview=False):
+    def __init__(self, view: sublime.View, region: sublime.Region, config: Config, preview=False):
         self.view = view
         self.region = region
-        self.options = options.copy()
+        self.config = config
         self.instant_preview = preview
 
     def placeholder(self):
@@ -46,10 +50,10 @@ class WrapAbbreviationInputHandler(sublime_plugin.TextInputHandler):
 
     def validate(self, text: str):
         try:
-            if self.options.get('type') == 'stylesheet':
-                stylesheet_parse(text, self.options)
+            if self.config.type == 'stylesheet':
+                stylesheet_parse(text, self.config)
             else:
-                markup_parse(text, self.options)
+                markup_parse(text, self.config)
             return True
         except:
             return False
@@ -68,7 +72,7 @@ class WrapAbbreviationInputHandler(sublime_plugin.TextInputHandler):
 
         if abbr:
             try:
-                result = emmet.expand(abbr, self.options)
+                result = emmet.expand(abbr, self.config)
                 if self.instant_preview:
                     self.view.run_command('emmet_wrap_with_abbreviation_preview', {
                         'region': (self.region.begin(), self.region.end()),
@@ -123,25 +127,26 @@ def popup_content(content: str):
     """ % content
 
 
-def get_wrap_region(view: sublime.View, sel: sublime.Region, options: dict) -> sublime.Region:
+def get_wrap_region(view: sublime.View, sel: sublime.Region, config: Config) -> sublime.Region:
     "Returns region to wrap with abbreviation"
-    if sel.empty() and options.get('context'):
+    if sel.empty():
         # No selection means user wants to wrap current tag container
-        ctx = options['context']
         pt = sel.begin()
+        ctx = emmet.get_tag_context(view, pt)
+        if ctx:
+            # Check how given point relates to matched tag:
+            # if it's in either open or close tag, we should wrap tag itself,
+            # otherwise we should wrap its contents
+            open_tag = ctx.get('open')
+            close_tag = ctx.get('close')
 
-        # Check how given point relates to matched tag:
-        # if it's in either open or close tag, we should wrap tag itself,
-        # otherwise we should wrap its contents
-        open_tag = ctx.get('open')
-        close_tag = ctx.get('close')
+            if in_range(open_tag, pt) or (close_tag and in_range(close_tag, pt)):
+                return sublime.Region(open_tag.begin(), close_tag and close_tag.end() or open_tag.end())
 
-        if in_range(open_tag, pt) or (close_tag and in_range(close_tag, pt)):
-            return sublime.Region(open_tag.begin(), close_tag and close_tag.end() or open_tag.end())
+            if close_tag:
+                r = sublime.Region(open_tag.end(), close_tag.begin())
+                return utils.narrow_to_non_space(view, r)
 
-        if close_tag:
-            r = sublime.Region(open_tag.end(), close_tag.begin())
-            return utils.narrow_to_non_space(view, r)
 
     return sel
 
@@ -150,3 +155,14 @@ def undo_preview(view: sublime.View):
     last_command = view.command_history(0, True)[0]
     if last_command == 'emmet_wrap_with_abbreviation_preview':
         view.run_command('undo')
+
+
+def get_wrap_config(view: sublime.View, pos: int) -> Config:
+    syntax_name = syntax.doc_syntax(view)
+    config = get_config(view, pos)
+    config.syntax = syntax_name
+    config.type = 'markup'
+    if syntax.is_html(syntax_name):
+        config.context = get_html_context(view, pos)
+
+    return config
