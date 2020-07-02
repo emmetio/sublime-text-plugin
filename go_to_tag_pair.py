@@ -3,7 +3,7 @@ import sublime
 import sublime_plugin
 from . import emmet_sublime as emmet
 from . import syntax
-from . import utils
+from .utils import get_caret, go_to_pos
 
 previews_by_buffer = {}
 phantoms_by_buffer = {}
@@ -21,7 +21,7 @@ def show_tag_preview(view: sublime.View, pt: int, text: str, dest: int):
         phantom_set = phantoms_by_buffer[buffer_id]
 
     r = sublime.Region(pt, pt)
-    nav = lambda href: utils.go_to_pos(view, int(href))
+    nav = lambda href: go_to_pos(view, int(href))
     phantoms = [sublime.Phantom(r, phantom_content(text, dest), sublime.LAYOUT_INLINE, on_navigate=nav)]
     phantom_set.update(phantoms)
 
@@ -58,15 +58,9 @@ def phantom_content(content: str, dest: int):
     """ % (dest, html.escape(content, False))
 
 
-def go_to_pos(view: sublime.version, pos: int):
-    "Scroll to given location in editor"
-    utils.go_to_pos(view, pos)
-    hide_tag_preview(view)
-
-
 class EmmetGoToTagPair(sublime_plugin.TextCommand):
     def run(self, edit: sublime.Edit):
-        caret = utils.get_caret(self.view)
+        caret = get_caret(self.view)
         if self.view.substr(caret) == '<':
             caret += 1
 
@@ -77,7 +71,7 @@ class EmmetGoToTagPair(sublime_plugin.TextCommand):
                 open_tag = ctx['open']
                 close_tag = ctx['close']
                 pos = close_tag.begin() if open_tag.contains(caret) else open_tag.begin()
-                utils.go_to_pos(self.view, pos)
+                go_to_pos(self.view, pos)
 
 
 class EmmetHideTagPreview(sublime_plugin.TextCommand):
@@ -106,7 +100,7 @@ class PreviewTagPair(sublime_plugin.EventListener):
 
     @allow_preview
     def on_selection_modified_async(self, view: sublime.View):
-        caret = utils.get_caret(view)
+        caret = get_caret(view)
         syntax_name = syntax.from_pos(view, caret)
         buffer_id = view.buffer_id()
 

@@ -19,9 +19,8 @@ class EmmetSplitJoinTag(sublime_plugin.TextCommand):
                 if close_tag:
                     # Join tag: remove tag contents, if any, and add closing slash
                     view.erase(edit, sublime.Region(open_tag.end(), close_tag.end()))
-                    if xml:
-                        closing = '/' if view.substr(open_tag.end() - 2).isspace() else ' /'
-                        view.insert(edit, open_tag.end() - 1, closing)
+                    closing = '/' if view.substr(open_tag.end() - 2).isspace() else ' /'
+                    view.insert(edit, open_tag.end() - 1, closing)
                 else:
                     # Split tag: add closing part and remove closing slash
                     view.insert(edit, open_tag.end(), '</%s>' % tag['name'])

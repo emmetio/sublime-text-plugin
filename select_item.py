@@ -2,7 +2,7 @@ import sublime
 import sublime_plugin
 from . import emmet_sublime as emmet
 from . import syntax
-from . import utils
+from .utils import get_content
 
 models_for_buffer = {}
 
@@ -41,7 +41,7 @@ def select_item(view: sublime.View, sel: sublime.Region, is_css=False, is_previo
         pos = model.start if is_previous else model.end
 
     # Calculate new model from current editor content
-    content = utils.get_content(view)
+    content = get_content(view)
     model = emmet.select_item(content, pos, is_css, is_previous)
     if model:
         models_for_buffer[buffer_id] = model

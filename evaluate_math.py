@@ -1,11 +1,11 @@
 import sublime
 import sublime_plugin
 from . import emmet_sublime as emmet
-from . import utils
+from .utils import get_caret
 
 class EmmetEvaluateMath(sublime_plugin.TextCommand):
     def run(self, edit: sublime.Edit):
-        caret = utils.get_caret(self.view)
+        caret = get_caret(self.view)
         line = self.view.line(caret)
         expr = emmet.evaluate_math(self.view.substr(line), caret - line.begin())
         if expr:

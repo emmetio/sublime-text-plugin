@@ -1,7 +1,5 @@
-from time import perf_counter
 import sublime
-import sublime_plugin
-from .utils import get_caret, get_content, attribute_value
+from .utils import  get_content, attribute_value
 from .config import get_config
 from .emmet.config import Config
 from .emmet.html_matcher import attributes
@@ -260,13 +258,13 @@ def region_contains(region: sublime.Region, pt: int) -> bool:
     return region.begin() < pt < region.end()
 
 
-class EmmetGetContext(sublime_plugin.TextCommand):
-    def run(self, edit):
-        pos = get_caret(self.view)
-        start = perf_counter()
-        ctx = get_activation_context(self.view, pos)
+# class EmmetGetContext(sublime_plugin.TextCommand):
+#     def run(self, edit):
+#         pos = get_caret(self.view)
+#         start = perf_counter()
+#         ctx = get_activation_context(self.view, pos)
 
 
-        print('doc syntax: %s' % syntax.doc_syntax(self.view))
-        print('exec time: %.5fs' % (perf_counter() - start))
-        print('found ctx: %s' % ctx)
+#         print('doc syntax: %s' % syntax.doc_syntax(self.view))
+#         print('exec time: %.5fs' % (perf_counter() - start))
+#         print('found ctx: %s' % ctx)

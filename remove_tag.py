@@ -1,7 +1,7 @@
 import sublime
 import sublime_plugin
 from . import emmet_sublime as emmet
-from . import utils
+from .utils import narrow_to_non_space
 
 class EmmetRemoveTag(sublime_plugin.TextCommand):
     def run(self, edit):
@@ -17,7 +17,7 @@ def remove_tag(view: sublime.View, edit: sublime.Edit, tag: dict):
         # Remove open and close tag and dedent inner content
         open_tag = tag['open']
         close_tag = tag['close']
-        inner_region = utils.narrow_to_non_space(view, sublime.Region(open_tag.end(), close_tag.begin()))
+        inner_region = narrow_to_non_space(view, sublime.Region(open_tag.end(), close_tag.begin()))
         if inner_region:
             # Gracefully remove open and close tags and tweak indentation on tag contents
             view.erase(edit, sublime.Region(inner_region.end(), close_tag.end()))

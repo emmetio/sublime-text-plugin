@@ -2,7 +2,7 @@ import sublime
 import sublime_plugin
 from . import emmet_sublime as emmet
 from . import syntax
-from . import utils
+from .utils import get_content, get_caret, narrow_to_non_space
 
 html_comment = {
     'start': '<!--',
@@ -27,14 +27,14 @@ class EmmetToggleComment(sublime_plugin.TextCommand):
 
             if view.match_selector(pt, comment_selector):
                 # Caret inside comment, strip it
-                comment_region = view.extract_scope(pt)
+                comment_region = narrow_to_non_space(view, view.extract_scope(pt))
                 remove_comments(view, edit, comment_region, tokens)
             elif s.empty():
                 # Empty region, find tag
                 region = get_range_for_comment(view, pt)
                 if region is None:
                     # No tag found, comment line
-                    region = utils.narrow_to_non_space(view, view.line(pt))
+                    region = narrow_to_non_space(view, view.line(pt))
 
                 # If there are any comments inside region, remove them
                 comments = get_comment_regions(view, region, tokens)
@@ -86,7 +86,7 @@ def get_range_for_comment(view: sublime.View, pt: int):
     "Returns tag range for given text position, if possible"
     syntax_name = syntax.from_pos(view, pt)
     if syntax.is_css(syntax_name):
-        m = emmet.match_css(utils.get_content(view), pt)
+        m = emmet.match_css(get_content(view), pt)
         if m:
             # TODO CSS might be an inline fragment of another document
             return sublime.Region(m.start, m.end)
@@ -132,7 +132,7 @@ def allow_emmet_comments(view: sublime.View):
     "Check if Emmet's Toggle Comment action can be applied at current view"
     if emmet.get_settings('comment'):
         selectors = emmet.get_settings('comment_scopes', [])
-        caret = utils.get_caret(view)
+        caret = get_caret(view)
         return syntax.matches_selector(view, caret, selectors)
 
     return False
