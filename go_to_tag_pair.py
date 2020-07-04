@@ -4,6 +4,7 @@ import sublime_plugin
 from . import emmet_sublime as emmet
 from . import syntax
 from .utils import get_caret, go_to_pos
+from .telemetry import track_action
 
 previews_by_buffer = {}
 phantoms_by_buffer = {}
@@ -72,6 +73,8 @@ class EmmetGoToTagPair(sublime_plugin.TextCommand):
                 close_tag = ctx['close']
                 pos = close_tag.begin() if open_tag.contains(caret) else open_tag.begin()
                 go_to_pos(self.view, pos)
+
+        track_action('Go to Tag Pair')
 
 
 class EmmetHideTagPreview(sublime_plugin.TextCommand):

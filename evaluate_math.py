@@ -2,6 +2,7 @@ import sublime
 import sublime_plugin
 from . import emmet_sublime as emmet
 from .utils import get_caret
+from .telemetry import track_action
 
 class EmmetEvaluateMath(sublime_plugin.TextCommand):
     def run(self, edit: sublime.Edit):
@@ -11,3 +12,4 @@ class EmmetEvaluateMath(sublime_plugin.TextCommand):
         if expr:
             r = sublime.Region(line.begin() + expr['start'], line.begin() + expr['end'])
             self.view.replace(edit, r, str(expr['snippet']))
+        track_action('Evaluate Math')

@@ -3,6 +3,7 @@ import sublime_plugin
 from . import emmet_sublime as emmet
 from . import syntax
 from . import utils
+from .telemetry import track_action
 
 
 def push_range(items, region):
@@ -100,3 +101,5 @@ class EmmetBalance(sublime_plugin.TextCommand):
         selection = self.view.sel()
         selection.clear()
         selection.add_all(regions)
+
+        track_action('Balance', direction)

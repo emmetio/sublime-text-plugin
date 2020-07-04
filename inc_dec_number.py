@@ -1,5 +1,6 @@
 import sublime
 import sublime_plugin
+from .telemetry import track_action
 
 class EmmetIncrementNumber(sublime_plugin.TextCommand):
     def run(self, edit, delta=1):
@@ -25,6 +26,8 @@ class EmmetIncrementNumber(sublime_plugin.TextCommand):
 
         selections.clear()
         selections.add_all(next_selections)
+
+        track_action('Increment number', 'delta', delta)
 
 
 def extract_number(text: str, pos: int):

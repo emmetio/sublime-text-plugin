@@ -9,6 +9,7 @@ from .emmet.stylesheet import CSSAbbreviationScope
 from .utils import pairs, pairs_end, get_caret, replace_with_snippet
 from .context import get_activation_context
 from .config import get_preview_config, get_settings
+from .telemetry import track_action
 from . import syntax
 from . import html_highlight
 
@@ -238,7 +239,6 @@ def create_tracker(editor: sublime.View, region: sublime.Region, params: dict) -
         tracker_params['preview'] = expand(parsed_abbr, preview_config)
         return AbbreviationTrackerValid(abbreviation, region, config, tracker_params)
     except Exception as err:
-        print('parse err %s' % err)
         tracker_params['error'] = {
             'message': err.message,
             'pos': err.pos,
@@ -626,6 +626,7 @@ class EmmetExpandAbbreviation(sublime_plugin.TextCommand):
         if trk and trk.region.contains(caret):
             expand_tracker(self.view, edit, trk)
             stop_tracking(self.view)
+            track_action('Expand Abbreviation', trk.config.syntax)
 
 
 class EmmetEnterAbbreviation(sublime_plugin.TextCommand):
@@ -643,11 +644,13 @@ class EmmetEnterAbbreviation(sublime_plugin.TextCommand):
             sel = self.view.sel()
             sel.clear()
             sel.add(sublime.Region(primary_sel.end(), primary_sel.end()))
+            track_action('Enter Abbreviation', trk.config.syntax)
 
 
 class EmmetClearAbbreviationMarker(sublime_plugin.TextCommand):
     def run(self, edit):
         stop_tracking(self.view, {'force': True, 'edit': edit})
+        track_action('Clear Abbreviation')
 
 
 class AbbreviationMarkerListener(sublime_plugin.EventListener):

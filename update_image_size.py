@@ -8,6 +8,7 @@ from . import emmet_sublime as emmet
 from . import syntax
 from . import utils
 from .emmet.action_utils import CSSProperty
+from .telemetry import track_action
 
 class EmmetUpdateImageSize(sublime_plugin.TextCommand):
     def run(self, edit):
@@ -19,6 +20,7 @@ class EmmetUpdateImageSize(sublime_plugin.TextCommand):
         elif syntax.is_css(syntax_name):
             update_image_size_css(self.view, edit, caret)
 
+        track_action('Update Image Size', syntax_name)
 
 def update_image_size_html(view: sublime.View, edit: sublime.Edit, pos: int):
     "Updates image size in HTML context"

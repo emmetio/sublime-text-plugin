@@ -2,6 +2,7 @@ import sublime
 import sublime_plugin
 from . import emmet_sublime as emmet
 from . import syntax
+from .telemetry import track_action
 
 class EmmetSplitJoinTag(sublime_plugin.TextCommand):
     def run(self, edit):
@@ -30,3 +31,5 @@ class EmmetSplitJoinTag(sublime_plugin.TextCommand):
                         if view.substr(start - 1).isspace():
                             start -= 1
                         view.erase(edit, sublime.Region(start, end))
+
+        track_action('Split/Join Tag')

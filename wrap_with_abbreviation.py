@@ -9,6 +9,7 @@ from .context import get_html_context
 from . import emmet_sublime as emmet
 from . import utils
 from . import syntax
+from .telemetry import track_action
 
 re_indent = re.compile(r'^\s+')
 last_abbreviation = None
@@ -20,6 +21,8 @@ class EmmetWrapWithAbbreviation(sublime_plugin.TextCommand):
             snippet = emmet.expand(wrap_abbreviation, self.config)
             utils.replace_with_snippet(self.view, edit, self.region, snippet)
             last_abbreviation = wrap_abbreviation
+
+            track_action('Wrap With Abbreviation')
 
 
     def input(self, *args, **kwargs):

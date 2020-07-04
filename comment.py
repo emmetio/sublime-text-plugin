@@ -3,6 +3,7 @@ import sublime_plugin
 from . import emmet_sublime as emmet
 from . import syntax
 from .utils import get_content, get_caret, narrow_to_non_space
+from .telemetry import track_action
 
 html_comment = {
     'start': '<!--',
@@ -49,6 +50,9 @@ class EmmetToggleComment(sublime_plugin.TextCommand):
             else:
                 # Comment selection
                 add_comment(view, edit, s, html_comment)
+
+        pos = get_caret(view)
+        track_action('Toggle Comment', syntax.from_pos(view, pos))
 
 
 def remove_comments(view: sublime.View, edit: sublime.Edit, region: sublime.Region, tokens: dict):
