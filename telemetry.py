@@ -4,12 +4,6 @@ from .config import get_settings
 
 __doc__ = "Telemetry module: sends anonymous Emmet usage stats to improve user experience"
 
-platforms = {
-    'osx': 'Macintosh',
-    'linux': 'X11; Linux',
-    'windows': 'Windows NT 10.0; Win64; x64'
-}
-
 TRACK_ID = 'UA-171521327-1'
 HOST = 'https://www.google-analytics.com/batch'
 MAX_BATCH = 20
@@ -45,7 +39,7 @@ def schedule_send():
     global scheduled
     if not scheduled:
         scheduled = True
-        sublime.set_timeout_async(_flush_queue, 1000)
+        sublime.set_timeout_async(_flush_queue, 30000)
 
 
 def get_user_agent():
@@ -76,25 +70,22 @@ def _flush_queue():
         entries.append(urllib.parse.urlencode(params))
 
     data = '\n'.join(entries).encode('ascii')
-    ua = get_user_agent()
-    headers = {
-        'User-Agent': ua,
-        'Content-Length': len(data)
-    }
-
-    print('user agent: %s' % ua)
-    print('headers %s' % headers)
-
     req = urllib.request.Request(
         HOST,
         data,
         method='POST',
-        headers=headers)
-    print('send req %s to %s as %s' % (req, HOST, ua))
-    print('payload: %s' % data)
+        headers={
+        'User-Agent': get_user_agent(),
+        'Content-Length': len(data)
+    })
+    # print('send req %s to %s as %s' % (req, HOST, ua))
+    # print('payload: %s' % data)
 
-    with urllib.request.urlopen(req) as res:
-        print('status: %s' % res.status)
+    try:
+        with urllib.request.urlopen(req):
+            # print('status: %s' % res.status)
+            pass
+    except:
         pass
 
     if queue:
