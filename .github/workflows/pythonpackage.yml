@@ -29,7 +29,7 @@ jobs:
         cp ./Default.sublime-keymap ./Default\ \(Windows\).sublime-keymap
         cp ./Default.sublime-keymap ./Default\ \(Linux\).sublime-keymap
         rm ./Default.sublime-keymap
-        zip -x "*.pyc" -x "__pycache__" -r Emmet.sublime-package emmet *.py *.sublime-*
+        zip -x "*.pyc" -x "__pycache__" -r Emmet.sublime-package emmet *.py *.sublime-* VERSION
     - name: Upload artifact
       uses: actions/upload-artifact@v1.0.0
       with:
