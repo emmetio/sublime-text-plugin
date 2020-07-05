@@ -13,8 +13,7 @@ platforms = {
 TRACK_ID = 'UA-171521327-1'
 HOST = 'https://www.google-analytics.com/batch'
 MAX_BATCH = 20
-VERSION = sublime.load_resource('/'.join(['Packages', __package__, 'VERSION']))
-USER_AGENT = 'Mozilla/5.0 (%s) EmmetTracker/%s' % (platforms.get(sublime.platform()), VERSION)
+
 
 scheduled = False
 queue = []
@@ -46,7 +45,7 @@ def schedule_send():
     global scheduled
     if not scheduled:
         scheduled = True
-        sublime.set_timeout_async(_flush_queue, 30000)
+        sublime.set_timeout_async(_flush_queue, 1000)
 
 
 def get_user_agent():
@@ -56,7 +55,12 @@ def get_user_agent():
         'windows': 'Windows NT 10.0; Win64; x64'
     }
 
-    return 'Mozilla/5.0 (%s) EmmetTracker/%s' % (platforms.get(sublime.platform()), VERSION)
+    try:
+        version = sublime.load_resource('/'.join(['Packages', __package__, 'VERSION']))
+    except:
+        version = '1.0.0'
+
+    return 'Mozilla/5.0 (%s) EmmetTracker/%s' % (platforms.get(sublime.platform()), version.strip())
 
 
 def _flush_queue():
@@ -72,15 +76,25 @@ def _flush_queue():
         entries.append(urllib.parse.urlencode(params))
 
     data = '\n'.join(entries).encode('ascii')
+    ua = get_user_agent()
+    headers = {
+        'User-Agent': ua,
+        'Content-Length': len(data)
+    }
+
+    print('user agent: %s' % ua)
+    print('headers %s' % headers)
+
     req = urllib.request.Request(
         HOST,
         data,
         method='POST',
-        headers={'User-Agent': USER_AGENT})
-    # print('send req %s to %s' % (data, HOST))
+        headers=headers)
+    print('send req %s to %s as %s' % (req, HOST, ua))
+    print('payload: %s' % data)
 
-    with urllib.request.urlopen(req):
-        # print('status: %s' % f.status)
+    with urllib.request.urlopen(req) as res:
+        print('status: %s' % res.status)
         pass
 
     if queue:
