@@ -15,6 +15,9 @@ queue = []
 
 
 def track_action(action: str, label: str = None, value: str = None):
+    if not get_settings('telemetry'):
+        return
+
     payload = {
         't': 'event',
         'ec': 'Actions',

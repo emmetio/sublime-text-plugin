@@ -16,6 +16,7 @@ def get_settings(key: str, default=None):
         if not settings.get('uid'):
             uid = str(uuid.uuid4())
             settings.set('uid', uid)
+            sublime.save_settings('Emmet.sublime-settings')
         settings.add_on_change('config', handle_settings_change)
 
     return settings.get(key, default)
