@@ -1,3 +1,4 @@
+import uuid
 import urllib
 import sublime
 from .config import get_settings
@@ -94,3 +95,35 @@ def _flush_queue():
     if queue:
         # print('schedule next request')
         schedule_send()
+
+
+def check_telemetry():
+    settings = sublime.load_settings('Emmet.sublime-settings')
+    updated = False
+    if not settings.get('uid'):
+        uid = str(uuid.uuid4())
+        settings.set('uid', uid)
+        updated = True
+
+    if settings.get('telemetry', None) is None:
+        allow_telemetry = ask_for_telemetry()
+        settings.set('telemetry', bool(allow_telemetry))
+        updated = True
+
+    if updated:
+        sublime.save_settings('Emmet.sublime-settings')
+
+
+def ask_for_telemetry():
+    return sublime.ok_cancel_dialog(
+        """
+Would you like to enable anonymous usage stats for Emmet?
+
+It will help me better understand how Emmet is used and prioritize future improvements.
+
+You can enable/disable telemetry later via Preferences > Package Settings > Emmet2 > Settings
+""", 'Yes, enable telemetry')
+
+
+def plugin_loaded():
+    check_telemetry()
