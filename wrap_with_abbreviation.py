@@ -7,6 +7,7 @@ from .emmet.css_abbreviation import parse as stylesheet_parse
 from .config import get_config
 from .context import get_html_context
 from . import emmet_sublime as emmet
+from .abbreviation import stop_tracking
 from . import utils
 from . import syntax
 from .telemetry import track_action
@@ -28,6 +29,7 @@ class EmmetWrapWithAbbreviation(sublime_plugin.TextCommand):
     def input(self, *args, **kwargs):
         # pylint: disable=attribute-defined-outside-init
         sel = self.view.sel()[0]
+        stop_tracking(self.view)
 
         self.config = get_wrap_config(self.view, sel.begin())
         self.region = get_wrap_region(self.view, sel, self.config)
