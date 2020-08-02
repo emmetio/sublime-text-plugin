@@ -667,6 +667,15 @@ class EmmetClearAbbreviationMarker(sublime_plugin.TextCommand):
         track_action('Clear Abbreviation')
 
 
+class EmmetCaptureAbbreviation(sublime_plugin.TextCommand):
+    def run(self, edit):
+        pos = get_caret(self.view)
+        tracker = suggest_abbreviation_tracker(self.view, pos)
+        if tracker:
+            mark(self.view, tracker)
+            show_preview(self.view, tracker)
+
+
 class AbbreviationMarkerListener(sublime_plugin.EventListener):
     def __init__(self):
         self.pending_completions_request = False
