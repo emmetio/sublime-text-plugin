@@ -81,6 +81,16 @@ In CSS, Sublime Text uses slightly different autocomplete behavior by default: i
 
 In Emmet 2, CSS abbreviations are enhanced with dynamic color snippets: you can type, for example, `#f.5` to quickly get `rgba(255, 255, 255, 0.5)`.
 
+### Tag preview
+
+Another new feature of Emmet 2 is inline open tag preview. When you move caret inside _name of closing tag_ and its matching open tag _is not visible on screen_, you’ll see an inline tag preview:
+
+![Tag preview](./images/emmet5.gif)
+
+Click on this preview will jump to open tag.
+
+This option is disable by default. To enable it, go to _Preferences > Package Settings > Emmet2 > Settings_ and set `tag_preview` option to `true`.
+
 ## More actions
 
 All the rest actions like [Wrap with Abbreviation](https://docs.emmet.io/actions/wrap-with-abbreviation/), [Balance](https://docs.emmet.io/actions/match-pair/), [Select Item](https://docs.emmet.io/actions/select-item/) etc. are also supported but doesn’t have default key bindings. You should either invoke these actions via Command Palette or [create your own keyboard shortcuts](https://www.sublimetext.com/docs/3/key_bindings.html) (see [Default.sublime-commands](./Default.sublime-commands) file for list of available actions). A final Emmet for Sublime Text plugin will provide convenient UI for fine-tuning Emmet options and key bindings.
