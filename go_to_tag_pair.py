@@ -1,3 +1,4 @@
+import re
 import html
 import sublime
 import sublime_plugin
@@ -117,7 +118,9 @@ class PreviewTagPair(sublime_plugin.EventListener):
 
         if syntax.is_html(syntax_name):
             ctx = emmet.get_tag_context(view, caret, syntax.is_xml(syntax_name))
-            if ctx and 'close' in ctx and ctx['close'].contains(caret) and \
+            if ctx and 'close' in ctx and \
+                ctx['attributes'] and \
+                ctx['close'].contains(caret) and \
                 not view.visible_region().contains(ctx['open']):
                 pos = ctx['close'].b
 
@@ -128,7 +131,7 @@ class PreviewTagPair(sublime_plugin.EventListener):
                     if pt == pos:
                         return
 
-                preview = view.substr(ctx['open'])
+                preview = create_tag_preview(ctx)
                 if len(preview) > max_preview_len:
                     preview = '%s...' % preview[0:max_preview_len]
                 show_tag_preview(view, pos, preview, ctx['open'].a)
@@ -147,3 +150,22 @@ def track_preview():
     if now > last_event + tracking['delay']:
         track_action('Display Tag Preview')
         tracking['last_event'] = now
+
+
+def create_tag_preview(ctx: dict):
+    class_name = ''
+    id_name = ''
+    attrs = []
+    for k in ctx['attributes'].keys():
+        value = ctx['attributes'][k]
+        if k == 'class':
+            value = re.sub(r'\s+', '.', value.strip())
+            if value:
+                class_name += '.%s' % value
+        elif k == 'id':
+            id_name += '#%s' % value.strip()
+        else:
+            attrs.append('%s="%s"' % (k, value))
+
+    attr_str = ('[%s]' % ' '.join(attrs)) if attrs else ''
+    return '%s%s%s%s' % (ctx['name'], id_name, class_name, attr_str)
