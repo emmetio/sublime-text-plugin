@@ -237,7 +237,11 @@ def create_tracker(editor: sublime.View, region: sublime.Region, params: dict) -
 
         preview_config = get_preview_config(config)
         tracker_params['preview'] = expand(parsed_abbr, preview_config)
-        return AbbreviationTrackerValid(abbreviation, region, config, tracker_params)
+        if tracker_params['preview']:
+            # Create tracker only if preview is not empty.
+            # Empty preview means Emmet was unable to find proper match for given
+            # abbreviation. Most likely it happens in stylesheets in `Section` scope
+            return AbbreviationTrackerValid(abbreviation, region, config, tracker_params)
     except Exception as err:
         tracker_params['error'] = {
             'message': err.message,

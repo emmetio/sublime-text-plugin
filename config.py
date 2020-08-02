@@ -56,6 +56,7 @@ def get_config(view: sublime.View, pos: int, params: dict = None) -> Config:
 def get_preview_config(config: Config) -> Config:
     preview_config = Config(config.user_config, get_settings('config'))
     preview_config.options['output.field'] = field_preview
+    preview_config.context = config.context
     return preview_config
 
 
