@@ -16,9 +16,11 @@ queue = []
 
 
 def track_action(action: str, label: str = None, value: str = None):
-    if not get_settings('telemetry'):
-        return
+    if get_settings('telemetry'):
+        send_tracking_action(action, label, value)
 
+
+def send_tracking_action(action: str, label: str = None, value: str = None):
     payload = {
         't': 'event',
         'ec': 'Actions',
@@ -32,7 +34,6 @@ def track_action(action: str, label: str = None, value: str = None):
         payload['ev'] = value
 
     push_queue(payload)
-
 
 def push_queue(item: dict):
     queue.append(item)
@@ -103,10 +104,12 @@ def check_telemetry():
     if not settings.get('uid'):
         uid = str(uuid.uuid4())
         settings.set('uid', uid)
+        send_tracking_action('Init', 'install')
         updated = True
 
     if settings.get('telemetry', None) is None:
         allow_telemetry = ask_for_telemetry()
+        send_tracking_action('Init', 'Enable Telemetry', str(allow_telemetry))
         settings.set('telemetry', bool(allow_telemetry))
         updated = True
 
