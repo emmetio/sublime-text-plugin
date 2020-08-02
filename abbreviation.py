@@ -295,10 +295,11 @@ def suggest_abbreviation_tracker(view: sublime.View, pos: int) -> AbbreviationTr
     if not trk:
         # Try to extract abbreviation from current location
         config = get_activation_context(view, pos)
-        abbr = extract_abbreviation(view, pos, config)
-        if abbr:
-            offset = abbr.location - abbr.start
-            return start_tracking(view, abbr.start, abbr.end, {'config': config, 'offset': offset})
+        if config:
+            abbr = extract_abbreviation(view, pos, config)
+            if abbr:
+                offset = abbr.location - abbr.start
+                return start_tracking(view, abbr.start, abbr.end, {'config': config, 'offset': offset})
 
 
 def handle_change(editor: sublime.View, pos: int) -> AbbreviationTracker:
@@ -348,8 +349,13 @@ def handle_change(editor: sublime.View, pos: int) -> AbbreviationTracker:
 
 def handle_selection_change(editor: sublime.View, pos: int) -> AbbreviationTracker:
     "Handle selection (caret) change in given editor instance"
+    last_pos = _last_pos.get(editor.id(), -1)
     set_last_pos(editor, pos)
-    tracker = get_tracker(editor) or restore_tracker(editor, pos)
+
+    # Do not restore tracker if selection wasn’t changed.
+    # Otherwise, it will restore just expanded tracker in some cases,
+    # like `#ddd` (e.g. abbreviation is the same as result)
+    tracker = get_tracker(editor) or (last_pos != pos and restore_tracker(editor, pos))
     if tracker:
         tracker.last_pos = pos
         return tracker
@@ -633,8 +639,8 @@ class EmmetExpandAbbreviation(sublime_plugin.TextCommand):
 
         if trk and trk.region.contains(caret):
             expand_tracker(self.view, edit, trk)
-            stop_tracking(self.view)
             track_action('Expand Abbreviation', trk.config.syntax)
+        stop_tracking(self.view)
 
 
 class EmmetEnterAbbreviation(sublime_plugin.TextCommand):
