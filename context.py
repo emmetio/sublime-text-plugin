@@ -168,7 +168,6 @@ def get_css_context(editor: sublime.View, pos: int):
     if not cur:
         return None
 
-
     if cur['type'] in (TokenType.PropertyName, TokenType.PropertyValue) or \
         is_typing_before_selector(editor, pos, cur):
 
@@ -176,8 +175,16 @@ def get_css_context(editor: sublime.View, pos: int):
         scope = CSSAbbreviationScope.Global
 
         if cur:
-            if cur['type'] == TokenType.PropertyValue and parent:
-                scope = editor.substr(parent['region'])
+            if cur['type'] == TokenType.PropertyValue:
+                prefix = editor.substr(pos - 1)
+                value = editor.substr(cur['region'])
+                allowed_prefixes = '!#'
+                if prefix not in allowed_prefixes and value[0] not in allowed_prefixes:
+                    # For value scope, allow color abbreviations only and important
+                    # modifiers. For all other cases, delegate to native completions
+                    return None
+                if parent:
+                    scope = editor.substr(parent['region'])
             elif cur['type'] in (TokenType.Selector, TokenType.PropertyName) and not parent:
                 scope = CSSAbbreviationScope.Section
 

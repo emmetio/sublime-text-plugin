@@ -122,7 +122,11 @@ def typing_abbreviation(editor: sublime.View, pos: int) -> AbbreviationTracker:
 
         config = get_activation_context(editor, pos)
         if config is not None:
-            if config.type == 'stylesheet' and not re_stylesheet_word_bound.match(prefix):
+            ctx_name = config.context['name'] if config.context else CSSAbbreviationScope.Global
+            check_bounds_scope = (CSSAbbreviationScope.Global,
+                                  CSSAbbreviationScope.Section,
+                                  CSSAbbreviationScope.Property)
+            if config.type == 'stylesheet' and ctx_name in check_bounds_scope and not re_stylesheet_word_bound.match(prefix):
                 # Additional check for stylesheet abbreviation start: it’s slightly
                 # differs from markup prefix, but we need activation context
                 # to ensure that context under caret is CSS
