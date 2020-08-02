@@ -1,6 +1,7 @@
 import html
 import sublime
 import sublime_plugin
+from time import time
 from . import emmet_sublime as emmet
 from . import syntax
 from .utils import get_caret, go_to_pos
@@ -10,7 +11,11 @@ previews_by_buffer = {}
 phantoms_by_buffer = {}
 phantom_key = 'emmet_tag_preview'
 max_preview_len = 100
-
+tracking = {
+    'last_event': 0,
+    # Delay between tracking events, in seconds
+    'delay': 5 * 60
+}
 
 def show_tag_preview(view: sublime.View, pt: int, text: str, dest: int):
     "Displays given tag preview at `pt` location"
@@ -42,8 +47,8 @@ def phantom_content(content: str, dest: int):
     <body>
         <style>
             body {
-                background-color: color(var(--accent) alpha(0.3));
-                color: var(--foreground);
+                background-color: #1D9B45;
+                color: #fff;
                 border-radius: 3px;
                 padding: 0px 3px;
                 opacity: 0.2;
@@ -51,7 +56,7 @@ def phantom_content(content: str, dest: int):
             }
             a {
                 text-decoration: none;
-                color: var(--foreground);
+                color: #fff;
             }
         </style>
         <div class="main"><a href="%d">%s</a></div>
@@ -90,8 +95,11 @@ def allow_preview(fn):
     "Method decorator for running action callbacks for in allowed tag preview context"
     def wrapper(self, view):
         if not view.settings().get('is_widget') and emmet.get_settings('tag_preview'):
-            fn(self, view)
+            size = emmet.get_settings('tag_preview_size_limit', 0)
+            if not size or view.size() <= size:
+                fn(self, view)
     return wrapper
+
 
 class PreviewTagPair(sublime_plugin.EventListener):
     def on_query_context(self, view: sublime.View, key: str, *args):
@@ -125,8 +133,17 @@ class PreviewTagPair(sublime_plugin.EventListener):
                     preview = '%s...' % preview[0:max_preview_len]
                 show_tag_preview(view, pos, preview, ctx['open'].a)
                 previews_by_buffer[buffer_id] = (pos, True)
+                track_preview()
                 return
 
         hide_tag_preview(view)
         if buffer_id in previews_by_buffer:
             del previews_by_buffer[buffer_id]
+
+
+def track_preview():
+    last_event = tracking['last_event']
+    now = time()
+    if now > last_event + tracking['delay']:
+        track_action('Display Tag Preview')
+        tracking['last_event'] = now

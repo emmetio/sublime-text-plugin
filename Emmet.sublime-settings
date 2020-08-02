@@ -55,7 +55,13 @@
 
 	// Display open tag preview next to closing tag when caret is inside it
 	// and open tag is not currently visible
-	"tag_preview": false,
+    "tag_preview": false,
+
+    // Document size limit for `tag_preview` option: display preview only if current
+    // document size is less that given one. Setting larger value will degrade
+    // performance of caret movement. Set value to 0 to disable limit
+    // Future versions of Emmet plugin might work better with large documents.
+    "tag_preview_size_limit": 51250,
 
 	// The maximum file size where Emmet will capture HTML tag context for abbreviation.
 	// Tag context is used for resolving implicit tag names in abbreviation

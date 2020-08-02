@@ -47,7 +47,8 @@ def replace_with_snippet(view: sublime.View, edit: sublime.Edit, region: sublime
 
 def get_caret(view: sublime.View) -> int:
     "Returns current caret position for single selection"
-    return view.sel()[0].begin()
+    sel = view.sel()
+    return sel[0].begin() if sel else 0
 
 
 def get_content(view: sublime.View) -> str:

@@ -561,7 +561,7 @@ def preview_phantom_html(content: str):
     <body id="emmet-preview-phantom">
         <style>
             body {
-                background-color: var(--greenish);
+                background-color: #1D9B45;
                 color: #fff;
                 border-radius: 3px;
                 padding: 1px 3px;
