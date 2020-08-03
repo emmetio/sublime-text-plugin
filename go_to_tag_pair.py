@@ -45,7 +45,7 @@ def hide_tag_preview(view: sublime.View):
 def phantom_content(content: str, dest: int):
     "Returns contents for phantom preview"
     return """
-    <body>
+    <body id="emmet-preview-phantom">
         <style>
             body {
                 background-color: #1D9B45;
@@ -60,7 +60,7 @@ def phantom_content(content: str, dest: int):
                 color: #fff;
             }
         </style>
-        <div class="main"><a href="%d">%s</a></div>
+        <div class="tag-preview"><a href="%d">%s</a></div>
     </body>
     """ % (dest, html.escape(content, False))
 

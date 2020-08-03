@@ -1,4 +1,3 @@
-import uuid
 import sublime
 from . import syntax
 from .emmet import Config
