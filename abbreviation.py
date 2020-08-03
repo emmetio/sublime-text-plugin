@@ -21,6 +21,7 @@ re_word_bound = re.compile(r'^[\s>;"\']?[a-zA-Z.#!@\[\(]$')
 re_stylesheet_word_bound = re.compile(r'^[\s;"\']?[a-zA-Z!@]$')
 re_stylesheet_preview_check = re.compile(r'/^:\s*;?$/')
 re_word_start = re.compile(r'^[a-z]', re.IGNORECASE)
+re_bound_char = re.compile(r'^[\s>;"\']')
 
 _cache = {}
 _trackers = {}
@@ -274,12 +275,25 @@ def restore_tracker(editor: sublime.View, pos: int) -> AbbreviationTracker:
         r = sublime.Region(tracker.region.begin() + tracker.offset, tracker.region.end())
 
         if editor.substr(r) == tracker.abbreviation:
+            if tracker.config and tracker.config.type == 'stylesheet' and not at_word_bound(editor, r):
+                # NB: dirty check for word bound on the right of abbreviation.
+                # For example, expanding `p` would produce `padding: ;`, but moving
+                # caret to first `p` will expand tracker since it matches
+                # original abbreviation. This dirty check tries to ensure that we
+                # actually trying to restore tracker
+                return None
+
             _trackers[editor.id()] = tracker
             mark(editor, tracker)
             tracker.last_length = editor.size()
             return tracker
 
     return None
+
+
+def at_word_bound(editor: sublime.View, r: sublime.Region) -> bool:
+    ch = editor.substr(r.end())
+    return not ch or re_bound_char.match(ch)
 
 
 def suggest_abbreviation_tracker(view: sublime.View, pos: int) -> AbbreviationTracker:
