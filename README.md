@@ -83,7 +83,7 @@ In Emmet 2, CSS abbreviations are enhanced with dynamic color snippets: you can 
 
 ### Tag preview
 
-Another new feature of Emmet 2 is inline open tag preview. When you move caret inside _name of closing tag_ and its matching open tag _is not visible on screen_, you’ll see an inline tag preview:
+Another new feature of Emmet 2 is inline preview of opening tag. When you move caret inside _name of closing tag_ and its matching open tag _is not visible on screen_, you’ll see an inline tag preview:
 
 ![Tag preview](./images/emmet5.gif)
 
