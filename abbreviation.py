@@ -8,7 +8,7 @@ from .emmet_sublime import JSX_PREFIX, expand, extract_abbreviation
 from .emmet.stylesheet import CSSAbbreviationScope
 from .utils import pairs, pairs_end, get_caret, replace_with_snippet
 from .context import get_activation_context
-from .config import get_preview_config, get_settings
+from .config import get_preview_config, get_settings, get_user_css
 from .telemetry import track_action
 from . import syntax
 from . import html_highlight
@@ -560,8 +560,8 @@ def hide_preview(editor: sublime.View):
         editor.erase_phantoms(ABBR_PREVIEW_ID)
         del _phantom_preview[key]
 
+
 def preview_popup_html(content: str):
-    style = html_highlight.styles()
     return """
     <body id="emmet-preview-popup">
         <style>
@@ -570,10 +570,11 @@ def preview_popup_html(content: str):
             .error.message { font-size: 11px; line-height: 1.3rem; }
             .markup-preview { font-size: 11px; line-height: 1.3rem; }
             %s
+            %s
         </style>
         <div>%s</div>
     </body>
-    """ % (style, content)
+    """ % (html_highlight.styles(), get_user_css(), content)
 
 
 def preview_phantom_html(content: str):
@@ -589,27 +590,29 @@ def preview_phantom_html(content: str):
             }
 
             .error { color: red }
+            %s
         </style>
         <div class="main">%s</div>
     </body>
-    """ % content
+    """ % (get_user_css(), content)
 
 
 def forced_indicator(content: str):
     "Returns HTML content of forced abbreviation indicator"
     return """
-        <body>
+        <body id="emmet-forced-abbreviation">
             <style>
-                #emmet-forced-abbreviation {
+                #emmet-forced-abbreviation .indicator {
                     background-color: var(--greenish);
                     color: #fff;
                     border-radius: 3px;
                     padding: 1px 3px;
                 }
+                %s
             </style>
-            <div id="emmet-forced-abbreviation">%s</div>
+            <div class="indicator">%s</div>
         </body>
-        """ % content
+        """ % (get_user_css(), content)
 
 
 def format_snippet(text: str, class_name=None):

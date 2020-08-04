@@ -7,6 +7,7 @@ from . import emmet_sublime as emmet
 from . import syntax
 from .utils import get_caret, go_to_pos
 from .telemetry import track_action
+from .config import get_user_css
 
 previews_by_buffer = {}
 phantoms_by_buffer = {}
@@ -59,10 +60,11 @@ def phantom_content(content: str, dest: int):
                 text-decoration: none;
                 color: #fff;
             }
+            %s
         </style>
         <div class="tag-preview"><a href="%d">%s</a></div>
     </body>
-    """ % (dest, html.escape(content, False))
+    """ % (get_user_css(), dest, html.escape(content, False))
 
 
 class EmmetGoToTagPair(sublime_plugin.TextCommand):

@@ -22,6 +22,11 @@ def handle_settings_change():
     emmet_cache = {}
 
 
+def get_user_css() -> str:
+    "Returns user-defined CSS for popups"
+    return get_settings('popup_css') or ''
+
+
 def field(index: int, placeholder: str, **kwargs):
     "Produces tabstops for editor"
     if placeholder:
@@ -53,7 +58,9 @@ def get_config(view: sublime.View, pos: int, params: dict = None) -> Config:
 
 
 def get_preview_config(config: Config) -> Config:
-    preview_config = Config(config.user_config, get_settings('config'))
+    user_config = dict(config.user_config or {})
+    user_config['max_repeat'] = 200
+    preview_config = Config(user_config, get_settings('config'))
     preview_config.options['output.field'] = field_preview
     preview_config.context = config.context
     return preview_config

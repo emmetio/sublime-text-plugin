@@ -117,6 +117,9 @@
     // or `color: #000000;`
     "short_hex": true,
 
+    // Additional CSS styles to be embedded into Emmet previews and phantoms
+    "popup_css": "",
+
 	// Config for Emmet
 	// See `GlobalConfig` interface for supported properties: https://github.com/emmetio/emmet/blob/master/src/config.ts
 	// Example:
