@@ -3,24 +3,21 @@ import io
 import struct
 import os.path
 import sublime
-import sublime_plugin
 from . import emmet_sublime as emmet
 from . import syntax
 from . import utils
-from .emmet.action_utils import CSSProperty
-from .telemetry import track_action
+from ..emmet.action_utils import CSSProperty
 
-class EmmetUpdateImageSize(sublime_plugin.TextCommand):
-    def run(self, edit):
-        caret = utils.get_caret(self.view)
-        syntax_name = syntax.from_pos(self.view, caret)
 
-        if syntax.is_html(syntax_name):
-            update_image_size_html(self.view, edit, caret)
-        elif syntax.is_css(syntax_name):
-            update_image_size_css(self.view, edit, caret)
+def update_image_size(view: sublime.View, edit: sublime.Edit):
+    caret = utils.get_caret(view)
+    syntax_name = syntax.from_pos(view, caret)
 
-        track_action('Update Image Size', syntax_name)
+    if syntax.is_html(syntax_name):
+        update_image_size_html(view, edit, caret)
+    elif syntax.is_css(syntax_name):
+        update_image_size_css(view, edit, caret)
+
 
 def update_image_size_html(view: sublime.View, edit: sublime.Edit, pos: int):
     "Updates image size in HTML context"
@@ -80,6 +77,7 @@ def get_dpi(file_path: str):
 
 def read_image_size(view: sublime.View, src: str):
     "Reads image size of given file, if possible"
+    abs_file = None
     if utils.is_url(src):
         abs_file = src
     elif view.file_name():
@@ -195,6 +193,9 @@ def get_size(data: bytes):
         elif webp_type == b'VP8X': # Extended WebP
             w = int((data[26] << 16) | (data[25] << 8) | data[24]) + 1
             h = int((data[29] << 16) | (data[28] << 8) | data[27]) + 1
+        else:
+            w = 0
+            h = 0
         return w, h
 
     if b'<svg' in data:
@@ -220,7 +221,8 @@ def get_size(data: bytes):
                 if 0xC0 <= ord(b) <= 0xC3:
                     inp.read(3)
                     h, w = struct.unpack(">HH", inp.read(4))
-                    break
+                    return int(w), int(h)
                 inp.read(int(struct.unpack(">H", inp.read(2))[0]) - 2)
                 b = inp.read(1)
-            return int(w), int(h)
+
+        return 0, 0

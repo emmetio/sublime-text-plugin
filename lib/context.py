@@ -1,11 +1,11 @@
 import sublime
 from .utils import  get_content, attribute_value
 from .config import get_config
-from .emmet.config import Config
-from .emmet.html_matcher import attributes
-from .emmet.css_matcher import scan as scan_css, TokenType
-from .emmet.stylesheet import CSSAbbreviationScope
 from . import syntax
+from ..emmet.config import Config
+from ..emmet.html_matcher import attributes
+from ..emmet.css_matcher import scan as scan_css, TokenType
+from ..emmet.stylesheet import CSSAbbreviationScope
 
 self_close = (
     'img', 'meta', 'link', 'br', 'base', 'hr', 'area', 'wbr', 'col', 'embed',

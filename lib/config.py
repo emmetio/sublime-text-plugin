@@ -1,6 +1,6 @@
 import sublime
 from . import syntax
-from .emmet import Config
+from ..emmet import Config
 
 # Cache for storing internal Emmet data
 emmet_cache = {}

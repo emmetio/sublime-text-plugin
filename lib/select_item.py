@@ -1,30 +1,17 @@
 import sublime
-import sublime_plugin
 from . import emmet_sublime as emmet
 from . import syntax
 from .utils import get_content
-from .telemetry import track_action
 
 models_for_buffer = {}
 
-class EmmetSelectItem(sublime_plugin.TextCommand):
-    def run(self, edit, previous=False):
-        sel = self.view.sel()[0]
-        syntax_name = syntax.from_pos(self.view, sel.a)
-        is_css = syntax.is_css(syntax_name)
-        if is_css or syntax.is_html(syntax_name):
-            select_item(self.view, sel, is_css, previous)
 
-        track_action('Select Item', 'previous' if previous else 'next')
-
-
-class SelectItemListener(sublime_plugin.EventListener):
-    def on_modified_async(self, view: sublime.View):
-        reset_model(view)
-
-    def on_post_text_command(self, view, command_name, args):
-        if command_name != 'emmet_select_item':
-            reset_model(view)
+def run_action(view: sublime.View, previous=False):
+    sel = view.sel()[0]
+    syntax_name = syntax.from_pos(view, sel.a)
+    is_css = syntax.is_css(syntax_name)
+    if is_css or syntax.is_html(syntax_name):
+        select_item(view, sel, is_css, previous)
 
 
 def select_item(view: sublime.View, sel: sublime.Region, is_css=False, is_previous=False):

@@ -1,18 +1,5 @@
 import sublime
-import sublime_plugin
-from . import emmet_sublime as emmet
 from .utils import narrow_to_non_space
-from .telemetry import track_action
-
-class EmmetRemoveTag(sublime_plugin.TextCommand):
-    def run(self, edit):
-        view = self.view
-        for sel in view.sel():
-            tag = emmet.get_tag_context(view, sel.begin())
-            if tag:
-                remove_tag(view, edit, tag)
-
-        track_action('Remove Tag')
 
 
 def remove_tag(view: sublime.View, edit: sublime.Edit, tag: dict):
@@ -40,6 +27,7 @@ def remove_tag(view: sublime.View, edit: sublime.Edit, tag: dict):
             view.erase(edit, open_tag.cover(close_tag))
     else:
         view.erase(edit, tag['open'])
+
 
 def get_line_indent(view: sublime.View, line: sublime.Region) -> str:
     "Returns indentation for given line or line found from given character location"

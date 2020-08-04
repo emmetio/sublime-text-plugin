@@ -1,9 +1,7 @@
 import sublime
-import sublime_plugin
 from . import emmet_sublime as emmet
 from . import syntax
-from . import utils
-from .telemetry import track_action
+from .utils import get_content, to_region
 
 
 def push_range(items, region):
@@ -14,11 +12,11 @@ def push_range(items, region):
 
 def get_regions(view: sublime.View, pt: int, syntax_name: str, direction='outward'):
     "Returns regions for balancing"
-    content = utils.get_content(view)
+    content = get_content(view)
 
     if syntax.is_css(syntax_name):
         regions = emmet.balance_css(content, pt, direction)
-        return [utils.to_region(r) for r in regions]
+        return [to_region(r) for r in regions]
 
     result = []
     tags = emmet.balance(content, pt, direction, syntax.is_xml(syntax_name))
@@ -81,25 +79,3 @@ def balance_outward(view, syntax_name):
         result.append(target_region)
 
     return result
-
-
-class EmmetBalance(sublime_plugin.TextCommand):
-    def run(self, edit, **kw):
-        info = syntax.info(self.view, utils.get_caret(self.view), 'html')
-        syntax_name = info['syntax']
-
-        if info['type'] != 'markup' and not syntax.is_css(syntax_name):
-            return
-
-        direction = kw.get('direction', 'outward')
-
-        if direction == 'inward':
-            regions = balance_inward(self.view, syntax_name)
-        else:
-            regions = balance_outward(self.view, syntax_name)
-
-        selection = self.view.sel()
-        selection.clear()
-        selection.add_all(regions)
-
-        track_action('Balance', direction)

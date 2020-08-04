@@ -1,6 +1,6 @@
 import re
 import html
-from .emmet.html_matcher import scan, get_attributes, ElementType
+from ..emmet.html_matcher import scan, get_attributes, ElementType
 
 re_tag_end = re.compile(r'\s*\/?>$')
 

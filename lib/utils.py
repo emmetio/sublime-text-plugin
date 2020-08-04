@@ -2,8 +2,8 @@ import re
 import os.path
 import urllib.request
 import sublime
-from .emmet.html_matcher import AttributeToken
-from .emmet.action_utils import CSSProperty
+from ..emmet.html_matcher import AttributeToken
+from ..emmet.action_utils import CSSProperty
 
 pairs = {
     '{': '}',

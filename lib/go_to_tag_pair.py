@@ -1,7 +1,6 @@
 import re
 import html
 import sublime
-import sublime_plugin
 from time import time
 from . import emmet_sublime as emmet
 from . import syntax
@@ -43,6 +42,14 @@ def hide_tag_preview(view: sublime.View):
         view.erase_phantoms(phantom_key)
 
 
+def reset_tag_preview(view: sublime.View):
+    buffer_id = view.buffer_id()
+    if buffer_id in previews_by_buffer:
+        pt, visible = previews_by_buffer[buffer_id]
+        if visible:
+            previews_by_buffer[buffer_id] = (pt, False)
+
+
 def phantom_content(content: str, dest: int):
     "Returns contents for phantom preview"
     return """
@@ -67,32 +74,6 @@ def phantom_content(content: str, dest: int):
     """ % (get_user_css(), dest, html.escape(content, False))
 
 
-class EmmetGoToTagPair(sublime_plugin.TextCommand):
-    def run(self, edit: sublime.Edit):
-        caret = get_caret(self.view)
-        if self.view.substr(caret) == '<':
-            caret += 1
-
-        syntax_name = syntax.from_pos(self.view, caret)
-        if syntax.is_html(syntax_name):
-            ctx = emmet.get_tag_context(self.view, caret, syntax.is_xml(syntax_name))
-            if ctx and 'open' in ctx and 'close' in ctx:
-                open_tag = ctx['open']
-                close_tag = ctx['close']
-                pos = close_tag.begin() if open_tag.contains(caret) else open_tag.begin()
-                go_to_pos(self.view, pos)
-
-        track_action('Go to Tag Pair')
-
-
-class EmmetHideTagPreview(sublime_plugin.TextCommand):
-    def run(self, edit: sublime.Edit):
-        buffer_id = self.view.buffer_id()
-        if buffer_id in previews_by_buffer:
-            pt, visible = previews_by_buffer[buffer_id]
-            if visible:
-                previews_by_buffer[buffer_id] = (pt, False)
-
 
 def allow_preview(fn):
     "Method decorator for running action callbacks for in allowed tag preview context"
@@ -104,46 +85,44 @@ def allow_preview(fn):
     return wrapper
 
 
-class PreviewTagPair(sublime_plugin.EventListener):
-    def on_query_context(self, view: sublime.View, key: str, *args):
-        if key == 'emmet_tag_preview':
-            buffer_id = view.buffer_id()
+def has_preview(view: sublime.View):
+    buffer_id = view.buffer_id()
+    if buffer_id in previews_by_buffer:
+        return previews_by_buffer[buffer_id][1]
+    return False
+
+
+def handle_selection_change(view: sublime.View):
+    caret = get_caret(view)
+    syntax_name = syntax.from_pos(view, caret)
+    buffer_id = view.buffer_id()
+
+    if syntax.is_html(syntax_name):
+        ctx = emmet.get_tag_context(view, caret, syntax.is_xml(syntax_name))
+        if ctx and 'close' in ctx and \
+            ctx['attributes'] and \
+            ctx['close'].contains(caret) and \
+            not view.visible_region().contains(ctx['open']):
+            pos = ctx['close'].b
+
+            # Do not display preview if user forcibly hides it with Esc key
+            # for current location
             if buffer_id in previews_by_buffer:
-                return previews_by_buffer[buffer_id][1]
-        return None
+                pt = previews_by_buffer[buffer_id][0]
+                if pt == pos:
+                    return
 
-    @allow_preview
-    def on_selection_modified_async(self, view: sublime.View):
-        caret = get_caret(view)
-        syntax_name = syntax.from_pos(view, caret)
-        buffer_id = view.buffer_id()
+            preview = create_tag_preview(ctx)
+            if len(preview) > max_preview_len:
+                preview = '%s...' % preview[0:max_preview_len]
+            show_tag_preview(view, pos, preview, ctx['open'].a)
+            previews_by_buffer[buffer_id] = (pos, True)
+            track_preview()
+            return
 
-        if syntax.is_html(syntax_name):
-            ctx = emmet.get_tag_context(view, caret, syntax.is_xml(syntax_name))
-            if ctx and 'close' in ctx and \
-                ctx['attributes'] and \
-                ctx['close'].contains(caret) and \
-                not view.visible_region().contains(ctx['open']):
-                pos = ctx['close'].b
-
-                # Do not display preview if user forcibly hides it with Esc key
-                # for current location
-                if buffer_id in previews_by_buffer:
-                    pt = previews_by_buffer[buffer_id][0]
-                    if pt == pos:
-                        return
-
-                preview = create_tag_preview(ctx)
-                if len(preview) > max_preview_len:
-                    preview = '%s...' % preview[0:max_preview_len]
-                show_tag_preview(view, pos, preview, ctx['open'].a)
-                previews_by_buffer[buffer_id] = (pos, True)
-                track_preview()
-                return
-
-        hide_tag_preview(view)
-        if buffer_id in previews_by_buffer:
-            del previews_by_buffer[buffer_id]
+    hide_tag_preview(view)
+    if buffer_id in previews_by_buffer:
+        del previews_by_buffer[buffer_id]
 
 
 def track_preview():

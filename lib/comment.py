@@ -1,9 +1,7 @@
 import sublime
-import sublime_plugin
 from . import emmet_sublime as emmet
 from . import syntax
-from .utils import get_content, get_caret, narrow_to_non_space
-from .telemetry import track_action
+from .utils import get_content, get_caret
 
 html_comment = {
     'start': '<!--',
@@ -16,44 +14,6 @@ css_comment = {
 }
 
 comment_selector = 'comment'
-
-# NB: use `Emmet` prefix to distinguish default `toggle_comment` action
-class EmmetToggleComment(sublime_plugin.TextCommand):
-    def run(self, edit):
-        view = self.view
-        for s in view.sel():
-            pt = s.begin()
-            syntax_name = syntax.from_pos(view, pt)
-            tokens = css_comment if syntax.is_css(syntax_name) else html_comment
-
-            if view.match_selector(pt, comment_selector):
-                # Caret inside comment, strip it
-                comment_region = narrow_to_non_space(view, view.extract_scope(pt))
-                remove_comments(view, edit, comment_region, tokens)
-            elif s.empty():
-                # Empty region, find tag
-                region = get_range_for_comment(view, pt)
-                if region is None:
-                    # No tag found, comment line
-                    region = narrow_to_non_space(view, view.line(pt))
-
-                # If there are any comments inside region, remove them
-                comments = get_comment_regions(view, region, tokens)
-                if comments:
-                    removed = 0
-                    comments.reverse()
-                    for c in comments:
-                        removed += remove_comments(view, edit, c, tokens)
-                    region = sublime.Region(region.begin(), region.end() - removed)
-
-                add_comment(view, edit, region, tokens)
-            else:
-                # Comment selection
-                add_comment(view, edit, s, html_comment)
-
-        pos = get_caret(view)
-        track_action('Toggle Comment', syntax.from_pos(view, pos))
-
 
 def remove_comments(view: sublime.View, edit: sublime.Edit, region: sublime.Region, tokens: dict):
     "Removes comment markers from given region. Returns amount of characters removed"
@@ -140,10 +100,3 @@ def allow_emmet_comments(view: sublime.View):
         return syntax.matches_selector(view, caret, selectors)
 
     return False
-
-
-class ToggleCommentListener(sublime_plugin.EventListener):
-    def on_text_command(self, view, command_name, args):
-        if command_name == 'toggle_comment' and allow_emmet_comments(view):
-            return ('emmet_toggle_comment', None)
-        return None

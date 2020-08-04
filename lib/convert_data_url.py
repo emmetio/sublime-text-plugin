@@ -3,12 +3,10 @@ import base64
 import os
 import os.path
 import sublime
-import sublime_plugin
 from . import emmet_sublime as emmet
-from . import syntax
 from . import utils
-from .emmet.html_matcher import AttributeToken
-from .emmet.action_utils import CSSProperty
+from ..emmet.html_matcher import AttributeToken
+from ..emmet.action_utils import CSSProperty
 
 mime_types = {
     '.gif' : 'image/gif',
@@ -18,16 +16,6 @@ mime_types = {
     '.svg' : 'image/svg+xml',
     '.webp' : 'image/webp',
 }
-
-class EmmetConvertDataUrl(sublime_plugin.TextCommand):
-    def run(self, edit):
-        caret = utils.get_caret(self.view)
-        syntax_name = syntax.from_pos(self.view, caret)
-
-        if syntax.is_html(syntax_name):
-            convert_html(self.view, edit, caret)
-        elif syntax.is_css(syntax_name):
-            convert_css(self.view, edit, caret)
 
 def convert_html(view: sublime.View, edit: sublime.Edit, pos: int):
     "Convert to/from data:URL for HTML context"
@@ -69,13 +57,6 @@ def toggle_url(view: sublime.View, edit: sublime.Edit, region: sublime.Region):
         view.window().show_input_panel('Enter file name', 'image%s' % get_ext(src), on_done, None, None)
     else:
         convert_to_data_url(view, edit, region)
-
-
-class ConvertDataUrlReplace(sublime_plugin.TextCommand):
-    "Internal command for async text replace"
-    def run(self, edit, region, text):
-        region = sublime.Region(*region)
-        self.view.replace(edit, region, text)
 
 
 def convert_to_data_url(view: sublime.View, edit: sublime.Edit, region: sublime.Region):

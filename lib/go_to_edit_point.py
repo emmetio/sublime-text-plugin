@@ -1,7 +1,3 @@
-import sublime_plugin
-from .utils import get_caret, go_to_pos
-from .telemetry import track_action
-
 
 def find_new_edit_point(view, pos, inc):
     doc_size = view.size()
@@ -28,12 +24,3 @@ def find_new_edit_point(view, pos, inc):
                 # Empty line
                 return line_region.b
 
-class EmmetGoToEditPoint(sublime_plugin.TextCommand):
-    def run(self, edit, previous=False):
-        caret = get_caret(self.view)
-        delta = -1 if previous else 1
-        pt = find_new_edit_point(self.view, caret + delta, delta)
-        if pt is not None:
-            go_to_pos(self.view, pt)
-
-        track_action('Go to Edit Point', 'previous' if previous else 'next')

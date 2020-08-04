@@ -127,6 +127,3 @@ It will help me better understand how Emmet is used and prioritize future improv
 You can enable/disable telemetry later via Preferences > Package Settings > Emmet2 > Settings
 """, 'Yes, enable telemetry')
 
-
-def plugin_loaded():
-    check_telemetry()

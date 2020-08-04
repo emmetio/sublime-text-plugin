@@ -1,15 +1,12 @@
 import re
 import sublime
-from .emmet import expand as expand_abbreviation, extract, Config, \
-    stylesheet_abbreviation, markup_abbreviation, ScannerException
-from .emmet.token_scanner import TokenScannerException
-from .emmet.html_matcher import match, balanced_inward, balanced_outward
-from .emmet.css_matcher import match as match_css, \
-    balanced_inward as css_balanced_inward, \
+from ..emmet import expand as expand_abbreviation, extract, Config
+from ..emmet.html_matcher import match, balanced_inward, balanced_outward
+from ..emmet.css_matcher import balanced_inward as css_balanced_inward, \
     balanced_outward as css_balanced_outward
-from .emmet.action_utils import select_item_css, select_item_html, \
-    get_open_tag as tag, get_css_section, SelectItemModel, CSSSection
-from .emmet.math_expression import evaluate, extract as extract_math
+from ..emmet.action_utils import select_item_css, select_item_html, \
+    get_css_section, SelectItemModel, CSSSection
+from ..emmet.math_expression import evaluate, extract as extract_math
 from . import syntax
 from .config import get_settings, get_config
 from .utils import to_region

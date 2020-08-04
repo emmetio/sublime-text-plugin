@@ -1,43 +1,17 @@
 import re
 import sublime
 import sublime_plugin
-from .emmet.config import Config
-from .emmet.abbreviation import parse as markup_parse
-from .emmet.css_abbreviation import parse as stylesheet_parse
+from ..emmet.config import Config
+from ..emmet.abbreviation import parse as markup_parse
+from ..emmet.css_abbreviation import parse as stylesheet_parse
 from .config import get_config
 from .context import get_html_context
 from . import emmet_sublime as emmet
-from .abbreviation import stop_tracking
 from . import utils
 from . import syntax
-from .telemetry import track_action
 
 re_indent = re.compile(r'^\s+')
 last_abbreviation = None
-
-class EmmetWrapWithAbbreviation(sublime_plugin.TextCommand):
-    def run(self, edit, wrap_abbreviation):
-        global last_abbreviation # pylint: disable=global-statement
-        if wrap_abbreviation:
-            snippet = emmet.expand(wrap_abbreviation, self.config)
-            utils.replace_with_snippet(self.view, edit, self.region, snippet)
-            last_abbreviation = wrap_abbreviation
-
-            track_action('Wrap With Abbreviation')
-
-
-    def input(self, *args, **kwargs):
-        # pylint: disable=attribute-defined-outside-init
-        sel = self.view.sel()[0]
-        stop_tracking(self.view)
-
-        self.config = get_wrap_config(self.view, sel.begin())
-        self.region = get_wrap_region(self.view, sel, self.config)
-        lines = get_content(self.view, self.region, True)
-        self.config.user_config['text'] = lines
-        preview = len(self.region) < emmet.get_settings('wrap_size_preview', -1)
-
-        return WrapAbbreviationInputHandler(self.view, self.region, self.config, preview)
 
 
 class WrapAbbreviationInputHandler(sublime_plugin.TextInputHandler):
@@ -90,14 +64,6 @@ class WrapAbbreviationInputHandler(sublime_plugin.TextInputHandler):
             return sublime.Html(popup_content(snippet))
 
         return None
-
-
-class EmmetWrapWithAbbreviationPreview(sublime_plugin.TextCommand):
-    "Internal command to preview abbreviation in text"
-    def run(self, edit: sublime.Edit, region: tuple, result: str):
-        r = sublime.Region(*region)
-        utils.replace_with_snippet(self.view, edit, r, result)
-        self.view.show_at_center(r.begin())
 
 
 def in_range(region: sublime.Region, pt: int):

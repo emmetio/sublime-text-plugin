@@ -1,15 +1,13 @@
 import re
 import html
 import sublime
-import sublime_plugin
-from .emmet import Abbreviation as MarkupAbbreviation, markup_abbreviation, stylesheet_abbreviation, expand
-from .emmet.config import Config
+from ..emmet import Abbreviation as MarkupAbbreviation, markup_abbreviation, stylesheet_abbreviation
+from ..emmet.config import Config
+from ..emmet.stylesheet import CSSAbbreviationScope
 from .emmet_sublime import JSX_PREFIX, expand, extract_abbreviation
-from .emmet.stylesheet import CSSAbbreviationScope
-from .utils import pairs, pairs_end, get_caret, replace_with_snippet
+from .utils import pairs, pairs_end, replace_with_snippet
 from .context import get_activation_context
 from .config import get_preview_config, get_settings, get_user_css
-from .telemetry import track_action
 from . import syntax
 from . import html_highlight
 
@@ -254,7 +252,6 @@ def create_tracker(editor: sublime.View, region: sublime.Region, params: dict) -
             'pointer': '%s^' % ('-' * err.pos, ) if err.pos is not None else ''
         }
         return AbbreviationTrackerError(abbreviation, region, config, tracker_params)
-
 
 
 def store_tracker(editor: sublime.View, tracker: AbbreviationTracker):
@@ -648,130 +645,3 @@ def expand_tracker(editor: sublime.View, edit: sublime.Edit, tracker: Abbreviati
         snippet = expand(tracker.abbreviation, tracker.config)
         replace_with_snippet(editor, edit, tracker.region, snippet)
 
-
-class EmmetExpandAbbreviation(sublime_plugin.TextCommand):
-    def run(self, edit):
-        caret = get_caret(self.view)
-        trk = get_tracker(self.view)
-
-        if trk and trk.region.contains(caret):
-            expand_tracker(self.view, edit, trk)
-            track_action('Expand Abbreviation', trk.config.syntax)
-        stop_tracking(self.view)
-
-
-class EmmetEnterAbbreviation(sublime_plugin.TextCommand):
-    def run(self, edit):
-        trk = get_tracker(self.view)
-        stop_tracking(self.view, {'force': True, 'edit': edit})
-        if trk and trk.forced:
-            # Already have forced abbreviation: act as toggler
-            return
-
-        primary_sel = self.view.sel()[0]
-        trk = start_tracking(self.view, primary_sel.begin(), primary_sel.end(), {'forced': True})
-        if trk and not primary_sel.empty():
-            show_preview(self.view, trk)
-            sel = self.view.sel()
-            sel.clear()
-            sel.add(sublime.Region(primary_sel.end(), primary_sel.end()))
-            track_action('Enter Abbreviation', trk.config.syntax)
-
-
-class EmmetClearAbbreviationMarker(sublime_plugin.TextCommand):
-    def run(self, edit):
-        stop_tracking(self.view, {'force': True, 'edit': edit})
-        track_action('Clear Abbreviation')
-
-
-class EmmetCaptureAbbreviation(sublime_plugin.TextCommand):
-    def run(self, edit):
-        pos = get_caret(self.view)
-        tracker = suggest_abbreviation_tracker(self.view, pos)
-        if tracker:
-            mark(self.view, tracker)
-            show_preview(self.view, tracker)
-
-
-class AbbreviationMarkerListener(sublime_plugin.EventListener):
-    def __init__(self):
-        self.pending_completions_request = False
-
-    @main_view
-    def on_close(self, editor: sublime.View):
-        dispose_editor(editor)
-
-    @main_view
-    def on_activated(self, editor: sublime.View):
-        handle_selection_change(editor, get_caret(editor))
-
-    @main_view
-    def on_selection_modified(self, editor: sublime.View):
-        if not is_enabled(editor):
-            return
-
-        pos = get_caret(editor)
-        trk = handle_selection_change(editor, pos)
-
-        # print('sel modified at %d: %s' % (pos, trk))
-        if trk:
-            if trk.region.contains(pos):
-                show_preview(editor, trk)
-            else:
-                hide_preview(editor)
-
-    @main_view
-    def on_modified(self, editor: sublime.View):
-        handle_change(editor, get_caret(editor))
-        # print('modified: %s' % trk)
-
-    def on_query_context(self, view: sublime.View, key: str, *args):
-        if key == 'emmet_abbreviation':
-            # Check if caret is currently inside Emmet abbreviation
-            trk = get_tracker(view)
-            if trk:
-                for s in view.sel():
-                    if trk.region.contains(s):
-                        return trk.forced or isinstance(trk, AbbreviationTrackerValid)
-
-            return False
-
-        if key == 'emmet_tab_expand':
-            return get_settings('tab_expand', False)
-
-        if key == 'has_emmet_abbreviation_mark':
-            return bool(get_tracker(view))
-
-        if key == 'has_emmet_forced_abbreviation_mark':
-            trk = get_tracker(view)
-            return trk.forced if trk else False
-
-        return None
-
-    def on_query_completions(self, editor: sublime.View, prefix: str, locations: list):
-        pos = locations[0]
-        if self.pending_completions_request:
-            self.pending_completions_request = False
-
-            tracker = suggest_abbreviation_tracker(editor, pos)
-            if tracker:
-                mark(editor, tracker)
-                show_preview(editor, tracker)
-                snippet = expand(tracker.abbreviation, tracker.config)
-                return [('%s\tEmmet' % tracker.abbreviation, snippet)]
-
-    def on_text_command(self, view: sublime.View, command_name: str, args: list):
-        if command_name == 'auto_complete' and is_enabled(view):
-            self.pending_completions_request = True
-        elif command_name == 'commit_completion':
-            stop_tracking(view)
-
-    def on_post_text_command(self, editor: sublime.View, command_name: str, args: list):
-        if command_name == 'auto_complete':
-            self.pending_completions_request = False
-        elif command_name == 'undo':
-            # In case of undo, editor may restore previously marked range.
-            # If so, restore marker from it
-            trk = get_stored_tracker(editor)
-            if trk and isinstance(trk, AbbreviationTrackerValid) and editor.substr(trk.region) == trk.abbreviation:
-                restore_tracker(editor, get_caret(editor))

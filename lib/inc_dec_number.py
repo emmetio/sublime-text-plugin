@@ -1,33 +1,29 @@
 import sublime
-import sublime_plugin
-from .telemetry import track_action
 
-class EmmetIncrementNumber(sublime_plugin.TextCommand):
-    def run(self, edit, delta=1):
-        next_selections = []
-        selections = self.view.sel()
-        for sel in selections:
-            if sel.empty():
-                # No selection, extract number
-                line = self.view.line(sel.begin())
-                offset = line.begin()
-                num_region = extract_number(self.view.substr(line), sel.begin() - offset)
-                if num_region:
-                    sel = sublime.Region(num_region[0] + offset, num_region[1] + offset)
 
-            if not sel.empty():
-                # Try to update value in given region
-                value = update_number(self.view.substr(sel), delta)
-                if value is not None:
-                    self.view.replace(edit, sel, value)
-                    sel = sublime.Region(sel.begin(), sel.begin() + len(value))
+def update(view: sublime.View, edit: sublime.Edit, delta=1):
+    next_selections = []
+    selections = view.sel()
+    for sel in selections:
+        if sel.empty():
+            # No selection, extract number
+            line = view.line(sel.begin())
+            offset = line.begin()
+            num_region = extract_number(view.substr(line), sel.begin() - offset)
+            if num_region:
+                sel = sublime.Region(num_region[0] + offset, num_region[1] + offset)
 
-            next_selections.append(sel)
+        if not sel.empty():
+            # Try to update value in given region
+            value = update_number(view.substr(sel), delta)
+            if value is not None:
+                view.replace(edit, sel, value)
+                sel = sublime.Region(sel.begin(), sel.begin() + len(value))
 
-        selections.clear()
-        selections.add_all(next_selections)
+        next_selections.append(sel)
 
-        track_action('Increment number', 'delta', delta)
+    selections.clear()
+    selections.add_all(next_selections)
 
 
 def extract_number(text: str, pos: int):
