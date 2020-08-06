@@ -21,7 +21,7 @@
 		"pug": "text.pug | source.pypug",
 		"slim": "text.slim",
 
-		"css": "source.css | meta.attribute-with-value.style.html string.quoted",
+		"css": "source.css | source.postcss | meta.attribute-with-value.style.html string.quoted",
 		"sass": "source.sass",
 		"scss": "source.scss",
 		"less": "source.less",
@@ -38,8 +38,8 @@
 	// e.g. plugin will mark text that user types as abbreviation
 	"abbreviation_scopes": [
 		"text.html - source - meta - comment",
-		"(source.css | source.scss | source.less) & meta.property-list",
-		"(source.css | source.scss | source.less) - meta.selector - meta.property-value - meta.property-name - string - punctuation - comment",
+		"(source.css | source.scss | source.less | source.postcss) & meta.property-list",
+		"(source.css | source.scss | source.less | source.postcss) - meta.selector - meta.property-value - meta.property-name - string - punctuation - comment",
 		"source.js.jsx | source.tsx",
 		// Inline CSS
 		"text.html meta.attribute-with-value.style (string.quoted | source.css)"
