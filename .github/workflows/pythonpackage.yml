@@ -23,7 +23,6 @@ jobs:
         pip install -r requirements.txt -t .
     - name: Create package
       run: |
-        rm ./__init__.py
         # Copy keymaps for all platforms (for some reason, Default.sublime-keymap doesn't always works)
         cp ./Default.sublime-keymap ./Default\ \(OSX\).sublime-keymap
         cp ./Default.sublime-keymap ./Default\ \(Windows\).sublime-keymap
