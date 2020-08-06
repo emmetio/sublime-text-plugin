@@ -25,7 +25,7 @@ jobs:
         cp ./Default.sublime-keymap ./Default\ \(Windows\).sublime-keymap
         cp ./Default.sublime-keymap ./Default\ \(Linux\).sublime-keymap
         rm ./Default.sublime-keymap
-        zip -x "*.pyc" -x "__pycache__" -r Emmet.zip emmet *.py *.sublime-* VERSION
+        zip -x "*.pyc" -x "__pycache__" -r Emmet.zip emmet lib *.py *.sublime-* VERSION
         python tools/registry.py > registry.json
     - name: GH Release
       uses: softprops/action-gh-release@v1
