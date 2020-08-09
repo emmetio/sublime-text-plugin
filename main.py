@@ -1,5 +1,19 @@
+import sys
 import sublime
 import sublime_plugin
+
+if int(sublime.version()) >= 3114:
+
+    # Clear module cache to force reloading all modules of this package.
+    # See https://github.com/emmetio/sublime-text-plugin/issues/35
+    prefix = __package__ + "."  # don't clear the base package
+    for module_name in [
+        module_name
+        for module_name in sys.modules
+        if module_name.startswith(prefix) and module_name != __name__
+    ]:
+        del sys.modules[module_name]
+    prefix = None
 
 from .lib import emmet_sublime, abbreviation, balance, syntax, comment, \
     convert_data_url as convert, go_to_edit_point as go_to, go_to_tag_pair as tag_pair, \
