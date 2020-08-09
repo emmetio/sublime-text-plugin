@@ -1,6 +1,6 @@
 # Emmet 2 for Sublime Text editor
 
-> This is the next version of Emmet plugin with greatly improved developer experience and new features. Read below for more details. Plugin is currently in alpha stage and may contain bugs.
+> This is the next version of Emmet plugin with greatly improved developer experience and new features. Read below for more details. Plugin is currently in beta stage and may contain bugs.
 
 Emmet is a web-developer’s toolkit for boosting HTML & CSS code writing.
 
@@ -80,6 +80,36 @@ In CSS, Sublime Text uses slightly different autocomplete behavior by default: i
 ![Emmet abbreviation example](./images/emmet4.gif)
 
 In Emmet 2, CSS abbreviations are enhanced with dynamic color snippets: you can type, for example, `#f.5` to quickly get `rgba(255, 255, 255, 0.5)`.
+
+### Disable abbreviation capturing
+
+To disable automatic abbreviation capturing, go to _Preferences > Package Settings > Emmet2 > Settings_ menu item and set `auto_mark` option to `false`. With abbreviation capturing disabled, you have several options to expand abbreviations manually:
+
+* You can type abbreviation (or pur caret behind existing abbreviation) and run `Emmet: Expand Abbreviation` action from command palette. It is recommended to set [keyboard shortcut](https://www.sublimetext.com/docs/3/key_bindings.html) for this action:
+
+```json
+// Put this code snippet into your .sublime-keymap file
+// and modify `keys` value with desired shortcut
+{
+    "keys": ["ctrl+e"],
+    "command": "emmet_expand_abbreviation"
+}
+```
+
+* Another option is to run `Emmet: Enter Abbreviation Mode` command: the `⋮>` mark indicates that you are in _explicit abbreviation mode_ and everything you type will be treated and validated as Emmet abbreviation. You can then hit <kbd>Tab</kbd> or <kbd>Enter</kbd> key to expand it, <kbd>Esc</kbd> to dispose.
+
+![Emmet abbreviation mode example](./images/emmet6.gif)
+
+It is recommended to add keyboard shortcut for this action as well:
+
+```json
+// Put this code snippet into your .sublime-keymap file
+// and modify `keys` value with desired shortcut
+{
+    "keys": ["ctrl+."],
+    "command": "emmet_enter_abbreviation"
+}
+```
 
 ### Tag preview
 
