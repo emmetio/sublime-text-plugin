@@ -1,0 +1,13 @@
+🎉 Emmet just updated to v2.0.0! 🎉
+
+The Emmet plugin just got better:
+
+* Features completely new developer experience: displays interactive abbreviation preview and plays nice with Tab key and native Sublime Text snippets.
+* New version is many times faster that previous one.
+* Improved JSX and CSS support.
+* Rewritten from scratch and doesn’t use heavy PyV8 binary anymore.
+
+Read more about new version: https://teletype.in/@chikuyonok/emmet2-sublime-text
+
+And if you like Emmet, please support it’s further development 😇:
+https://github.com/sponsors/emmetio
