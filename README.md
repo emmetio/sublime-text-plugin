@@ -2,6 +2,16 @@
 
 > This is the next version of Emmet plugin with greatly improved developer experience and new features. Read below for more details. Plugin is currently in beta stage and may contain bugs.
 
+- [Features](#features)
+- [Installation](#installation)
+- [Expanding abbreviation](#expanding-abbreviation)
+  - [JSX support](#jsx-support)
+  - [CSS support](#css-support)
+  - [Disable abbreviation capturing](#disable-abbreviation-capturing)
+- [Tag preview](#tag-preview)
+- [More actions](#more-actions)
+- [Development](#development)
+
 Emmet is a web-developer’s toolkit for boosting HTML & CSS code writing.
 
 With Emmet, you can type expressions (_abbreviations_) similar to CSS selectors and convert them into code fragment with a single keystroke. For example, this abbreviation:
@@ -111,7 +121,7 @@ It is recommended to add keyboard shortcut for this action as well:
 }
 ```
 
-### Tag preview
+## Tag preview
 
 Another new feature of Emmet 2 is inline preview of opening tag. When you move caret inside _name of closing tag_ and its matching open tag _is not visible on screen_, you’ll see an inline tag preview:
 
