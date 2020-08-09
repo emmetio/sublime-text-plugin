@@ -65,6 +65,10 @@ def get_user_agent():
 def _flush_queue():
     global scheduled, queue
     scheduled = False
+    if not queue:
+        # Seems like plugin was reloaded, skip queue
+        return
+
     _queue = queue[:MAX_BATCH]
     queue = queue[MAX_BATCH:]
     entries = []

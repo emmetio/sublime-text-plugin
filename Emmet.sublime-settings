@@ -1,6 +1,6 @@
 {
-	// Automatically mark Emmet abbreviation when typing text: marked abbreviation
-	// is highlighted with green underline.
+	// Automatically marks (captures) Emmet abbreviation when typing text: captured abbreviation
+	// is highlighted with underline. Use Tab key inside captured abbreviation to exapnd it.
 	// Works in limited syntaxes only, see `abbreviation_scopes` option
 	"auto_mark": true,
 

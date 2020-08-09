@@ -2,6 +2,7 @@
     {
         "keys": ["tab"],
         "command": "emmet_expand_abbreviation",
+        "args": { "tab": true },
         "context": [
             { "key": "emmet_abbreviation" },
             { "key": "emmet_tab_expand" }

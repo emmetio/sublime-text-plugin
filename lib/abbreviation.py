@@ -295,9 +295,6 @@ def at_word_bound(editor: sublime.View, r: sublime.Region) -> bool:
 
 def suggest_abbreviation_tracker(view: sublime.View, pos: int) -> AbbreviationTracker:
     "Tries to extract abbreviation from given position and returns tracker for it, if available"
-    if not allow_tracking(view, pos):
-        return None
-
     trk = get_tracker(view)
     if trk and not trk.region.contains(pos):
         stop_tracking(view)

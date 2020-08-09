@@ -48,14 +48,19 @@ def main_view(fn):
 
 
 class EmmetExpandAbbreviation(sublime_plugin.TextCommand):
-    def run(self, edit):
+    def run(self, edit, tab=False):
         caret = get_caret(self.view)
         trk = abbreviation.get_tracker(self.view)
+
+        if not trk and not tab:
+            # No active tracker but we are expanding not from Tab:
+            # try to create tracker from current location
+            trk = abbreviation.suggest_abbreviation_tracker(self.view, caret)
 
         if trk and trk.region.contains(caret):
             abbreviation.expand_tracker(self.view, edit, trk)
             track_action('Expand Abbreviation', trk.config.syntax)
-        abbreviation.stop_tracking(self.view)
+        abbreviation.stop_tracking(self.view, {'force': not tab})
 
 
 class EmmetEnterAbbreviation(sublime_plugin.TextCommand):
@@ -304,7 +309,6 @@ class AbbreviationMarkerListener(sublime_plugin.EventListener):
         pos = get_caret(editor)
         trk = abbreviation.handle_selection_change(editor, pos)
 
-        # print('sel modified at %d: %s' % (pos, trk))
         if trk:
             if trk.region.contains(pos):
                 abbreviation.show_preview(editor, trk)
@@ -314,7 +318,6 @@ class AbbreviationMarkerListener(sublime_plugin.EventListener):
     @main_view
     def on_modified(self, editor: sublime.View):
         abbreviation.handle_change(editor, get_caret(editor))
-        # print('modified: %s' % trk)
 
     def on_query_context(self, view: sublime.View, key: str, *args):
         if key == 'emmet_abbreviation':
@@ -344,7 +347,10 @@ class AbbreviationMarkerListener(sublime_plugin.EventListener):
         if self.pending_completions_request:
             self.pending_completions_request = False
 
-            tracker = abbreviation.suggest_abbreviation_tracker(editor, pos)
+            tracker = None
+            if abbreviation.allow_tracking(editor, pos):
+                tracker = abbreviation.suggest_abbreviation_tracker(editor, pos)
+
             if tracker:
                 abbreviation.mark(editor, tracker)
                 abbreviation.show_preview(editor, tracker)
