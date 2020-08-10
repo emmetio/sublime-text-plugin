@@ -49,9 +49,9 @@ Due to development stage, this package must be installed from custom repository:
 1. In Sublime Text, open `Command Palette`, find and run `Package Control: Add Repository` command
 2. Enter the following URL into dialog and hit Enter: https://github.com/emmetio/sublime-text-plugin/releases/latest/download/registry.json
 3. From `Command Palette`, run `Package Control: Install Package` command.
-4. In opened packages list, find `Emmet2` package and install it
+4. In opened packages list, find `Emmet` package and install it
 
-If you’re unable to find `Emmet2` package on last step or installed package doesn’t work as expected, restart Sublime Text and try again
+If you’re unable to find `Emmet` package on last step or installed package doesn’t work as expected, restart Sublime Text and try again
 
 ## Expanding abbreviation
 
@@ -93,7 +93,7 @@ In Emmet 2, CSS abbreviations are enhanced with dynamic color snippets: you can 
 
 ### Disable abbreviation capturing
 
-To disable automatic abbreviation capturing, go to _Preferences > Package Settings > Emmet2 > Settings_ menu item and set `auto_mark` option to `false`. With abbreviation capturing disabled, you have several options to expand abbreviations manually:
+To disable automatic abbreviation capturing, go to _Preferences > Package Settings > Emmet > Settings_ menu item and set `auto_mark` option to `false`. With abbreviation capturing disabled, you have several options to expand abbreviations manually:
 
 * You can type abbreviation (or pur caret behind existing abbreviation) and run `Emmet: Expand Abbreviation` action from command palette. It is recommended to set [keyboard shortcut](https://www.sublimetext.com/docs/3/key_bindings.html) for this action:
 
@@ -129,7 +129,7 @@ Another new feature of Emmet 2 is inline preview of opening tag. When you move c
 
 Click on this preview will jump to open tag.
 
-This option is disable by default. To enable it, go to _Preferences > Package Settings > Emmet2 > Settings_ and set `tag_preview` option to `true`.
+This option is disable by default. To enable it, go to _Preferences > Package Settings > Emmet > Settings_ and set `tag_preview` option to `true`.
 
 ## More actions
 

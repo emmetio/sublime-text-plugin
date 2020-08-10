@@ -5,10 +5,10 @@
 		"mnemonic": "P",
 		"id": "package-settings",
 		"children": [{
-			"caption": "Emmet2",
+			"caption": "Emmet",
 			"children": [{
 				"command": "edit_settings",
-				"args": { "base_file": "${packages}/Emmet2/Emmet.sublime-settings" },
+				"args": { "base_file": "${packages}/Emmet/Emmet.sublime-settings" },
 				"caption": "Settings"
 			}]
 		}]

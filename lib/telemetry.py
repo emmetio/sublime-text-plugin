@@ -128,6 +128,6 @@ Would you like to enable anonymous usage stats for Emmet?
 
 It will help me better understand how Emmet is used and prioritize future improvements.
 
-You can enable/disable telemetry later via Preferences > Package Settings > Emmet2 > Settings
+You can enable/disable telemetry later via Preferences > Package Settings > Emmet > Settings
 """, 'Yes, enable telemetry')
 
