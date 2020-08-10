@@ -89,13 +89,27 @@ In CSS, Sublime Text uses slightly different autocomplete behavior by default: i
 
 ![Emmet abbreviation example](./images/emmet4.gif)
 
+If you don’t like inline preview for CSS, you can disable it for CSS only:
+
+* Go to _Preferences > Package Settings > Emmet > Settings_ menu item.
+* Set `abbreviation_preview` option to `"markup"`, e.g. `"abbreviation_preview": "markup"`. This will enable previews for markup syntaxes (HTML, XML, JSX etc.) only.
+* You can also disable previews completely by setting `abbreviation_preview` value to `false`.
+
+
 In Emmet 2, CSS abbreviations are enhanced with dynamic color snippets: you can type, for example, `#f.5` to quickly get `rgba(255, 255, 255, 0.5)`.
 
 ### Disable abbreviation capturing
 
-To disable automatic abbreviation capturing, go to _Preferences > Package Settings > Emmet > Settings_ menu item and set `auto_mark` option to `false`. With abbreviation capturing disabled, you have several options to expand abbreviations manually:
+To fine tune automatic abbreviation capturing, go to _Preferences > Package Settings > Emmet > Settings_ menu item and update `auto_mark` option:
 
-* You can type abbreviation (or pur caret behind existing abbreviation) and run `Emmet: Expand Abbreviation` action from command palette. It is recommended to set [keyboard shortcut](https://www.sublimetext.com/docs/3/key_bindings.html) for this action:
+* Set value to `false` to completely disable abbreviation capturing.
+* Set value to either `"markup"` or `"stylesheet"` to enable capturing for markup (HTML, XML, JSX etc) or stylesheet (CSS, SCSS, LESS etc.) syntaxes only.
+
+For example, if you want abbreviation capturing for HTML and disable it for CSS, set `"auto_mark": "markup"`. You can also apply the same values for `abbreviation_preview` option to enable/disable interactive previews completely or for specific syntaxes only.
+
+With abbreviation capturing disabled, you have several options to expand abbreviations manually:
+
+* You can type abbreviation (or put caret behind existing abbreviation) and run `Emmet: Expand Abbreviation` action from command palette. It is recommended to set [keyboard shortcut](https://www.sublimetext.com/docs/3/key_bindings.html) for this action:
 
 ```json
 // Put this code snippet into your .sublime-keymap file

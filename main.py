@@ -303,10 +303,11 @@ class AbbreviationMarkerListener(sublime_plugin.EventListener):
 
     @main_view
     def on_selection_modified(self, editor: sublime.View):
-        if not abbreviation.is_enabled(editor):
+        pos = get_caret(editor)
+
+        if not abbreviation.is_enabled(editor, pos):
             return
 
-        pos = get_caret(editor)
         trk = abbreviation.handle_selection_change(editor, pos)
 
         if trk:

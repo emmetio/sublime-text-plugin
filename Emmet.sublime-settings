@@ -1,10 +1,18 @@
 {
 	// Automatically marks (captures) Emmet abbreviation when typing text: captured abbreviation
 	// is highlighted with underline. Use Tab key inside captured abbreviation to exapnd it.
-	// Works in limited syntaxes only, see `abbreviation_scopes` option
+    // Works in limited syntaxes only, see `abbreviation_scopes` option
+    // Possible values:
+    // – true: enable capturing for both markup and stylesheet abbreviations
+    // – false: completely disable capturing
+    // – "markup" or "stylesheet": enable capturing for either markup or stylesheet abbreviations
 	"auto_mark": true,
 
-	// Preview captured abbreviations, works only if `auto_mark` is enabled
+    // Preview captured abbreviations, works only if `auto_mark` is enabled.
+    // Possible values:
+    // – true: enable preview for both markup and stylesheet abbreviations
+    // – false: completely disable preview
+    // – "markup" or "stylesheet": enable previews for either markup or stylesheet abbreviations
 	"abbreviation_preview": true,
 
 	// Scope for marked abbreviation region highlighting

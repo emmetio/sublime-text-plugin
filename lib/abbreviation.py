@@ -462,16 +462,21 @@ def is_simple_markup_abbreviation(abbr: MarkupAbbreviation) -> bool:
 
 def allow_tracking(editor: sublime.View, pos: int) -> bool:
     "Check if abbreviation tracking is allowed in editor at given location"
-    if is_enabled(editor):
+    if is_enabled(editor, pos):
         syntax_name = syntax.from_pos(editor, pos)
         return syntax.is_supported(syntax_name) or syntax.is_jsx(syntax_name)
 
     return False
 
 
-def is_enabled(view: sublime.View) -> bool:
+def is_enabled(view: sublime.View, pos: int) -> bool:
     "Check if Emmet abbreviation tracking is enabled"
-    return get_settings('auto_mark', False)
+    auto_mark = get_settings('auto_mark', False)
+    if isinstance(auto_mark, bool):
+        return auto_mark
+
+    syntax_info = syntax.info(view, pos)
+    return syntax_info['type'] == auto_mark
 
 
 def mark(editor: sublime.View, tracker: AbbreviationTracker):
@@ -498,9 +503,15 @@ def unmark(editor: sublime.View):
     hide_preview(editor)
 
 
+def is_preview_enabled(tracker: AbbreviationTracker) -> bool:
+    "Check if preview is enabled for given tracker"
+    preview = get_settings('abbreviation_preview', True)
+    return preview is True or preview == tracker.config.type
+
+
 def show_preview(editor: sublime.View, tracker: AbbreviationTracker):
     "Displays expanded preview of abbreviation in current tracker in given view"
-    if not get_settings('abbreviation_preview', True):
+    if not is_preview_enabled(tracker):
         return
 
     key = editor.id()
@@ -641,4 +652,3 @@ def expand_tracker(editor: sublime.View, edit: sublime.Edit, tracker: Abbreviati
     if isinstance(tracker, AbbreviationTrackerValid):
         snippet = expand(tracker.abbreviation, tracker.config)
         replace_with_snippet(editor, edit, tracker.region, snippet)
-
