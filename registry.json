@@ -1,0 +1,23 @@
+{
+ "schema_version": "3.0.0",
+ "packages": [
+  {
+   "name": "Emmet",
+   "details": "https://github.com/emmetio/sublime-text-plugin",
+   "labels": [
+    "auto-complete",
+    "snippets",
+    "text manipulation"
+   ],
+   "donate": "https://github.com/sponsors/emmetio",
+   "releases": [
+    {
+     "version": "2.0.2",
+     "url": "https://github.com/emmetio/sublime-text-plugin/releases/download/v2.0.2/Emmet.zip",
+     "date": "2020-08-11 20:56:22",
+     "sublime_text": ">=3000"
+    }
+   ]
+  }
+ ]
+}
