@@ -31,7 +31,7 @@ jobs:
         zip -x "*.pyc" -x "__pycache__" -r Emmet.sublime-package emmet lib *.py *.sublime-* .python-version VERSION
         mkdir public
         python tools/registry.py > public/registry.json
-        cp ./Emmet.zip ./public/Emmet.zip
+        cp ./Emmet.sublime-package ./public/Emmet.sublime-package
     - name: Upload artifact
       uses: actions/upload-artifact@v1.0.0
       with:
