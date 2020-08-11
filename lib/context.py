@@ -38,8 +38,13 @@ def get_activation_context(editor: sublime.View, pos: int) -> Config:
     syntax_name = syntax.from_pos(editor, pos)
     if syntax.is_css(syntax_name):
         ctx = get_css_context(editor, pos)
-        return create_activation_context(editor, pos, ctx) if ctx is not None else None
+        if ctx:
+            result = create_activation_context(editor, pos, ctx)
+            if editor.match_selector(pos, 'meta.at-rule.media'):
+                result.options['stylesheet.after'] = ''
+            return result
 
+        return None
 
     if syntax.is_html(syntax_name):
         ctx = get_html_context(editor, pos)
@@ -48,7 +53,7 @@ def get_activation_context(editor: sublime.View, pos: int) -> Config:
     return create_activation_context(editor, pos)
 
 
-def create_activation_context(editor: sublime.View, pos: int, context: dict = None, inline=False) -> dict:
+def create_activation_context(editor: sublime.View, pos: int, context: dict = None, inline=False) -> Config:
     "Creates abbreviation activation context payload for given location in editor."
     config = get_config(editor, pos)
     config.context = context
@@ -168,6 +173,13 @@ def get_css_context(editor: sublime.View, pos: int):
     if not cur:
         return None
 
+    # Check for edge case: typing abbreviation inside media expression,
+    # e.g. `@media (|) { ... }`
+    if cur['type'] == TokenType.Selector:
+        value = editor.substr(cur['region'])
+        if value.startswith('@media') and in_media_expression(value, pos - cur['region'].begin()):
+            return {'name': CSSAbbreviationScope.Property}
+
     if cur['type'] in (TokenType.PropertyName, TokenType.PropertyValue) or \
         is_typing_before_selector(editor, pos, cur):
 
@@ -265,13 +277,19 @@ def region_contains(region: sublime.Region, pt: int) -> bool:
     return region.begin() < pt < region.end()
 
 
-# class EmmetGetContext(sublime_plugin.TextCommand):
-#     def run(self, edit):
-#         pos = get_caret(self.view)
-#         start = perf_counter()
-#         ctx = get_activation_context(self.view, pos)
+def in_media_expression(value: str, pos: int) -> bool:
+    "Check if given `pos` is inside expresion of @media rule"
+    stack = 0
+    i = 0
+    while i < len(value):
+        if i == pos:
+            return stack > 0
 
+        if value[i] == '(':
+            stack += 1
+        elif value[i] == ')':
+            stack -= 1
 
-#         print('doc syntax: %s' % syntax.doc_syntax(self.view))
-#         print('exec time: %.5fs' % (perf_counter() - start))
-#         print('found ctx: %s' % ctx)
+        i += 1
+
+    return False

@@ -61,6 +61,7 @@ def get_preview_config(config: Config) -> Config:
     user_config = dict(config.user_config or {})
     user_config['max_repeat'] = 200
     preview_config = Config(user_config, get_settings('config'))
+    preview_config.options.update(config.options)
     preview_config.options['output.field'] = field_preview
     preview_config.context = config.context
     return preview_config

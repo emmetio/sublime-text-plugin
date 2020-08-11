@@ -15,8 +15,8 @@ ABBR_REGION_ID = 'emmet-abbreviation'
 ABBR_PREVIEW_ID = 'emmet-abbreviation-preview'
 
 re_jsx_abbr_start = re.compile(r'^[a-zA-Z.#\[\(]$')
-re_word_bound = re.compile(r'^[\s>;"\']?[a-zA-Z.#!@\[\(]$')
-re_stylesheet_word_bound = re.compile(r'^[\s;"\']?[a-zA-Z!@]$')
+re_word_bound = re.compile(r'^[\s>;"\'()]?[a-zA-Z.#!@\[\(]$')
+re_stylesheet_word_bound = re.compile(r'^[\s;"\'()]?[a-zA-Z!@]$')
 re_stylesheet_preview_check = re.compile(r'/^:\s*;?$/')
 re_word_start = re.compile(r'^[a-z]', re.IGNORECASE)
 re_bound_char = re.compile(r'^[\s>;"\']')
@@ -317,7 +317,7 @@ def handle_change(editor: sublime.View, pos: int) -> AbbreviationTracker:
     set_last_pos(editor, pos)
 
     if not tracker:
-        # No active tracker, check if we user is actually typing it
+        # No active tracker, check if we user is actually typing abbreviation
         if editor_last_pos is not None and editor_last_pos == pos - 1 and allow_tracking(editor, pos):
             return typing_abbreviation(editor, pos)
         return None
