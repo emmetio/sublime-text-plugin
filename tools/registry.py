@@ -23,7 +23,7 @@ registry = {
         "donate": "https://github.com/sponsors/emmetio",
         "releases": [{
             "version": version,
-            "url": "https://github.com/emmetio/sublime-text-plugin/releases/download/v%s/Emmet.zip" % version,
+            "url": "https://emmetio.github.io/sublime-text-plugin/%s/Emmet.sublime-package" % version,
             "date": now.strftime("%Y-%m-%d %H:%M:%S"),
             "sublime_text": ">=3000"
         }]

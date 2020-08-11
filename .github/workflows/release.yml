@@ -20,19 +20,29 @@ jobs:
         pip install -r requirements.txt -t .
     - name: Build
       run: |
+        VERSION=$(<VERSION)
         # Copy keymaps for all platforms (for some reason, Default.sublime-keymap doesn't always works)
         cp ./Default.sublime-keymap ./Default\ \(OSX\).sublime-keymap
         cp ./Default.sublime-keymap ./Default\ \(Windows\).sublime-keymap
         cp ./Default.sublime-keymap ./Default\ \(Linux\).sublime-keymap
         rm ./Default.sublime-keymap
-        zip -x "*.pyc" -x "__pycache__" -r Emmet.zip emmet lib *.py *.sublime-* .python-version VERSION
-        python tools/registry.py > registry.json
-    - name: GH Release
-      uses: softprops/action-gh-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        zip -x "*.pyc" -x "__pycache__" -r Emmet.sublime-package emmet lib *.py *.sublime-* .python-version VERSION
+        mkdir -p public/$VERSION
+        python tools/registry.py > public/registry.json
+        cp ./Emmet.sublime-package ./public/$VERSION/Emmet.sublime-package
+    # - name: GH Release
+    #   uses: softprops/action-gh-release@v1
+    #   env:
+    #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    #   with:
+    #     files: |
+    #       Emmet.zip
+    #       registry.json
+    - name: Deploy 🚀
+      uses: JamesIves/github-pages-deploy-action@3.5.9
       with:
-        files: |
-          Emmet.zip
-          registry.json
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        BRANCH: download # The branch the action should deploy to.
+        FOLDER: public # The folder the action should deploy.
+
 
