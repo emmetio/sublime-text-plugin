@@ -29,8 +29,17 @@ jobs:
         cp ./Default.sublime-keymap ./Default\ \(Linux\).sublime-keymap
         rm ./Default.sublime-keymap
         zip -x "*.pyc" -x "__pycache__" -r Emmet.sublime-package emmet lib *.py *.sublime-* .python-version VERSION
+        mkdir public
+        python tools/registry.py > public/registry.json
+        cp ./Emmet.zip ./public/Emmet.zip
     - name: Upload artifact
       uses: actions/upload-artifact@v1.0.0
       with:
         name: Sublime Text package
         path: ./Emmet.sublime-package
+    - name: Deploy 🚀
+      uses: JamesIves/github-pages-deploy-action@3.5.9
+      with:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        BRANCH: download # The branch the action should deploy to.
+        FOLDER: public # The folder the action should deploy.
