@@ -47,7 +47,7 @@ ul#nav>li.item$*4>a{Item $}
 Due to development stage, this package must be installed from custom repository:
 
 1. In Sublime Text, open `Command Palette`, find and run `Package Control: Add Repository` command
-2. Enter the following URL into dialog and hit Enter: https://github.com/emmetio/sublime-text-plugin/releases/latest/download/registry.json
+2. Enter the following URL into dialog and hit Enter: http://emmetio.github.io/sublime-text-plugin/registry.json
 3. From `Command Palette`, run `Package Control: Install Package` command.
 4. In opened packages list, find `Emmet` package and install it
 
