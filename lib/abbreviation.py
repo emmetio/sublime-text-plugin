@@ -472,11 +472,15 @@ def allow_tracking(editor: sublime.View, pos: int) -> bool:
 def is_enabled(view: sublime.View, pos: int) -> bool:
     "Check if Emmet abbreviation tracking is enabled"
     auto_mark = get_settings('auto_mark', False)
-    if isinstance(auto_mark, bool):
-        return auto_mark
+
+    if auto_mark is False or not syntax.in_activation_scope(view, pos):
+        return False
+
+    if auto_mark is True:
+        return True
 
     syntax_info = syntax.info(view, pos)
-    return syntax_info['type'] == auto_mark
+    return syntax_info['type'] == auto_mark and syntax.in_activation_scope(view, pos)
 
 
 def mark(editor: sublime.View, tracker: AbbreviationTracker):

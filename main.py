@@ -21,7 +21,7 @@ from .lib import emmet_sublime, abbreviation, balance, syntax, comment, \
 from .lib.remove_tag import remove_tag
 from .lib.split_join_tag import split_join_tag
 from .lib.update_image_size import update_image_size
-from .lib.utils import get_caret, narrow_to_non_space, replace_with_snippet, get_content
+from .lib.utils import get_caret, narrow_to_non_space, replace_with_snippet, go_to_pos
 from .lib.telemetry import track_action, check_telemetry
 from .lib.config import get_settings
 
@@ -191,7 +191,7 @@ class EmmetGoToEditPoint(sublime_plugin.TextCommand):
         delta = -1 if previous else 1
         pt = go_to.find_new_edit_point(self.view, caret + delta, delta)
         if pt is not None:
-            go_to.go_to_pos(self.view, pt)
+            go_to_pos(self.view, pt)
 
         track_action('Go to Edit Point', 'previous' if previous else 'next')
 
@@ -359,7 +359,7 @@ class AbbreviationMarkerListener(sublime_plugin.EventListener):
                 return [('%s\tEmmet' % tracker.abbreviation, snippet)]
 
     def on_text_command(self, view: sublime.View, command_name: str, args: list):
-        if command_name == 'auto_complete' and abbreviation.is_enabled(view):
+        if command_name == 'auto_complete' and abbreviation.is_enabled(view, get_caret(view)):
             self.pending_completions_request = True
         elif command_name == 'commit_completion':
             abbreviation.stop_tracking(view)
