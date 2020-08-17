@@ -1,5 +1,10 @@
 [
     {
+        "caption": "Preferences: Emmet Settings",
+        "command": "edit_settings",
+        "args": { "base_file": "${packages}/Emmet/Emmet.sublime-settings" }
+    },
+    {
         "caption": "Emmet: Expand Abbreviation",
         "command": "emmet_expand_abbreviation"
     },
