@@ -172,3 +172,8 @@ def has_new_line(text: str) -> bool:
 def to_region(rng: list) -> sublime.Region:
     "Converts given list range to Sublime region"
     return sublime.Region(rng[0], rng[1])
+
+
+def escape_snippet(text: str) -> str:
+    "Escapes given text for snippet insertion"
+    return text.replace('$', '\\$')

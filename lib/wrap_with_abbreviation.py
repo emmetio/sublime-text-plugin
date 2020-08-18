@@ -81,7 +81,7 @@ def get_content(view: sublime.View, region: sublime.Region, lines=False):
     for line in src_lines:
         if dest_lines and line.startswith(indent):
             line = line[len(indent):]
-        dest_lines.append(line)
+        dest_lines.append(utils.escape_snippet(line))
 
     return dest_lines if lines else '\n'.join(dest_lines)
 
