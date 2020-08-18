@@ -594,7 +594,7 @@ def preview_phantom_html(content: str):
                 background-color: #1D9B45;
                 color: #fff;
                 border-radius: 3px;
-                padding: 1px 3px;
+                padding: 0 3px;
                 position: relative;
             }
 
@@ -615,7 +615,7 @@ def forced_indicator(content: str):
                     background-color: var(--greenish);
                     color: #fff;
                     border-radius: 3px;
-                    padding: 1px 3px;
+                    padding: 0 3px;
                 }
                 %s
             </style>
