@@ -1,3 +1,13 @@
+## 2.1.0
+
+* Introduce `known_snippets_only` option, which is enabled by default for HTML syntaxes. It allows to expand a single-word abbreviation only if it’s a known HTML tag, Emmet snippet or common component pattern.
+* Improved unmatched CSS abbreviations handling: https://github.com/emmetio/sublime-text-plugin/issues/45
+
+
+## 2.0.0
+
+Final release of Emmet.
+
 ## v0.2.4
 
 * Support TSX syntax.
