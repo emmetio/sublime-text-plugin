@@ -5,7 +5,7 @@ from ..emmet import Abbreviation as MarkupAbbreviation, markup_abbreviation, sty
 from ..emmet.config import Config
 from ..emmet.stylesheet import CSSAbbreviationScope
 from .emmet_sublime import JSX_PREFIX, expand, extract_abbreviation
-from .utils import pairs, pairs_end, replace_with_snippet
+from .utils import pairs, pairs_end, known_tags, replace_with_snippet
 from .context import get_activation_context
 from .config import get_preview_config, get_settings, get_user_css
 from . import syntax
@@ -20,6 +20,7 @@ re_stylesheet_word_bound = re.compile(r'^[\s;"\'()]?[a-zA-Z!@]$')
 re_stylesheet_preview_check = re.compile(r'/^:\s*;?$/')
 re_word_start = re.compile(r'^[a-z]', re.IGNORECASE)
 re_bound_char = re.compile(r'^[\s>;"\']')
+re_complex_abbr = re.compile(r'[.#>^+*\[\(\{]')
 
 _cache = {}
 _trackers = {}
@@ -31,7 +32,7 @@ _has_popup_preview = {}
 
 class AbbreviationTracker:
     __slots__ = ('region', 'abbreviation', 'forced', 'forced', 'offset',
-                 'last_pos', 'last_length', 'config', 'simple', 'preview', 'error')
+                 'last_pos', 'last_length', 'config', 'simple', 'preview', 'error', 'valid_candidate')
     def __init__(self, abbreviation: str, region: sublime.Region, config: Config, params: dict = None):
         self.abbreviation = abbreviation
         "Range in editor for abbreviation"
@@ -59,6 +60,9 @@ class AbbreviationTracker:
         self.last_length = 0
         "Last editor size"
 
+        self.valid_candidate = True
+        "Indicates that current abbreviation is a valid candidate to expand"
+
         if params:
             for k, v in params.items():
                 if hasattr(self, k) or k in self.__slots__:
@@ -66,12 +70,14 @@ class AbbreviationTracker:
 
 
 class AbbreviationTrackerValid(AbbreviationTracker):
-    __slots__ = ('simple', 'preview')
+    __slots__ = ('simple', 'preview', 'valid_candidate')
 
     def __init__(self, *args):
         self.simple = False
         self.preview = ''
         super().__init__(*args)
+
+        self.valid_candidate = is_valid_candidate(self.abbreviation, self.config)
 
 class AbbreviationTrackerError(AbbreviationTracker):
     def __init__(self, *args):
@@ -486,9 +492,13 @@ def is_enabled(view: sublime.View, pos: int, skip_selector=False) -> bool:
 def mark(editor: sublime.View, tracker: AbbreviationTracker):
     "Marks tracker in given view"
     scope = get_settings('marker_scope', 'region.accent')
-    mark_opt = sublime.DRAW_SOLID_UNDERLINE | sublime.DRAW_NO_FILL | sublime.DRAW_NO_OUTLINE
     editor.erase_regions(ABBR_REGION_ID)
-    editor.add_regions(ABBR_REGION_ID, [tracker.region], scope, '', mark_opt)
+
+    if tracker.valid_candidate:
+        # Do not mark abbreviation if it’s not known candidate
+        mark_opt = sublime.DRAW_SOLID_UNDERLINE | sublime.DRAW_NO_FILL | sublime.DRAW_NO_OUTLINE
+        editor.add_regions(ABBR_REGION_ID, [tracker.region], scope, '', mark_opt)
+
     if isinstance(tracker, AbbreviationTrackerValid) and tracker.forced:
         phantoms = [
             sublime.Phantom(tracker.region, forced_indicator('⋮>'), sublime.LAYOUT_INLINE)
@@ -656,3 +666,19 @@ def expand_tracker(editor: sublime.View, edit: sublime.Edit, tracker: Abbreviati
     if isinstance(tracker, AbbreviationTrackerValid):
         snippet = expand(tracker.abbreviation, tracker.config)
         replace_with_snippet(editor, edit, tracker.region, snippet)
+
+
+def is_valid_candidate(abbr: str, config: Config) -> bool:
+    "Check if given string is a valid candidate for Emmet abbreviation"
+    if re_complex_abbr.match(abbr):
+        return True
+
+    # Looks like a single-word abbreviation, check if it’s a valid candidate:
+    # * contains dash (web components)
+    # * upper-cased (JSX, Svelte components)
+    # * known HTML tags
+    # * known Emmet snippets
+    if config.type == 'markup' and config.syntax in get_settings('known_snippets_only', []):
+        return '-' in abbr or abbr[0].isupper() or abbr in known_tags or abbr in config.snippets
+
+    return True

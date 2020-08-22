@@ -332,7 +332,7 @@ class AbbreviationMarkerListener(sublime_plugin.EventListener):
             if trk:
                 for s in view.sel():
                     if trk.region.contains(s):
-                        return trk.forced or isinstance(trk, abbreviation.AbbreviationTrackerValid)
+                        return trk.valid_candidate and (trk.forced or isinstance(trk, abbreviation.AbbreviationTrackerValid))
 
             return False
 
@@ -358,15 +358,22 @@ class AbbreviationMarkerListener(sublime_plugin.EventListener):
                 tracker = abbreviation.suggest_abbreviation_tracker(editor, pos)
 
             if tracker:
-                abbreviation.mark(editor, tracker)
-                abbreviation.show_preview(editor, tracker)
-                snippet = emmet_sublime.expand(tracker.abbreviation, tracker.config)
-                return [('%s\tEmmet' % tracker.abbreviation, snippet)]
+                if tracker.valid_candidate:
+                    abbreviation.mark(editor, tracker)
+                    abbreviation.show_preview(editor, tracker)
+                    snippet = emmet_sublime.expand(tracker.abbreviation, tracker.config)
+                    return [('%s\tEmmet' % tracker.abbreviation, snippet)]
+                else:
+                    abbreviation.stop_tracking(editor)
+            else:
+                tracker = abbreviation.get_tracker(editor)
+                if tracker and not tracker.valid_candidate:
+                    abbreviation.stop_tracking(editor)
 
     def on_text_command(self, view: sublime.View, command_name: str, args: list):
         if command_name == 'auto_complete' and abbreviation.is_enabled(view, get_caret(view)):
             self.pending_completions_request = True
-        elif command_name == 'commit_completion':
+        elif command_name in ('commit_completion', 'insert_best_completion'):
             abbreviation.stop_tracking(view)
 
     def on_post_text_command(self, editor: sublime.View, command_name: str, args: list):

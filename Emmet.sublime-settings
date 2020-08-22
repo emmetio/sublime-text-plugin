@@ -59,7 +59,21 @@
 	"ignore_scopes": [],
 
 	// Expand Emmet abbreviation with Tab key when in abbreviation marker
-	"tab_expand": true,
+    "tab_expand": true,
+
+    // Emmet syntaxes (keys of "syntax_scopes" dictionary) where Tab expander
+    // is limited to known snippets only.
+    // For example, when you type `di`, pressing Tab key will try to match default
+    // Sublime Text snippet since `di` is neither known tag nor known Emmet snippet.
+    // But `div` will be expanded via Emmet since it’s a known tag.
+    // However, typing `di.sample` will be expanded via Emmet as well since it
+    // contains special operator like `.`
+    // Known snippets are:
+    // * any valid HTML5 tag
+    // * any predefined Emmet snippet
+    // * upper-cased word (JSX, Svelte components)
+    // * words with dash (Vue, Web Components)
+    "known_snippets_only": ["html"],
 
 	// Display open tag preview next to closing tag when caret is inside it
 	// and open tag is not currently visible
