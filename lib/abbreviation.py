@@ -245,7 +245,7 @@ def create_tracker(editor: sublime.View, region: sublime.Region, params: dict) -
             tracker_params['simple'] = not jsx and is_simple_markup_abbreviation(parsed_abbr)
 
         preview_config = get_preview_config(config)
-        tracker_params['preview'] = expand(parsed_abbr, preview_config)
+        tracker_params['preview'] = expand(abbreviation, preview_config)
         if tracker_params['preview'] or forced:
             # Create tracker only if preview is not empty for non-forced abbreviation.
             # Empty preview means Emmet was unable to find proper match for given
