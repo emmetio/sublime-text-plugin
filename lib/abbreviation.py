@@ -15,8 +15,8 @@ ABBR_REGION_ID = 'emmet-abbreviation'
 ABBR_PREVIEW_ID = 'emmet-abbreviation-preview'
 
 re_jsx_abbr_start = re.compile(r'^[a-zA-Z.#\[\(]$')
-re_word_bound = re.compile(r'^[\s>;"\'()]?[a-zA-Z.#!@\[\(]$')
-re_stylesheet_word_bound = re.compile(r'^[\s;"\'()]?[a-zA-Z!@]$')
+re_word_bound = re.compile(r'^[\s>;"\'(){}]?[a-zA-Z.#!@\[\(]$')
+re_stylesheet_word_bound = re.compile(r'^[\s;"\'(){}]?[a-zA-Z!@]$')
 re_stylesheet_preview_check = re.compile(r'/^:\s*;?$/')
 re_word_start = re.compile(r'^[a-z]', re.IGNORECASE)
 re_bound_char = re.compile(r'^[\s>;"\']')
