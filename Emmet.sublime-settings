@@ -23,7 +23,7 @@
 		"html": "text.html - source - meta.attribute-with-value.style",
 		"xml": "text.xml - text.xml.xsl",
 		"xsl": "text.xml.xsl",
-		"jsx": "source.js.jsx | source.tsx",
+		"jsx": "source.js.jsx | source.tsx | source.js",
 		"haml": "source.haml",
 		"jade": "text.jade | source.pyjade",
 		"pug": "text.pug | source.pypug",
@@ -49,7 +49,7 @@
         "source.sass - meta.property-value - meta.property-name - string - punctuation - comment",
 		"(source.css | source.scss | source.less | source.postcss) & meta.property-list",
 		"(source.css | source.scss | source.less | source.postcss) - meta.selector - meta.property-value - meta.property-name - string - punctuation - comment",
-		"source.js.jsx | source.tsx",
+		"source.js.jsx | source.tsx | source.js meta.jsx",
 		// Inline CSS
 		"text.html meta.attribute-with-value.style (string.quoted | source.css)"
 	],
