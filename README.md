@@ -9,6 +9,7 @@
   - [CSS support](#css-support)
   - [Disable abbreviation capturing](#disable-abbreviation-capturing)
 - [Tag preview](#tag-preview)
+- [Adding custom Emmet snippets](#adding-custom-emmet-snippets)
 - [More actions](#more-actions)
 - [Development](#development)
 
@@ -42,14 +43,8 @@ ul#nav>li.item$*4>a{Item $}
 
 ## Installation
 
-> Please remove old Emmet plugin (https://packagecontrol.io/packages/Emmet) first, otherwise new plugin won’t work.
-
-Due to development stage, this package must be installed from custom repository:
-
-1. In Sublime Text, open `Command Palette`, find and run `Package Control: Add Repository` command
-2. Enter the following URL into dialog and hit Enter: http://emmetio.github.io/sublime-text-plugin/registry.json
-3. From `Command Palette`, run `Package Control: Install Package` command.
-4. In opened packages list, find `Emmet` package and install it
+1. From `Command Palette`, run `Package Control: Install Package` command.
+2. In opened packages list, find `Emmet` package and install it
 
 If you’re unable to find `Emmet` package on last step or installed package doesn’t work as expected, restart Sublime Text and try again
 
@@ -144,6 +139,71 @@ Another new feature of Emmet 2 is inline preview of opening tag. When you move c
 Click on this preview will jump to open tag.
 
 This option is disable by default. To enable it, go to _Preferences > Package Settings > Emmet > Settings_ and set `tag_preview` option to `true`.
+
+## Adding custom Emmet snippets
+
+To add new Emmet snippets or modify existing ones, tweak core Emmet preferences etc., go to _Preferences > Package Settings > Emmet > Settings_ and modify `config` key.
+
+You can configure snippets/preferences globally or per syntax. Emmet understands two types of abbreviations: `markup` (used for markup syntaxes like HTML, Pug, JSX etc.) and `stylesheet` (for CSS, Sass, Less, etc.). In order to add or modify snippets globally, you should use one of these keys in `config` section. If you want to set snippets for specific syntax only (for example, only for JSX or HTML), you should use syntax name as a key. Here’s an example config:
+
+```jsonc
+{
+    "config": {
+        // Use "markup" key to specify global snippets/options for all markup
+        // syntaxes like HTML, XML, JSX, Pug
+        "markup": {
+            // Snippets are just aliases for Emmet abbreviations
+            // Check out default snippets:
+            // https://github.com/emmetio/py-emmet/blob/master/emmet/snippets/html.py
+            "snippets": {
+                "foo": "ul.foo>li.foo-item*4"
+            },
+
+            // Add options to fine-tune Emmet,see all available options here:
+            // https://github.com/emmetio/emmet/blob/master/src/config.ts#L79
+            "options": {
+                "output.tagCase": "upper"
+            }
+        },
+
+        // Configure snippets/options for HTML syntax only.
+        // For a list of supported syntaxes, check out keys of `syntax_scopes`
+        // dictionary of `Emmet.sublime-settings`
+        "html": {
+            "snippets": {
+                "myhtml": "main.my-html>section"
+            }
+        },
+
+        // Use "stylesheet" key to configure all stylesheet syntaxes like CSS, SCSS,
+        // Sass etc.
+        "stylesheet": {
+            // Stylesheet snippets are either aliases to CSS properties with
+            // optional values or any arbitrary text.
+            // Check out default snippets:
+            // https://github.com/emmetio/py-emmet/blob/master/emmet/snippets/css.py
+            "snippets": {
+                "foo": "foo-bar"
+            },
+
+            // You can also set options here:
+            // https://github.com/emmetio/emmet/blob/master/src/config.ts#L79
+            "options": {
+                "stylesheet.shortHex": false
+            }
+        },
+
+        // Configure snippets/options for CSS syntax only.
+        // For a list of supported syntaxes, check out keys of `syntax_scopes`
+        // dictionary of `Emmet.sublime-settings`
+        "css": {
+            "snippets": {
+                "prop": "some-prop:${value}"
+            }
+        }
+    }
+}
+```
 
 ## More actions
 
