@@ -20,7 +20,8 @@ re_stylesheet_word_bound = re.compile(r'^[\s;"\'()]?[a-zA-Z!@]$')
 re_stylesheet_preview_check = re.compile(r'/^:\s*;?$/')
 re_word_start = re.compile(r'^[a-z]', re.IGNORECASE)
 re_bound_char = re.compile(r'^[\s>;"\']')
-re_complex_abbr = re.compile(r'[.#>^+*\[\(\{]')
+re_complex_abbr = re.compile(r'[.#>^+*\[\(\{\/]')
+re_lorem = re.compile(r'^lorem')
 
 _cache = {}
 _trackers = {}
@@ -670,7 +671,7 @@ def expand_tracker(editor: sublime.View, edit: sublime.Edit, tracker: Abbreviati
 
 def is_valid_candidate(abbr: str, config: Config) -> bool:
     "Check if given string is a valid candidate for Emmet abbreviation"
-    if re_complex_abbr.match(abbr):
+    if re_complex_abbr.search(abbr):
         return True
 
     # Looks like a single-word abbreviation, check if it’s a valid candidate:
@@ -679,6 +680,10 @@ def is_valid_candidate(abbr: str, config: Config) -> bool:
     # * known HTML tags
     # * known Emmet snippets
     if config.type == 'markup' and config.syntax in get_settings('known_snippets_only', []):
-        return '-' in abbr or abbr[0].isupper() or abbr in known_tags or abbr in config.snippets
+        return '-' in abbr \
+            or abbr[0].isupper() \
+            or abbr in known_tags \
+            or abbr in config.snippets \
+            or re_lorem.match(abbr)
 
     return True
