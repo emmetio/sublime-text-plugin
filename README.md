@@ -207,7 +207,11 @@ You can configure snippets/preferences globally or per syntax. Emmet understands
 
 ## More actions
 
-All the rest actions like [Wrap with Abbreviation](https://docs.emmet.io/actions/wrap-with-abbreviation/), [Balance](https://docs.emmet.io/actions/match-pair/), [Select Item](https://docs.emmet.io/actions/select-item/) etc. are also supported but doesn’t have default key bindings. You should either invoke these actions via Command Palette or [create your own keyboard shortcuts](https://www.sublimetext.com/docs/3/key_bindings.html) (see [Default.sublime-commands](./Default.sublime-commands) file for list of available actions). A final Emmet for Sublime Text plugin will provide convenient UI for fine-tuning Emmet options and key bindings.
+All the rest actions like [Wrap with Abbreviation](https://docs.emmet.io/actions/wrap-with-abbreviation/), [Balance](https://docs.emmet.io/actions/match-pair/), [Select Item](https://docs.emmet.io/actions/select-item/) etc. are also supported but doesn’t have default key bindings. You should either invoke these actions via Command Palette or [create your own keyboard shortcuts](https://www.sublimetext.com/docs/3/key_bindings.html) (see [Default.sublime-commands](./Default.sublime-commands) file for list of available actions).
+
+A convenient way to add key bindings for Emmet commands is to go to _Preferences > Package Settings > Emmet > Key Bindings_ menu and copy required sample bindings from the left side to the right without comments.
+
+> In future, Emmet for Sublime Text plugin will provide convenient UI for fine-tuning Emmet options and key bindings.
 
 ## Development
 

@@ -1,0 +1,134 @@
+[
+    // This is a sample keymap for all available Emmet actions like
+    // Increment/Decrement number, Balance, Select Item etc.
+    // Copy and uncomment actions you want to use into your keybindings file on the right.
+    // Read more about Sublime Text key binding: https://www.sublimetext.com/docs/3/key_bindings.html
+
+    // Expand abbreviation anywhere
+    // {
+    //     "keys": ["ctrl+e"],
+    //     "command": "emmet_expand_abbreviation"
+    // },
+
+    // Enter abbreviation mode: explicitly enter abbreviation anywhere 
+    // with interactive preview
+    // {
+    //     "keys": ["ctrl+."],
+    //     "command": "emmet_enter_abbreviation"
+    // },
+
+    // Wrap with Abbreviation
+    // {
+    //     "keys": ["ctrl+w"],
+    //     "command": "emmet_wrap_with_abbreviation",
+    //     "context": [{"key": "setting.is_widget",  "operand": false }]
+    // },
+
+    // Balance Outward
+    // {
+    //     "keys": ["ctrl+d"],
+    //     "command": "emmet_balance",
+    //     "args": { "direction": "outward" }
+    // },
+
+    // Balance Inward
+    // {
+    //     "keys": ["ctrl+j"],
+    //     "command": "emmet_balance",
+    //     "args": { "direction": "inward" }
+    // },
+
+    // Go to Matching Tag/Tag Pair
+    // {
+    //     "keys": ["ctrl+shift+t"],
+    //     "command": "emmet_go_to_tag_pair"
+    // },
+
+    // Remove Tag
+    // {
+    //     "keys": ["super+'"],
+    //     "command": "emmet_remove_tag"
+    // },
+
+    // Split/Join Tag
+    // {
+    //     "keys": ["shift+super+'"],
+    //     "command": "emmet_split_join_tag"
+    // },
+
+    // Go to Next Edit Point
+    // {
+    //     "keys": ["ctrl+alt+right"],
+    //     "command": "emmet_go_to_edit_point"
+    // },
+
+    // Go to Previous Edit Point
+    // {
+    //     "keys": ["ctrl+alt+right"],
+    //     "command": "emmet_go_to_edit_point",
+    //     "args": { "previous": true }
+    // },
+
+    // Select Next Item
+    // {
+    //     "keys": ["shift+super+."],
+    //     "command": "emmet_select_item"
+    // },
+
+    // Select Previous Item
+    // {
+    //     "keys": ["shift+super+,"],
+    //     "command": "emmet_select_item",
+    //     "args": { "previous": true }
+    // },
+
+    // Evaluate Math Expression
+    // {
+    //     "keys": ["shift+super+y"],
+    //     "command": "emmet_evaluate_math"
+    // },
+
+    // Increment/Decrement Number
+    // {
+    //     "keys": ["ctrl+up"],
+    //     "command": "emmet_increment_number",
+    //     "args": { "delta": 1 }
+    // },
+    // {
+    //     "keys": ["ctrl+down"],
+    //     "command": "emmet_increment_number",
+    //     "args": { "delta": -1 }
+    // },
+    // {
+    //     "keys": ["alt+up"],
+    //     "command": "emmet_increment_number",
+    //     "args": { "delta": 0.1 }
+    // },
+    // {
+    //     "keys": ["alt+down"],
+    //     "command": "emmet_increment_number",
+    //     "args": { "delta": 0.1 }
+    // },
+    // {
+    //     "keys": ["shift+alt+up"],
+    //     "command": "emmet_increment_number",
+    //     "args": { "delta": 10 }
+    // },
+    // {
+    //     "keys": ["shift+alt+down"],
+    //     "command": "emmet_increment_number",
+    //     "args": { "delta": -10 }
+    // },
+
+    // Update Image Size
+    // {
+    //     "keys": ["shift+ctrl+i"],
+    //     "command": "emmet_update_image_size"
+    // },
+
+    // Convert data:URL
+    // {
+    //     "keys": ["shift+ctrl+d"],
+    //     "command": "emmet_convert_data_url"
+    // }
+]

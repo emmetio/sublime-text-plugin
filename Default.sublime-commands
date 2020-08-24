@@ -5,6 +5,11 @@
         "args": { "base_file": "${packages}/Emmet/Emmet.sublime-settings" }
     },
     {
+        "caption": "Preferences: Emmet Key Bindings",
+        "command": "edit_settings",
+        "args": { "base_file": "${packages}/Emmet/Default (${platform}).sublime-keymap" }
+    },
+    {
         "caption": "Emmet: Expand Abbreviation",
         "command": "emmet_expand_abbreviation"
     },

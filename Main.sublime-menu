@@ -10,6 +10,10 @@
 				"command": "edit_settings",
 				"args": { "base_file": "${packages}/Emmet/Emmet.sublime-settings" },
 				"caption": "Settings"
+			}, {
+				"command": "edit_settings",
+				"args": { "base_file": "${packages}/Emmet/Default (${platform}).sublime-keymap" },
+				"caption": "Key Bindings"
 			}]
 		}]
 	}]
