@@ -45,7 +45,7 @@
 	// List of scope selectors where abbreviation marker should be activated,
 	// e.g. plugin will mark text that user types as abbreviation
 	"abbreviation_scopes": [
-        "text.html - source - meta - comment",
+        "(text.html | text.xml) - source - meta - comment",
         "source.sass - meta.property-value - meta.property-name - string - punctuation - comment",
 		"(source.css | source.scss | source.less | source.postcss) & meta.property-list",
 		"(source.css | source.scss | source.less | source.postcss) - meta.property-value - meta.property-name - string - comment",

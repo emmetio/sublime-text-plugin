@@ -114,7 +114,7 @@ def in_activation_scope(view: sublime.View, pt: int):
     # <div>a|</div>
     # in this example, ST returns `punctuation.definition.tag.begin.html`
     # scope, even if caret is actually not in tag. Add some custom checks here
-    if view.match_selector(pt, 'text.html meta.tag punctuation.definition.tag.begin') and view.substr(pt) == '<':
+    if view.match_selector(pt, '(text.html | text.xml) meta.tag punctuation.definition.tag.begin') and view.substr(pt) == '<':
         return True
 
     return False
