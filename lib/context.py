@@ -48,6 +48,10 @@ def get_activation_context(editor: sublime.View, pos: int) -> Config:
 
     if syntax.is_html(syntax_name):
         ctx = get_html_context(editor, pos)
+        if syntax.is_jsx(syntax_name) and ctx is None:
+            # No luck with context for JSX: but we can still use it
+            return create_activation_context(editor, pos)
+
         return create_activation_context(editor, pos, ctx) if ctx is not None else None
 
     return create_activation_context(editor, pos)

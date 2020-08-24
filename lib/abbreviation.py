@@ -444,6 +444,15 @@ def is_valid_tracker(tracker: AbbreviationTracker, region: sublime.Region, pos: 
         abbreviation = tracker.abbreviation
         start = region.begin()
         target_pos = region.end()
+
+        if '</' in abbreviation:
+            # XXX Silly check for auto-consed tag in JSX (see Naomi syntax)
+            # Find better solution
+            return False
+
+        if syntax.is_jsx(tracker.config.syntax):
+            start += 1
+
         while target_pos > start:
             ch = abbreviation[target_pos - start - 1]
             if ch in pairs_end:
