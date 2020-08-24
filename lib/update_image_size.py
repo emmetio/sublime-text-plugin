@@ -6,7 +6,7 @@ import sublime
 from . import emmet_sublime as emmet
 from . import syntax
 from . import utils
-from ..emmet.action_utils import CSSProperty
+from ..emmet.action_utils import CSSProperty, get_open_tag
 
 
 def update_image_size(view: sublime.View, edit: sublime.Edit):
@@ -21,7 +21,7 @@ def update_image_size(view: sublime.View, edit: sublime.Edit):
 
 def update_image_size_html(view: sublime.View, edit: sublime.Edit, pos: int):
     "Updates image size in HTML context"
-    tag = emmet.tag(utils.get_content(view), pos)
+    tag = get_open_tag(utils.get_content(view), pos)
     if tag and tag.name.lower() == 'img' and tag.attributes:
         attrs = dict([(a.name.lower(), a) for a in tag.attributes])
 
