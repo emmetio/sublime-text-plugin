@@ -22,10 +22,10 @@ jobs:
       run: |
         VERSION=$(<VERSION)
         # Copy keymaps for all platforms (for some reason, Default.sublime-keymap doesn't always works)
-        cp ./Default.sublime-keymap ./Default\ \(OSX\).sublime-keymap
-        cp ./Default.sublime-keymap ./Default\ \(Windows\).sublime-keymap
-        cp ./Default.sublime-keymap ./Default\ \(Linux\).sublime-keymap
-        rm ./Default.sublime-keymap
+        # cp ./Default.sublime-keymap ./Default\ \(OSX\).sublime-keymap
+        # cp ./Default.sublime-keymap ./Default\ \(Windows\).sublime-keymap
+        # cp ./Default.sublime-keymap ./Default\ \(Linux\).sublime-keymap
+        # rm ./Default.sublime-keymap
         zip -x "*.pyc" -x "__pycache__" -r Emmet.sublime-package emmet messages messages.json lib *.py *.sublime-* .python-version VERSION LICENSE
         mkdir -p public/$VERSION
         python tools/registry.py > public/registry.json

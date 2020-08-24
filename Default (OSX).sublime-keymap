@@ -131,4 +131,46 @@
     //     "keys": ["shift+ctrl+d"],
     //     "command": "emmet_convert_data_url"
     // }
+
+    {
+        "keys": ["tab"],
+        "command": "emmet_expand_abbreviation",
+        "args": { "tab": true },
+        "context": [
+            { "key": "emmet_abbreviation" },
+            { "key": "emmet_tab_expand" }
+        ]
+    },
+    {
+        "keys": ["enter"],
+        "command": "emmet_expand_abbreviation",
+        "context": [
+            { "key": "has_emmet_forced_abbreviation_mark" },
+            { "key": "emmet_abbreviation" }
+        ]
+    },
+    {
+        "keys": ["shift+tab"],
+        "command": "next_field",
+        "context": [
+            { "key": "has_next_field" },
+            { "key": "emmet_abbreviation" },
+            { "key": "emmet_tab_expand" }
+        ]
+    },
+    {
+        "keys": ["escape"],
+        "command": "emmet_clear_abbreviation_marker",
+        "context": [
+            { "key": "has_emmet_abbreviation_mark" },
+            { "key": "auto_complete_visible", "operator": "equal", "operand": false }
+        ]
+    },
+    {
+        "keys": ["escape"],
+        "command": "emmet_hide_tag_preview",
+        "context": [
+            { "key": "emmet_tag_preview" }
+        ]
+    }
 ]
