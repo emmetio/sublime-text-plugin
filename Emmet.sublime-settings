@@ -101,12 +101,8 @@
 	// for current caret position and comment entire tag instead of current line.
 	// If this option is disabled, you can create keyboard shortcut for
 	// `toggle_comment` action.
-    "comment": false,
+    "toggle_comment": false,
 
-    // Outputs everything between `[` and `]` only if specified attribute name
-    // (written in UPPERCASE) exists in element. Attribute name is replaced with
-    // actual value. Use `\n` to add a newline.
-    "comment_template": "\n<!-- /[#ID][.CLASS] -->",
 	"comment_scopes": [
 		"text.html - source",
 		"text.xml",
@@ -114,6 +110,16 @@
 		"source.scss",
 		"source.less"
 	],
+
+	// Enable closing tag commenting after expanding abbreviations, e.g. 
+	// <div class="foo">
+	// </div><!-- .foo -->
+	"comment": false,
+	
+	// Outputs everything between `[` and `]` only if specified attribute name
+    // (written in UPPERCASE) exists in element. Attribute name is replaced with
+    // actual value. Use `\n` to add a newline.
+    "comment_template": "\n<!-- /[#ID][.CLASS] -->",
 
 	// Max size of file to convert to data:URL. Set to 0 to disable limit
     "max_data_url": 20480,
