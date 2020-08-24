@@ -49,7 +49,7 @@
         "source.sass - meta.property-value - meta.property-name - string - punctuation - comment",
 		"(source.css | source.scss | source.less | source.postcss) & meta.property-list",
 		"(source.css | source.scss | source.less | source.postcss) - meta.property-value - meta.property-name - string - comment",
-		"source.js.jsx | source.tsx | source.js meta.jsx | source.jsx",
+		"source.js.jsx | source.tsx | source.js | source.jsx",
 		// Inline CSS
 		"text.html meta.attribute-with-value.style (string.quoted | source.css)"
 	],
