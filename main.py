@@ -346,6 +346,11 @@ class AbbreviationMarkerListener(sublime_plugin.EventListener):
             trk = abbreviation.get_tracker(view)
             return trk.forced if trk else False
 
+        if key == 'emmet_capture_abbreviation':
+            if abbreviation.get_tracker(view) or \
+                abbreviation.suggest_abbreviation_tracker(view, get_caret(view)):
+                return True
+
         return None
 
     def on_query_completions(self, editor: sublime.View, prefix: str, locations: list):
