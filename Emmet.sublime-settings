@@ -48,7 +48,7 @@
         "text.html - source - meta - comment",
         "source.sass - meta.property-value - meta.property-name - string - punctuation - comment",
 		"(source.css | source.scss | source.less | source.postcss) & meta.property-list",
-		"(source.css | source.scss | source.less | source.postcss) - meta.selector - meta.property-value - meta.property-name - string - comment",
+		"(source.css | source.scss | source.less | source.postcss) - meta.property-value - meta.property-name - string - comment",
 		"source.js.jsx | source.tsx | source.js meta.jsx",
 		// Inline CSS
 		"text.html meta.attribute-with-value.style (string.quoted | source.css)"
@@ -115,7 +115,7 @@
 	// <div class="foo">
 	// </div><!-- .foo -->
 	"comment": false,
-	
+
 	// Outputs everything between `[` and `]` only if specified attribute name
     // (written in UPPERCASE) exists in element. Attribute name is replaced with
     // actual value. Use `\n` to add a newline.
