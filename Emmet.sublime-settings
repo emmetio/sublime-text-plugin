@@ -1,18 +1,18 @@
 {
 	// Automatically marks (captures) Emmet abbreviation when typing text: captured abbreviation
 	// is highlighted with underline. Use Tab key inside captured abbreviation to exapnd it.
-    // Works in limited syntaxes only, see `abbreviation_scopes` option
-    // Possible values:
-    // – true: enable capturing for both markup and stylesheet abbreviations
-    // – false: completely disable capturing
-    // – "markup" or "stylesheet": enable capturing for either markup or stylesheet abbreviations
+	// Works in limited syntaxes only, see `abbreviation_scopes` option
+	// Possible values:
+	// – true: enable capturing for both markup and stylesheet abbreviations
+	// – false: completely disable capturing
+	// – "markup" or "stylesheet": enable capturing for either markup or stylesheet abbreviations
 	"auto_mark": true,
 
-    // Preview captured abbreviations, works only if `auto_mark` is enabled.
-    // Possible values:
-    // – true: enable preview for both markup and stylesheet abbreviations
-    // – false: completely disable preview
-    // – "markup" or "stylesheet": enable previews for either markup or stylesheet abbreviations
+	// Preview captured abbreviations, works only if `auto_mark` is enabled.
+	// Possible values:
+	// – true: enable preview for both markup and stylesheet abbreviations
+	// – false: completely disable preview
+	// – "markup" or "stylesheet": enable previews for either markup or stylesheet abbreviations
 	"abbreviation_preview": true,
 
 	// Scope for marked abbreviation region highlighting
@@ -45,8 +45,8 @@
 	// List of scope selectors where abbreviation marker should be activated,
 	// e.g. plugin will mark text that user types as abbreviation
 	"abbreviation_scopes": [
-        "(text.html | text.xml) - source - meta - comment",
-        "source.sass - meta.property-value - meta.property-name - string - punctuation - comment",
+		"(text.html | text.xml) - source - meta - comment",
+		"source.sass - meta.property-value - meta.property-name - string - punctuation - comment",
 		"(source.css | source.scss | source.less | source.postcss) & meta.property-list",
 		"(source.css | source.scss | source.less | source.postcss) - meta.property-value - meta.property-name - string - comment",
 		"source.js.jsx | source.tsx | source.js | source.jsx",
@@ -60,31 +60,31 @@
 	"ignore_scopes": [],
 
 	// Expand Emmet abbreviation with Tab key when in abbreviation marker
-    "tab_expand": true,
+	"tab_expand": true,
 
-    // Emmet syntaxes (keys of "syntax_scopes" dictionary) where Tab expander
-    // is limited to known snippets only.
-    // For example, when you type `di`, pressing Tab key will try to match default
-    // Sublime Text snippet since `di` is neither known tag nor known Emmet snippet.
-    // But `div` will be expanded via Emmet since it’s a known tag.
-    // However, typing `di.sample` will be expanded via Emmet as well since it
-    // contains special operator like `.`
-    // Known snippets are:
-    // * any valid HTML5 tag
-    // * any predefined Emmet snippet
-    // * upper-cased word (JSX, Svelte components)
-    // * words with dash (Vue, Web Components)
-    "known_snippets_only": ["html"],
+	// Emmet syntaxes (keys of "syntax_scopes" dictionary) where Tab expander
+	// is limited to known snippets only.
+	// For example, when you type `di`, pressing Tab key will try to match default
+	// Sublime Text snippet since `di` is neither known tag nor known Emmet snippet.
+	// But `div` will be expanded via Emmet since it’s a known tag.
+	// However, typing `di.sample` will be expanded via Emmet as well since it
+	// contains special operator like `.`
+	// Known snippets are:
+	// * any valid HTML5 tag
+	// * any predefined Emmet snippet
+	// * upper-cased word (JSX, Svelte components)
+	// * words with dash (Vue, Web Components)
+	"known_snippets_only": ["html"],
 
 	// Display open tag preview next to closing tag when caret is inside it
 	// and open tag is not currently visible
-    "tag_preview": false,
+	"tag_preview": false,
 
-    // Document size limit for `tag_preview` option: display preview only if current
-    // document size is less that given one. Setting larger value will degrade
-    // performance of caret movement. Set value to 0 to disable limit
-    // Future versions of Emmet plugin might work better with large documents.
-    "tag_preview_size_limit": 51250,
+	// Document size limit for `tag_preview` option: display preview only if current
+	// document size is less that given one. Setting larger value will degrade
+	// performance of caret movement. Set value to 0 to disable limit
+	// Future versions of Emmet plugin might work better with large documents.
+	"tag_preview_size_limit": 51250,
 
 	// The maximum file size where Emmet will capture HTML tag context for abbreviation.
 	// Tag context is used for resolving implicit tag names in abbreviation
@@ -101,7 +101,7 @@
 	// for current caret position and comment entire tag instead of current line.
 	// If this option is disabled, you can create keyboard shortcut for
 	// `toggle_comment` action.
-    "toggle_comment": false,
+	"toggle_comment": false,
 
 	"comment_scopes": [
 		"text.html - source",
@@ -117,37 +117,37 @@
 	"comment": false,
 
 	// Outputs everything between `[` and `]` only if specified attribute name
-    // (written in UPPERCASE) exists in element. Attribute name is replaced with
-    // actual value. Use `\n` to add a newline.
-    "comment_template": "\n<!-- /[#ID][.CLASS] -->",
+	// (written in UPPERCASE) exists in element. Attribute name is replaced with
+	// actual value. Use `\n` to add a newline.
+	"comment_template": "\n<!-- /[#ID][.CLASS] -->",
 
 	// Max size of file to convert to data:URL. Set to 0 to disable limit
-    "max_data_url": 20480,
+	"max_data_url": 20480,
 
-    // Output code style
-    // Defines how self-closing tags (like `<img>` or `<br>`) and boolean attributes
-    // (like `disabled`) will look in generated code.
-    // Possible values are "html", "xhtml", "xml"
-    "markup_style": "html",
+	// Output code style
+	// Defines how self-closing tags (like `<img>` or `<br>`) and boolean attributes
+	// (like `disabled`) will look in generated code.
+	// Possible values are "html", "xhtml", "xml"
+	"markup_style": "html",
 
-    // Attribute value quotes, "double" or "single"
-    "attribute_quotes": "double",
+	// Attribute value quotes, "double" or "single"
+	"attribute_quotes": "double",
 
-    // Enable BEM support.
-    // When enabled, Emmet will treat class names starting with `-`` as element
-    // and with `_` as modifier in BEM (https://en.bem.info) notation.
-    // These class names will inherit block name from current or ancestor element.
-    // For example, the abbreviation `ul.nav.nav_secondary>li.nav__item` can be
-    // shortened to `ul.nav._secondary>li.-item` with this option enabled.
-    "bem": false,
+	// Enable BEM support.
+	// When enabled, Emmet will treat class names starting with `-`` as element
+	// and with `_` as modifier in BEM (https://en.bem.info) notation.
+	// These class names will inherit block name from current or ancestor element.
+	// For example, the abbreviation `ul.nav.nav_secondary>li.nav__item` can be
+	// shortened to `ul.nav._secondary>li.-item` with this option enabled.
+	"bem": false,
 
-    // When enabled, tries to shorten generated HEX color values for CSS abbreviations.
-    // For example, `c#0` abbreviation can be expanded either to `color: #000;`
-    // or `color: #000000;`
-    "short_hex": true,
+	// When enabled, tries to shorten generated HEX color values for CSS abbreviations.
+	// For example, `c#0` abbreviation can be expanded either to `color: #000;`
+	// or `color: #000000;`
+	"short_hex": true,
 
-    // Additional CSS styles to be embedded into Emmet previews and phantoms
-    "popup_css": "",
+	// Additional CSS styles to be embedded into Emmet previews and phantoms
+	"popup_css": "",
 
 	// Config for Emmet
 	// See `GlobalConfig` interface for supported properties: https://github.com/emmetio/emmet/blob/master/src/config.ts
@@ -162,12 +162,12 @@
 	// 		}
 	// 	}
 	// }
-    "config": {},
+	"config": {},
 
-    // Unique ID editor instance, used for upcoming online Emmet config.
-    // Please do not edit
-    "uid": null,
+	// Unique ID editor instance, used for upcoming online Emmet config.
+	// Please do not edit
+	"uid": null,
 
-    // Enable anonymous event tracking, used to improve Emmet experience
-    "telemetry": null
+	// Enable anonymous event tracking, used to improve Emmet experience
+	"telemetry": null
 }
