@@ -277,7 +277,7 @@ class EmmetWrapWithAbbreviation(sublime_plugin.TextCommand):
         self.config.user_config['text'] = lines
         preview = len(self.region) <  get_settings('wrap_size_preview', -1)
 
-        return wrap.WrapAbbreviationInputHandler(self.view, self.region, self.config, preview)
+        return wrap.WrapAbbreviationInputHandler(self.view, self.region, self.config, last_wrap_abbreviation, preview)
 
 
 class EmmetWrapWithAbbreviationPreview(sublime_plugin.TextCommand):

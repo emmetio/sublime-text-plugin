@@ -11,21 +11,20 @@ from . import utils
 from . import syntax
 
 re_indent = re.compile(r'^\s+')
-last_abbreviation = None
-
 
 class WrapAbbreviationInputHandler(sublime_plugin.TextInputHandler):
-    def __init__(self, view: sublime.View, region: sublime.Region, config: Config, preview=False):
+    def __init__(self, view: sublime.View, region: sublime.Region, config: Config, initial_abbr=None, preview=False):
         self.view = view
         self.region = region
         self.config = config
         self.instant_preview = preview
+        self.initial_abbr = initial_abbr
 
     def placeholder(self):
         return 'Enter abbreviation'
 
     def initial_text(self):
-        return last_abbreviation
+        return self.initial_abbr
 
     def validate(self, text: str):
         try:
@@ -118,8 +117,7 @@ def get_wrap_region(view: sublime.View, sel: sublime.Region, config: Config) -> 
                 r = sublime.Region(open_tag.end(), close_tag.begin())
                 return utils.narrow_to_non_space(view, r)
 
-
-    return sel
+    return utils.narrow_to_non_space(view, sel)
 
 
 def undo_preview(view: sublime.View):
