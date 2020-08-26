@@ -207,11 +207,18 @@ class EmmetEvaluateMath(sublime_plugin.TextCommand):
 
 class EmmetGoToEditPoint(sublime_plugin.TextCommand):
     def run(self, edit, previous=False):
-        caret = get_caret(self.view)
         delta = -1 if previous else 1
-        pt = go_to.find_new_edit_point(self.view, caret + delta, delta)
-        if pt is not None:
-            go_to_pos(self.view, pt)
+        next_selections = []
+        for r in self.view.sel():
+            pt = go_to.find_new_edit_point(self.view, r.begin() + delta, delta)
+            if pt is not None:
+                next_selections.append(sublime.Region(pt, pt))
+
+        if next_selections:
+            sel = self.view.sel()
+            sel.clear()
+            sel.add_all(next_selections)
+            self.view.show(next_selections[0])
 
         track_action('Go to Edit Point', 'previous' if previous else 'next')
 

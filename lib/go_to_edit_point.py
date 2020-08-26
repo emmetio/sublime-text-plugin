@@ -1,5 +1,6 @@
+import sublime
 
-def find_new_edit_point(view, pos, inc):
+def find_new_edit_point(view: sublime.View, pos: int, inc: int) -> int:
     doc_size = view.size()
     cur_pos = pos
 
