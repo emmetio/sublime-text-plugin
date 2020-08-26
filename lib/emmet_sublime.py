@@ -137,6 +137,7 @@ def extract_abbreviation(view: sublime.View, loc: int, config: Config = None):
     text = view.substr(region)
     begin = region.begin()
     abbr_pos = pt - begin
+    look_ahead = config.type != 'stylesheet'
 
     if config is None:
         config = get_config(view, pt)
@@ -145,7 +146,7 @@ def extract_abbreviation(view: sublime.View, loc: int, config: Config = None):
         'type': config.type,
         # No look-ahead for stylesheets: they do not support brackets syntax
         # and enabled look-ahead produces false matches
-        'lookAhead': config.type != 'stylesheet',
+        'lookAhead': look_ahead,
         'prefix': JSX_PREFIX if syntax.is_jsx(config.syntax) else None
     })
 
@@ -154,6 +155,14 @@ def extract_abbreviation(view: sublime.View, loc: int, config: Config = None):
         abbr_data = extract(text, abbr_pos, {
             'type': config.type,
             'lookAhead': config.type != 'stylesheet',
+        })
+
+    if not abbr_data and look_ahead:
+        # Try without lookAhead option: useful for abbreviations inside
+        # string literals
+        abbr_data = extract(text, abbr_pos, {
+            'type': config.type,
+            'lookAhead': False,
         })
 
     if abbr_data:
