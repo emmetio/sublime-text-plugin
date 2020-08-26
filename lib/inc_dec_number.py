@@ -44,7 +44,7 @@ def extract_number(text: str, pos: int):
         end += 1
 
     # Read backward for possible numerics
-    while start >= 0:
+    while start > 0:
         ch = text[start - 1]
         if ch == '.':
             if has_dot:
