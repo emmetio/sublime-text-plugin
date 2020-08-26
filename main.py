@@ -176,12 +176,32 @@ class ConvertDataUrlReplace(sublime_plugin.TextCommand):
 
 class EmmetEvaluateMath(sublime_plugin.TextCommand):
     def run(self, edit: sublime.Edit):
-        caret = get_caret(self.view)
-        line = self.view.line(caret)
-        expr = emmet_sublime.evaluate_math(self.view.substr(line), caret - line.begin())
-        if expr:
-            r = sublime.Region(line.begin() + expr['start'], line.begin() + expr['end'])
-            self.view.replace(edit, r, str(expr['snippet']))
+        replacements = []
+        selections = self.view.sel()
+        for sel in selections:
+            if sel.empty():
+                # No selection, extract expression from line
+                line = self.view.line(sel.begin())
+                expr = emmet_sublime.evaluate_math(self.view.substr(line), sel.end() - line.begin())
+                if expr:
+                    replacements.append({
+                        'region': sublime.Region(line.begin() + expr['start'], line.begin() + expr['end']),
+                        'snippet': str(expr['snippet'])
+                    })
+            else:
+                text = self.view.substr(sel)
+                expr = emmet_sublime.evaluate_math(text, len(text))
+                if expr:
+                    replacements.append({
+                        'region': sublime.Region(sel.begin() + expr['start'], sel.begin() + expr['end']),
+                        'snippet': str(expr['snippet'])
+                    })
+
+        if replacements:
+            replacements.reverse()
+            for item in replacements:
+                self.view.replace(edit, item['region'], item['snippet'])
+
         track_action('Evaluate Math')
 
 
