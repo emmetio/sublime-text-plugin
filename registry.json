@@ -12,9 +12,9 @@
    "donate": "https://github.com/sponsors/emmetio",
    "releases": [
     {
-     "version": "2.1.11",
-     "url": "https://emmetio.github.io/sublime-text-plugin/2.1.11/Emmet.sublime-package",
-     "date": "2020-08-26 08:40:05",
+     "version": "2.1.12",
+     "url": "https://emmetio.github.io/sublime-text-plugin/2.1.12/Emmet.sublime-package",
+     "date": "2020-08-26 09:01:16",
      "sublime_text": ">=3000"
     }
    ]
