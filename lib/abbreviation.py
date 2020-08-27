@@ -139,8 +139,12 @@ def typing_abbreviation(editor: sublime.View, pos: int) -> AbbreviationTracker:
                 return
 
             tracker = start_tracking(editor, start, end, {'offset': offset, 'config': config})
-            if tracker and isinstance(tracker, AbbreviationTrackerValid) and \
-                get_by_key(config, 'context.name') == CSSAbbreviationScope.Section:
+
+            if not tracker or isinstance(tracker, AbbreviationTrackerError):
+                stop_tracking(editor)
+                return None
+
+            if get_by_key(config, 'context.name') == CSSAbbreviationScope.Section:
                 # Make a silly check for section context: if user start typing
                 # CSS selector at the end of file, it will be treated as property
                 # name and provide unrelated completion by default.
@@ -156,9 +160,7 @@ def typing_abbreviation(editor: sublime.View, pos: int) -> AbbreviationTracker:
                     stop_tracking(editor)
                     return
 
-            if tracker:
-                mark(editor, tracker)
-
+            mark(editor, tracker)
             return tracker
 
 
