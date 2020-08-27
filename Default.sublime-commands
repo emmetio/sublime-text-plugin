@@ -112,7 +112,7 @@
         "command": "emmet_convert_data_url"
     },
     {
-        "caption": "Emmet: Get context",
-        "command": "emmet_get_context"
+        "caption": "Emmet: Rename Tag",
+        "command": "emmet_rename_tag"
     }
 ]

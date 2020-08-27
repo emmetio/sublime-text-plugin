@@ -316,6 +316,31 @@ class EmmetWrapWithAbbreviationPreview(sublime_plugin.TextCommand):
         self.view.show_at_center(r.begin())
 
 
+class EmmetRenameTag(sublime_plugin.TextCommand):
+    def run(self, edit, **kw):
+        selection = self.view.sel()
+        sels = list(selection)
+        sel_cleared = False
+
+        for s in sels:
+            syntax_name = syntax.from_pos(self.view, s.begin())
+            if syntax.is_html(syntax_name):
+                ctx = emmet_sublime.get_tag_context(self.view, s.begin(), syntax.is_xml(syntax_name))
+                if ctx:
+                    if not sel_cleared:
+                        selection.clear()
+                        sel_cleared = True
+
+                    selection.add(sublime.Region(ctx['open'].begin() + 1, ctx['open'].begin() + 1 + len(ctx['name'])))
+                    if 'close' in ctx:
+                        selection.add(sublime.Region(ctx['close'].begin() + 2, ctx['close'].end() - 1))
+
+        if sel_cleared:
+            self.view.show(selection)
+
+        track_action('Rename Tag')
+
+
 class AbbreviationMarkerListener(sublime_plugin.EventListener):
     def __init__(self):
         self.pending_completions_request = False
