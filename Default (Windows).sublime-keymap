@@ -107,7 +107,7 @@
     // {
     //     "keys": ["alt+down"],
     //     "command": "emmet_increment_number",
-    //     "args": { "delta": 0.1 }
+    //     "args": { "delta": -0.1 }
     // },
     // {
     //     "keys": ["shift+alt+up"],
