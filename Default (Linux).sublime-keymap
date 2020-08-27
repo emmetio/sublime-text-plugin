@@ -132,6 +132,12 @@
     //     "command": "emmet_convert_data_url"
     // },
 
+    // Rename Tag
+    // {
+    //     "keys": ["shift+ctrl+'"],
+    //     "command": "emmet_rename_tag"
+    // },
+
     {
         "keys": ["tab"],
         "command": "emmet_expand_abbreviation",
