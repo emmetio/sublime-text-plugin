@@ -10,7 +10,7 @@
     //     "command": "emmet_expand_abbreviation"
     // },
 
-    // Enter abbreviation mode: explicitly enter abbreviation anywhere 
+    // Enter abbreviation mode: explicitly enter abbreviation anywhere
     // with interactive preview
     // {
     //     "keys": ["ctrl+."],
@@ -171,6 +171,50 @@
         "command": "emmet_hide_tag_preview",
         "context": [
             { "key": "emmet_tag_preview" }
+        ]
+    },
+    {
+        "keys": [
+            "#"
+        ],
+        "args": {
+            "attribute": "id"
+        },
+        "command": "emmet_insert_attribute",
+        "context": [
+            {
+                "operand": "text.html meta.tag -string -punctuation.definition.tag.begin.html -meta.scope.between-tag-pair.html -source -meta.tag.template.value.twig",
+                "operator": "equal",
+                "match_all": true,
+                "key": "selector"
+            },
+            {
+                "operator": "equal",
+                "operand": true,
+                "key": "emmet_auto_id_class"
+            }
+        ]
+    },
+    {
+        "keys": [
+            "."
+        ],
+        "args": {
+            "attribute": "class"
+        },
+        "command": "emmet_insert_attribute",
+        "context": [
+            {
+                "operand": "text.html meta.tag -string -punctuation.definition.tag.begin.html -meta.scope.between-tag-pair.html -source -meta.tag.template.value.twig",
+                "operator": "equal",
+                "match_all": true,
+                "key": "selector"
+            },
+            {
+                "operator": "equal",
+                "operand": true,
+                "key": "emmet_auto_id_class"
+            }
         ]
     }
 ]

@@ -341,6 +341,19 @@ class EmmetRenameTag(sublime_plugin.TextCommand):
         track_action('Rename Tag')
 
 
+class EmmetInsertAttribute(sublime_plugin.TextCommand):
+	def run(self, edit, attribute=None, **kw):
+		if not attribute:
+			return
+
+		prefix = ''
+		if self.view.sel():
+			sel = self.view.sel()[0]
+			if not self.view.substr(sublime.Region(sel.begin() - 1, sel.begin())).isspace():
+				prefix = ' '
+
+		self.view.run_command('insert_snippet', {'contents': '%s%s="$1"' % (prefix, attribute)})
+
 class AbbreviationMarkerListener(sublime_plugin.EventListener):
     def __init__(self):
         self.pending_completions_request = False
@@ -402,6 +415,9 @@ class AbbreviationMarkerListener(sublime_plugin.EventListener):
             if abbreviation.get_tracker(view) or \
                 abbreviation.suggest_abbreviation_tracker(view, get_caret(view)):
                 return True
+
+        if key == 'emmet_auto_id_class':
+            return get_settings('auto_id_class', False)
 
         return None
 
