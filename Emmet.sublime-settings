@@ -47,8 +47,8 @@
 	"abbreviation_scopes": [
 		"(text.html | text.xml) - source - meta - comment",
 		"source.sass - meta.property-value - meta.property-name - string - punctuation - comment",
-		"(source.css | source.scss | source.less | source.postcss) & meta.property-list",
-		"(source.css | source.scss | source.less | source.postcss) - meta.property-value - meta.property-name - string - comment",
+		"(source.css | source.scss | source.less | source.postcss | source.stylus) & meta.property-list",
+		"(source.css | source.scss | source.less | source.postcss | source.stylus) - meta.property-value - meta.property-name - string - comment",
 		"(source.tsx | source.js | source.jsx) - comment",
 		// Inline CSS
 		"text.html meta.attribute-with-value.style (string.quoted | source.css)"
