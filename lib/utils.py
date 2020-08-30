@@ -61,8 +61,9 @@ def replace_with_snippet(view: sublime.View, edit: sublime.Edit, region: sublime
     sel.clear()
     sel.add(sublime.Region(region.begin(), region.begin()))
     view.replace(edit, region, '')
+
     view.run_command('insert_snippet', {
-        'contents': snippet
+        'contents': preprocess_snippet(snippet)
     })
 
 
@@ -198,3 +199,28 @@ def to_region(rng: list) -> sublime.Region:
 def escape_snippet(text: str) -> str:
     "Escapes given text for snippet insertion"
     return text.replace('$', '\\$')
+
+
+def preprocess_snippet(text: str) -> str:
+    "Preprocess given text before inserting into document: escapes $ charaters where required"
+    result = ''
+    i = 0
+    l = len(text)
+
+    while i < l:
+        ch = text[i]
+        next_ch = text[i + 1] if i + 1 < l else ''
+        i += 1
+        if ch == '\\':
+            # Escape sequence
+            result += ch + next_ch
+            i += 1
+        elif ch == '$' and next_ch != '{':
+            # Non-field $ character
+            result += '\\' + ch
+        else:
+            result += ch
+
+    return result
+
+
