@@ -11,6 +11,7 @@
 - [Tag preview](#tag-preview)
 - [Adding custom Emmet snippets](#adding-custom-emmet-snippets)
 - [More actions](#more-actions)
+- [FAQ about migration from v1](#faq_about_migration_from_v1)
 - [Development](#development)
 
 Emmet is a web-developer’s toolkit for boosting HTML & CSS code writing.
@@ -212,6 +213,47 @@ All the rest actions like [Wrap with Abbreviation](https://docs.emmet.io/actions
 A convenient way to add key bindings for Emmet commands is to go to _Preferences > Package Settings > Emmet > Key Bindings_ menu and copy required sample bindings from the left side to the right without comments.
 
 > In future, Emmet for Sublime Text plugin will provide convenient UI for fine-tuning Emmet options and key bindings.
+
+## FAQ about migration from v1
+
+Here are some most frequently asked questions and issues users came up with after updating to Emmet v2:
+
+### All my keyboard shortcuts gone/nothing works!
+
+Emmet comes with lots of actions like [Wrap with Abbreviation](https://docs.emmet.io/actions/wrap-with-abbreviation/), [Balance](https://docs.emmet.io/actions/match-pair/), [Select Item](https://docs.emmet.io/actions/select-item/) etc. In v1, all these actions had default key bindings. And some of these actions override default ST actions like _Go To End of Line_ (<kbd>Ctrl+E</kbd>) or actions from default packages. Unfortunately, ST doesn’t provide any means to unbind key bindings coming from packages so it became a real problem for users to properly restore editor behavior.
+
+In Emmet 2, all key bindings are disabled by default so you have to add them manually. But don’t worry, you have to just uncomment them:
+
+* Go to _Preferences > Package Settings > Emmet > Key Bindings_ menu item.
+* On the left side you’ll see a sample, commented list of Emmet actions. You just need to copy required actions to the right side and uncomment them.
+
+### <kbd>Tab</kbd> key doesn’t work anymore
+
+Most likely, you’ve updated <kbd>Tab</kbd> key handler for `expand_abbreviation_by_tab` action from Emmet v1 in your key bindings file: simply remove it, it no longer valid.
+
+### I don’t like new behavior with abbreviation capturing, I’d like to expand with <kbd>Tab</kbd> as earlier
+
+You can get almost the same abbreviation expansion behavior as in v1:
+
+* Go to _Preferences > Package Settings > Emmet > Settings_ menu item and set `auto_mark` option to `false`.
+* Add the following into user key bindings (_Preferences > Key Bindings_ menu item) file:
+
+```jsonc
+{
+    "keys": ["tab"],
+    "command": "emmet_expand_abbreviation",
+    "args": { "tab": true },
+    "context": [
+        { "key": "emmet_capture_abbreviation" },
+        { "key": "selection_empty" },
+        { "key": "has_next_field", "operand": false },
+        { "key": "auto_complete_visible", "operand": false },
+        { "key": "selector", "operand": "source.css, source.sass, source.less, source.scss, source.stylus, source.postcss, source.jade, text.jade, source.pug, text.pug, text.slim, text.xml, text.html - source, text.haml, text.scala.html, source string" }
+    ]
+}
+```
+
+Note that old behavior has lots of downsides: you won‘t be able to expand native ST snippets and use <kbd>Tab</kbd> key to insert indentation after word.
 
 ## Development
 
