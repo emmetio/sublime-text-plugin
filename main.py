@@ -251,6 +251,11 @@ class EmmetIncrementNumber(sublime_plugin.TextCommand):
         inc_dec.update(self.view, edit, delta)
         track_action('Increment number', 'delta', delta)
 
+class EmmetDecrementNumber(sublime_plugin.TextCommand):
+    def run(self, edit, delta=1):
+        inc_dec.update(self.view, edit, -delta)
+        track_action('Increment number', 'delta', delta)
+
 
 class EmmetRemoveTag(sublime_plugin.TextCommand):
     def run(self, edit):
