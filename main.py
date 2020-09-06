@@ -285,9 +285,15 @@ class EmmetUpdateImageSize(sublime_plugin.TextCommand):
 class EmmetWrapWithAbbreviation(sublime_plugin.TextCommand):
     def run(self, edit, wrap_abbreviation):
         global last_wrap_abbreviation  # pylint: disable=global-statement
+
         if wrap_abbreviation:
-            snippet = emmet_sublime.expand(wrap_abbreviation, self.config)
-            replace_with_snippet(self.view, edit, self.region, snippet)
+            entries = self.wrap_entries[:]
+            entries.reverse()
+
+            for region, config in entries:
+                snippet = emmet_sublime.expand(wrap_abbreviation, config)
+                replace_with_snippet(self.view, edit, region, snippet)
+
             last_wrap_abbreviation = wrap_abbreviation
 
             track_action('Wrap With Abbreviation')
@@ -295,25 +301,51 @@ class EmmetWrapWithAbbreviation(sublime_plugin.TextCommand):
 
     def input(self, *args, **kwargs):
         # pylint: disable=attribute-defined-outside-init
-        sel = self.view.sel()[0]
-        abbreviation.stop_tracking(self.view)
+        view = self.view
+        abbreviation.stop_tracking(view)
+        wrap_entries = []
+        wrap_size = 0
 
-        self.config = wrap.get_wrap_config(self.view, sel.begin())
-        self.region = wrap.get_wrap_region(self.view, sel, self.config)
-        lines = wrap.get_content(self.view, self.region, True)
-        self.config.user_config['text'] = lines
-        preview = len(self.region) <  get_settings('wrap_size_preview', -1)
+        for sel in list(self.view.sel()):
+            config = wrap.get_wrap_config(view, sel.begin())
+            region = wrap.get_wrap_region(view, sel, config)
+            lines = wrap.get_content(view, region, True)
+            config.user_config['text'] = lines
+            wrap_size += len(region)
 
-        return wrap.WrapAbbreviationInputHandler(self.view, self.region, self.config, last_wrap_abbreviation, preview)
+            wrap_entries.append((region, config))
+
+
+        # Check for region overlapping
+        self.wrap_entries = []
+        wrap_entries.sort(key=lambda item: item[0].begin())
+
+        for entry in wrap_entries:
+            prev = self.wrap_entries[-1] if self.wrap_entries else None
+            if prev and prev[0].intersects(entry[0]):
+                prev[0] = prev[0].cover(entry[0])
+            else:
+                self.wrap_entries.append(entry)
+
+        preview = wrap_size < get_settings('wrap_size_preview', -1)
+
+        return wrap.WrapAbbreviationInputHandler(view, self.wrap_entries, last_wrap_abbreviation, preview)
 
 
 class EmmetWrapWithAbbreviationPreview(sublime_plugin.TextCommand):
     "Internal command to preview abbreviation in text"
 
-    def run(self, edit: sublime.Edit, region: tuple, result: str):
-        r = sublime.Region(*region)
-        replace_with_snippet(self.view, edit, r, result)
-        self.view.show_at_center(r.begin())
+    def run(self, edit: sublime.Edit, items: list):
+        items = items[:]
+        items.reverse()
+        r = None
+
+        for begin, end, result in items:
+            r = sublime.Region(begin, end)
+            replace_with_snippet(self.view, edit, r, result)
+
+        if r is not None:
+            self.view.show_at_center(r.begin())
 
 
 class EmmetRenameTag(sublime_plugin.TextCommand):

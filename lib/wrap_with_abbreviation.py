@@ -13,10 +13,9 @@ from . import syntax
 re_indent = re.compile(r'^\s+')
 
 class WrapAbbreviationInputHandler(sublime_plugin.TextInputHandler):
-    def __init__(self, view: sublime.View, region: sublime.Region, config: Config, initial_abbr=None, preview=False):
+    def __init__(self, view: sublime.View, wrap_entries: list, initial_abbr=None, preview=False):
         self.view = view
-        self.region = region
-        self.config = config
+        self.wrap_entries = wrap_entries
         self.instant_preview = preview
         self.initial_abbr = initial_abbr
 
@@ -28,10 +27,11 @@ class WrapAbbreviationInputHandler(sublime_plugin.TextInputHandler):
 
     def validate(self, text: str):
         try:
-            if self.config.type == 'stylesheet':
-                stylesheet_parse(text, self.config)
+            config = self.wrap_entries[0][1] if self.wrap_entries else None
+            if config and config.type == 'stylesheet':
+                stylesheet_parse(text, config)
             else:
-                markup_parse(text, self.config)
+                markup_parse(text, config)
             return True
         except:
             return False
@@ -50,11 +50,15 @@ class WrapAbbreviationInputHandler(sublime_plugin.TextInputHandler):
 
         if abbr:
             try:
-                result = emmet.expand(abbr, self.config)
-                if self.instant_preview:
+                preview_items = []
+                for region, config in self.wrap_entries:
+                    result = emmet.expand(abbr, config)
+                    if self.instant_preview:
+                        preview_items.append((region.begin(), region.end(), result))
+
+                if preview_items:
                     self.view.run_command('emmet_wrap_with_abbreviation_preview', {
-                        'region': (self.region.begin(), self.region.end()),
-                        'result': result
+                        'items': preview_items
                     })
             except:
                 snippet = '<div class="error">Invalid abbreviation</div>'
