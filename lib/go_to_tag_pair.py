@@ -97,7 +97,7 @@ def handle_selection_change(view: sublime.View):
     syntax_name = syntax.from_pos(view, caret)
     buffer_id = view.buffer_id()
 
-    if syntax.is_html(syntax_name):
+    if syntax.is_html(syntax_name) and not syntax.is_jsx(syntax_name):
         ctx = emmet.get_tag_context(view, caret, syntax.is_xml(syntax_name))
         if ctx and 'close' in ctx and \
             ctx['attributes'] and \
