@@ -255,12 +255,15 @@ def create_tracker(editor: sublime.View, region: sublime.Region, params: dict) -
             # abbreviation. Most likely it happens in stylesheets in `Section` scope
             return AbbreviationTrackerValid(abbreviation, region, config, tracker_params)
     except Exception as err:
-        tracker_params['error'] = {
-            'message': err.message,
-            'pos': err.pos,
-            'pointer': '%s^' % ('-' * err.pos, ) if err.pos is not None else ''
-        }
-        return AbbreviationTrackerError(abbreviation, region, config, tracker_params)
+        if hasattr(err, 'message') and hasattr(err, 'pos'):
+            tracker_params['error'] = {
+                'message': err.message,
+                'pos': err.pos,
+                'pointer': '%s^' % ('-' * err.pos, ) if err.pos is not None else ''
+            }
+            return AbbreviationTrackerError(abbreviation, region, config, tracker_params)
+        else:
+            print(repr(err))
 
 
 def store_tracker(editor: sublime.View, tracker: AbbreviationTracker):
@@ -692,7 +695,7 @@ def is_valid_candidate(abbr: str, config: Config) -> bool:
     # * known Emmet snippets
     if config.type == 'markup' and config.syntax in get_settings('known_snippets_only', []):
         return '-' in abbr \
-            or abbr[0].isupper() \
+            or (abbr and abbr[0].isupper()) \
             or abbr in known_tags \
             or abbr in config.snippets \
             or re_lorem.match(abbr)
