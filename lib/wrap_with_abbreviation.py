@@ -119,9 +119,18 @@ def get_wrap_region(view: sublime.View, sel: sublime.Region, config: Config) -> 
 
             if close_tag:
                 r = sublime.Region(open_tag.end(), close_tag.begin())
-                return utils.narrow_to_non_space(view, r)
+                next_region = utils.narrow_to_non_space(view, r)
 
-    return utils.narrow_to_non_space(view, sel)
+                # On the right side of tag contents, we should skip new lines only
+                # and trim spaces at the end of line
+                padding = view.substr(sublime.Region(next_region.end(), r.end()))
+                ix = padding.find('\n')
+                end = next_region.end() + ix if ix != -1 else r.end()
+                next_region = sublime.Region(next_region.begin(), end)
+
+                return next_region
+
+    return utils.narrow_to_non_space(view, sel, utils.NON_SPACE_LEFT)
 
 
 def undo_preview(view: sublime.View):

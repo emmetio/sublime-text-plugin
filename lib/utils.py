@@ -37,20 +37,25 @@ for k, v in pairs.items():
     pairs_end[v] = k
 
 
-def narrow_to_non_space(view: sublime.View, region: sublime.Region) -> sublime.Region:
+NON_SPACE_LEFT = 1
+NON_SPACE_RIGHT = 2
+
+def narrow_to_non_space(view: sublime.View, region: sublime.Region, direction = NON_SPACE_LEFT | NON_SPACE_RIGHT) -> sublime.Region:
     "Returns copy of region which starts and ends at non-space character"
     begin = region.begin()
     end = region.end()
 
-    while begin < end:
-        if not view.substr(begin).isspace():
-            break
-        begin += 1
+    if direction & NON_SPACE_LEFT:
+        while begin < end:
+            if not view.substr(begin).isspace():
+                break
+            begin += 1
 
-    while end > begin:
-        if not view.substr(end - 1).isspace():
-            break
-        end -= 1
+    if (direction & NON_SPACE_RIGHT):
+        while end > begin:
+            if not view.substr(end - 1).isspace():
+                break
+            end -= 1
 
     return sublime.Region(begin, end)
 
