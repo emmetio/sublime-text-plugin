@@ -2,6 +2,7 @@ import sublime
 from . import emmet_sublime as emmet
 from . import syntax
 from .utils import get_content, get_caret
+from ..emmet.css_matcher import match as match_css
 
 html_comment = {
     'start': '<!--',
@@ -14,6 +15,7 @@ css_comment = {
 }
 
 comment_selector = 'comment'
+embedded_style = 'source.css.embedded | source.less.embedded | source.scss.embedded | source.sass.embedded | source.sss.embedded'
 
 def remove_comments(view: sublime.View, edit: sublime.Edit, region: sublime.Region, tokens: dict):
     "Removes comment markers from given region. Returns amount of characters removed"
@@ -50,10 +52,21 @@ def get_range_for_comment(view: sublime.View, pt: int):
     "Returns tag range for given text position, if possible"
     syntax_name = syntax.from_pos(view, pt)
     if syntax.is_css(syntax_name):
-        m = emmet.match_css(get_content(view), pt)
+        offset = 0
+        inner_region = None
+        if view.match_selector(pt, embedded_style):
+            # Looks like embedded CSS, find matching region
+            for r in view.find_by_selector(embedded_style):
+                if r.contains(pt):
+                    inner_region = r
+                    offset = r.begin()
+                    break
+
+
+        content = view.substr(inner_region) if inner_region else get_content(view)
+        m = match_css(content, pt - offset)
         if m:
-            # TODO CSS might be an inline fragment of another document
-            return sublime.Region(m.start, m.end)
+            return sublime.Region(m.start + offset, m.end + offset)
     elif syntax.is_html(syntax_name):
         tag = emmet.get_tag_context(view, pt, syntax.is_xml(syntax_name))
         if tag:
