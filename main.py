@@ -496,6 +496,9 @@ class AbbreviationMarkerListener(sublime_plugin.EventListener):
             if trk and isinstance(trk, abbreviation.AbbreviationTrackerValid) and \
                 editor.substr(trk.region) == trk.abbreviation:
                 abbreviation.restore_tracker(editor, get_caret(editor))
+            else:
+                # Undo may restore editor marker, remove it
+                abbreviation.unmark(editor)
 
 
 class ToggleCommentListener(sublime_plugin.EventListener):

@@ -198,7 +198,7 @@ def stop_tracking(editor: sublime.View, params: dict = {}):
                 # Contents of forced abbreviation must be removed
                 editor.replace(edit, tracker.region, '')
 
-        if params.get('force'):
+        if params.get('force') or tracker.forced:
             _dispose_cache_tracker(editor)
         else:
             # Store tracker in history to restore it if user continues editing
