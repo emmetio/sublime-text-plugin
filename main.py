@@ -406,15 +406,6 @@ class AbbreviationMarkerListener(sublime_plugin.EventListener):
     @main_view
     def on_selection_modified(self, editor: sublime.View):
         pos = get_caret(editor)
-
-        # NB: Use `skip_selector` here to check if tracking is enabled:
-        # in some tricky cases (like in SCSS/Sass package) syntax highlighter may
-        # produce ignored selector when user types more characters, which
-        # mistakenly leads to ignored selector event if tracker is available.
-        # https://github.com/emmetio/sublime-text-plugin/issues/44
-        if not abbreviation.is_enabled(editor, pos, True):
-            return
-
         trk = abbreviation.handle_selection_change(editor, pos)
 
         if trk:

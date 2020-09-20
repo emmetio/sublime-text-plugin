@@ -494,7 +494,9 @@ def is_enabled(view: sublime.View, pos: int, skip_selector=False) -> bool:
     "Check if Emmet abbreviation tracking is enabled"
     auto_mark = get_settings('auto_mark', False)
 
-    if auto_mark is False or (not skip_selector and not syntax.in_activation_scope(view, pos)):
+    # `auto_mark` could be a boolean or string, indicating type of allowed abbreviation:
+    # either `markup` or `stylesheet`
+    if auto_mark is False:
         return False
 
     if auto_mark is True:
