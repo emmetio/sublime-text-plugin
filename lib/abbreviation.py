@@ -369,13 +369,12 @@ def handle_change(editor: sublime.View, pos: int) -> AbbreviationTracker:
 
 def handle_selection_change(editor: sublime.View, pos: int) -> AbbreviationTracker:
     "Handle selection (caret) change in given editor instance"
-    last_pos = _last_pos.get(editor.id(), -1)
     set_last_pos(editor, pos)
 
     # Do not restore tracker if selection wasn’t changed.
     # Otherwise, it will restore just expanded tracker in some cases,
     # like `#ddd` (e.g. abbreviation is the same as result)
-    tracker = get_tracker(editor) or (last_pos != pos and restore_tracker(editor, pos))
+    tracker = get_tracker(editor) or restore_tracker(editor, pos)
     if tracker:
         tracker.last_pos = pos
         return tracker
