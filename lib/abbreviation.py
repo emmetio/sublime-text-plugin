@@ -1,5 +1,6 @@
 import re
 import html
+import traceback
 import sublime
 from ..emmet import Abbreviation as MarkupAbbreviation, markup_abbreviation, stylesheet_abbreviation
 from ..emmet.config import Config
@@ -263,7 +264,8 @@ def create_tracker(editor: sublime.View, region: sublime.Region, params: dict) -
             }
             return AbbreviationTrackerError(abbreviation, region, config, tracker_params)
         else:
-            print(repr(err))
+            print('Error while parsing abbreviation')
+            traceback.print_exc()
 
 
 def store_tracker(editor: sublime.View, tracker: AbbreviationTracker):
