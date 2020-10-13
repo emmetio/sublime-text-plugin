@@ -484,7 +484,7 @@ def is_simple_markup_abbreviation(abbr: MarkupAbbreviation) -> bool:
 
 def allow_tracking(editor: sublime.View, pos: int) -> bool:
     "Check if abbreviation tracking is allowed in editor at given location"
-    if is_enabled(editor, pos):
+    if is_enabled(editor, pos) and syntax.in_activation_scope(editor, pos):
         syntax_name = syntax.from_pos(editor, pos)
         return syntax.is_supported(syntax_name) or syntax.is_jsx(syntax_name)
 
