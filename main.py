@@ -48,7 +48,18 @@ def main_view(fn):
 
 
 class EmmetExpandAbbreviation(sublime_plugin.TextCommand):
-    def run(self, edit, tab=False):
+    def run(self, edit, **kwargs):
+        if len(self.view.sel()) > 1 or kwargs.get('force', False):
+            # Multicaret is less restricted mode: it doesn’t require
+            # abbreviation to be typed in order to expand it.
+            # Users can pass `force: true` argument to `emmet_expand_abbreviation`
+            # command to expand single-cursor abbreviations as well
+            self.multiple_caret(edit)
+        else:
+            self.single_caret(edit, kwargs.get('tab', False))
+
+
+    def single_caret(self, edit, tab=False):
         caret = get_caret(self.view)
         trk = abbreviation.get_tracker(self.view)
 
@@ -61,6 +72,41 @@ class EmmetExpandAbbreviation(sublime_plugin.TextCommand):
             abbreviation.expand_tracker(self.view, edit, trk)
             track_action('Expand Abbreviation', trk.config.syntax)
         abbreviation.stop_tracking(self.view, {'force': not tab})
+
+
+    def multiple_caret(self, edit):
+        sels = []
+        doc_size = self.view.size()
+        expanded = None
+        cur_tracker = abbreviation.get_tracker(self.view)
+
+        for sel in reversed(list(self.view.sel())):
+            trk = abbreviation.suggest_abbreviation_tracker(self.view, sel.end())
+            if trk:
+                abbreviation.expand_tracker(self.view, edit, trk)
+                expanded = trk.config.syntax
+
+                # Update locations of existing regions
+                next_size = self.view.size()
+                delta = next_size - doc_size
+                for r in sels:
+                    r.a += delta
+                    r.b += delta
+
+                doc_size = next_size
+                sels += list(self.view.sel())
+            else:
+                sels.append(sel)
+            abbreviation.stop_tracking(self.view, {'force': True})
+
+        s = self.view.sel()
+        s.clear()
+        s.add_all(sels)
+
+        if expanded:
+            if cur_tracker:
+                abbreviation.store_tracker(self.view, cur_tracker)
+            track_action('Expand Multiple Abbreviations', expanded)
 
 
 class EmmetEnterAbbreviation(sublime_plugin.TextCommand):
@@ -432,6 +478,17 @@ class AbbreviationMarkerListener(sublime_plugin.EventListener):
         if key == 'emmet_tab_expand':
             return get_settings('tab_expand', False)
 
+        if key == 'emmet_multicursor_tab_expand':
+            return allow_multicursor_abbr(view)
+
+        if key == 'emmet_activation_scope':
+            # For each cursor check if it’s in allowed context
+            for sel in view.sel():
+                if not sel.empty() or not syntax.in_activation_scope(view, sel.end()):
+                    return False
+
+            return True
+
         if key == 'has_emmet_abbreviation_mark':
             return bool(abbreviation.get_tracker(view))
 
@@ -486,7 +543,8 @@ class AbbreviationMarkerListener(sublime_plugin.EventListener):
             trk = abbreviation.get_stored_tracker(editor)
             if trk and isinstance(trk, abbreviation.AbbreviationTrackerValid) and \
                 editor.substr(trk.region) == trk.abbreviation:
-                abbreviation.restore_tracker(editor, get_caret(editor))
+                for s in editor.sel():
+                    abbreviation.restore_tracker(editor, s.end())
             else:
                 # Undo may restore editor marker, remove it
                 abbreviation.unmark(editor)
@@ -517,3 +575,28 @@ class SelectItemListener(sublime_plugin.EventListener):
     def on_post_text_command(self, view, command_name, args):
         if command_name != 'emmet_select_item':
             select_item.reset_model(view)
+
+
+def allow_multicursor_abbr(view: sublime.View):
+    "Check if multicursor abbreviation expand is allowed"
+    if not get_settings('multicursor_tab', False):
+        return False
+
+    # Check that any of the cursors touches valid Emmet abbreviation
+    tracker = abbreviation.get_tracker(view)
+    if tracker:
+        for s in view.sel():
+            if tracker.line.contains(s):
+                return True
+
+    # Fast check failed: try to extract abbreviation for any of cursors
+    for s in view.sel():
+        trk = abbreviation.suggest_abbreviation_tracker(view, s.end())
+        if trk:
+            return True
+
+    # Restore previous tracker, if any
+    if tracker:
+        abbreviation.set_active_tracker(view, tracker)
+
+    return False

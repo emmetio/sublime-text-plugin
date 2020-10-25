@@ -61,7 +61,15 @@
 	"ignore_scopes": [],
 
 	// Expand Emmet abbreviation with Tab key when in abbreviation marker
-	"tab_expand": true,
+    "tab_expand": true,
+
+    // Expand Emmet abbreviation with Tab key with multiple cursors in editor.
+    // Currently, this mode is less restricted that single-cursor Tab: it doesn’t
+    // require abbreviation to be immediately typed and expanded by user, it may
+    // expand existing abbreviation.
+    // As a side-effect, you may not be able to insert tab character after words
+    // if this option is enabled
+    "multicursor_tab": true,
 
 	// Emmet syntaxes (keys of "syntax_scopes" dictionary) where Tab expander
 	// is limited to known snippets only.

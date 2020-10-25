@@ -34,7 +34,8 @@ _has_popup_preview = {}
 
 class AbbreviationTracker:
     __slots__ = ('region', 'abbreviation', 'forced', 'forced', 'offset',
-                 'last_pos', 'last_length', 'config', 'simple', 'preview', 'error', 'valid_candidate')
+                 'last_pos', 'config', 'simple', 'preview', 'line',
+                 'error', 'valid_candidate')
     def __init__(self, abbreviation: str, region: sublime.Region, config: Config, params: dict = None):
         self.abbreviation = abbreviation
         "Range in editor for abbreviation"
@@ -56,11 +57,13 @@ class AbbreviationTracker:
         Used to handle prefixes in abbreviation
         """
 
+        self.line = sublime.Region(0, 0)
+        """
+        Region of text line that contains tracked abbreviation
+        """
+
         self.last_pos = 0
         "Last character location in editor"
-
-        self.last_length = 0
-        "Last editor size"
 
         self.valid_candidate = True
         "Indicates that current abbreviation is a valid candidate to expand"
@@ -180,9 +183,7 @@ def start_tracking(editor: sublime.View, start: int, pos: int, params: dict = No
     tracker = create_tracker(editor, sublime.Region(start, pos), tracker_params)
 
     if tracker:
-        _trackers[editor.id()] = tracker
-        mark(editor, tracker)
-        return tracker
+        return set_active_tracker(editor, tracker)
 
     _dispose_tracker(editor)
 
@@ -208,6 +209,14 @@ def stop_tracking(editor: sublime.View, params: dict = {}):
         _dispose_tracker(editor)
 
 
+def set_active_tracker(editor: sublime.View, tracker: AbbreviationTracker) -> AbbreviationTracker:
+    "Sets currently active tracker"
+    _dispose_tracker(editor)
+    _trackers[editor.id()] = tracker
+    mark(editor, tracker)
+    return tracker
+
+
 def create_tracker(editor: sublime.View, region: sublime.Region, params: dict) -> AbbreviationTracker:
     """
     Creates abbreviation tracker for given range in editor. Parses contents
@@ -222,6 +231,13 @@ def create_tracker(editor: sublime.View, region: sublime.Region, params: dict) -
         # Invalid range
         return
 
+    line_a = editor.line(region.a)
+    line_b = editor.line(region.b)
+
+    if line_a != line_b:
+        # Mulitline regions are not supported
+        return
+
     abbreviation = editor.substr(region)
     if offset:
         abbreviation = abbreviation[offset:]
@@ -234,8 +250,8 @@ def create_tracker(editor: sublime.View, region: sublime.Region, params: dict) -
     tracker_params = {
         'forced': forced,
         'offset': offset,
+        'line': line_a,
         'last_pos': region.end(),
-        'last_length': editor.size(),
     }
 
     try:
@@ -258,7 +274,7 @@ def create_tracker(editor: sublime.View, region: sublime.Region, params: dict) -
     except Exception as err:
         if hasattr(err, 'message') and hasattr(err, 'pos'):
             tracker_params['error'] = {
-                'message': err.message,
+                'message': err.message.split('\n')[0],
                 'pos': err.pos,
                 'pointer': '%s^' % ('-' * err.pos, ) if err.pos is not None else ''
             }
@@ -294,10 +310,8 @@ def restore_tracker(editor: sublime.View, pos: int) -> AbbreviationTracker:
                 # actually trying to restore tracker
                 return None
 
-            _trackers[editor.id()] = tracker
-            mark(editor, tracker)
-            tracker.last_length = editor.size()
-            return tracker
+            tracker.line = editor.line(tracker.region.a)
+            return set_active_tracker(editor, tracker)
 
     return None
 
@@ -314,14 +328,16 @@ def suggest_abbreviation_tracker(view: sublime.View, pos: int) -> AbbreviationTr
         stop_tracking(view)
         trk = None
 
-    if not trk:
+    if not trk and allow_tracking(view, pos):
         # Try to extract abbreviation from current location
         config = get_activation_context(view, pos)
         if config:
             abbr = extract_abbreviation(view, pos, config)
             if abbr:
                 offset = abbr.location - abbr.start
-                return start_tracking(view, abbr.start, abbr.end, {'config': config, 'offset': offset})
+                trk = start_tracking(view, abbr.start, abbr.end, {'config': config, 'offset': offset})
+
+    return trk
 
 
 def handle_change(editor: sublime.View, pos: int) -> AbbreviationTracker:
@@ -338,14 +354,15 @@ def handle_change(editor: sublime.View, pos: int) -> AbbreviationTracker:
 
     last_pos = tracker.last_pos
     region = tracker.region
+    line = editor.line(pos)
 
-    if last_pos < region.begin() or last_pos > region.end():
-        # Updated content outside abbreviation: reset tracker
+    if last_pos < region.begin() or last_pos > region.end() or line.begin() != tracker.line.begin():
+        # Updated content outside abbreviation or tracker spans multiple lines:
+        # reset tracker
         stop_tracking(editor)
         return None
 
-    length = editor.size()
-    delta = length - tracker.last_length
+    delta = line.size() - tracker.line.size()
     region = sublime.Region(region.a, region.b)
 
     # Modify region and validate it: if it leads to invalid abbreviation, reset tracker
@@ -491,7 +508,7 @@ def allow_tracking(editor: sublime.View, pos: int) -> bool:
     return False
 
 
-def is_enabled(view: sublime.View, pos: int, skip_selector=False) -> bool:
+def is_enabled(view: sublime.View, pos: int) -> bool:
     "Check if Emmet abbreviation tracking is enabled"
     auto_mark = get_settings('auto_mark', False)
 
