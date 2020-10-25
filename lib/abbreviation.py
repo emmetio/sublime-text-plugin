@@ -110,7 +110,8 @@ def typing_abbreviation(editor: sublime.View, pos: int) -> AbbreviationTracker:
     # character at the word bound
     # NB: get last 2 characters: first should be a word bound(or empty),
     # second must be abbreviation start
-    prefix = editor.substr(sublime.Region(max(0, pos - 2), pos))
+    line = editor.line(pos)
+    prefix = editor.substr(sublime.Region(max(line.begin(), pos - 2), pos))
     syntax_name = syntax.from_pos(editor, pos)
     start = -1
     end = pos
@@ -128,7 +129,7 @@ def typing_abbreviation(editor: sublime.View, pos: int) -> AbbreviationTracker:
         # Check if there’s paired character
         last_ch = prefix[-1]
         if last_ch in pairs and editor.substr(sublime.Region(pos, pos + 1)) == pairs[last_ch]:
-            end += 2
+            end += 1
 
         config = get_activation_context(editor, pos)
         if config is not None:
@@ -226,16 +227,11 @@ def create_tracker(editor: sublime.View, region: sublime.Region, params: dict) -
     config = get_by_key(params, 'config')
     offset = get_by_key(params, 'offset', 0)
     forced = get_by_key(params, 'forced', False)
+    line = editor.line(region.begin())
 
-    if region.a > region.b or (region.a == region.b and not forced):
-        # Invalid range
-        return
-
-    line_a = editor.line(region.a)
-    line_b = editor.line(region.b)
-
-    if line_a != line_b:
-        # Mulitline regions are not supported
+    if region.a > region.b or (region.a == region.b and not forced) or not line.contains(region):
+        # * Invalid range
+        # * Mulitline regions are not supported
         return
 
     abbreviation = editor.substr(region)
@@ -250,7 +246,7 @@ def create_tracker(editor: sublime.View, region: sublime.Region, params: dict) -
     tracker_params = {
         'forced': forced,
         'offset': offset,
-        'line': line_a,
+        'line': line,
         'last_pos': region.end(),
     }
 
@@ -266,10 +262,12 @@ def create_tracker(editor: sublime.View, region: sublime.Region, params: dict) -
 
         preview_config = get_preview_config(config)
         tracker_params['preview'] = expand(abbreviation, preview_config)
-        if tracker_params['preview'] or forced:
+        if forced or config.type != 'stylesheet' or tracker_params['preview']:
             # Create tracker only if preview is not empty for non-forced abbreviation.
             # Empty preview means Emmet was unable to find proper match for given
             # abbreviation. Most likely it happens in stylesheets in `Section` scope
+            # NB: empty preview is perfectly valid case for markup abbreviations,
+            # for example, `()` abbreviation produces empty output
             return AbbreviationTrackerValid(abbreviation, region, config, tracker_params)
     except Exception as err:
         if hasattr(err, 'message') and hasattr(err, 'pos'):
@@ -380,10 +378,8 @@ def handle_change(editor: sublime.View, pos: int) -> AbbreviationTracker:
         return
 
     next_tracker.last_pos = pos
-    _trackers[editor.id()] = next_tracker
-    mark(editor, next_tracker)
 
-    return next_tracker
+    return set_active_tracker(editor, next_tracker)
 
 
 def handle_selection_change(editor: sublime.View, pos: int) -> AbbreviationTracker:
