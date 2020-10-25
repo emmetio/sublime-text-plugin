@@ -1,3 +1,7 @@
+## 2.2.0
+
+* Expand abbreviations from multiple cursors.
+
 ## 2.1.0
 
 * Introduce `known_snippets_only` option, which is enabled by default for HTML syntaxes. It allows to expand a single-word abbreviation only if it’s a known HTML tag, Emmet snippet or common component pattern.
