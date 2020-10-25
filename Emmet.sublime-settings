@@ -13,10 +13,17 @@
 	// – true: enable preview for both markup and stylesheet abbreviations
 	// – false: completely disable preview
 	// – "markup" or "stylesheet": enable previews for either markup or stylesheet abbreviations
-	"abbreviation_preview": true,
+    "abbreviation_preview": true,
+
+    // If enabled, all abbreviations in JSX must be prefixed with `<` character.
+    // It allows you to explicitly specify that you are typing abbreviation and
+    // want to expand it with `Tab` key.
+    // Disabling this option will likely break native ST `Tab` key handler like
+    // inserting completions and indenting code
+    "jsx_prefix": true,
 
 	// Scope for marked abbreviation region highlighting
-	"marker_scope": "region.accent",
+	"marker_scope": "comment",
 
 	// Editor scope to Emmet syntax mapping
 	"syntax_scopes": {

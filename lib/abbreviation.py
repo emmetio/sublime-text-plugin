@@ -5,7 +5,7 @@ import sublime
 from ..emmet import Abbreviation as MarkupAbbreviation, markup_abbreviation, stylesheet_abbreviation
 from ..emmet.config import Config
 from ..emmet.stylesheet import CSSAbbreviationScope
-from .emmet_sublime import JSX_PREFIX, expand, extract_abbreviation
+from .emmet_sublime import get_jsx_prefix, expand, extract_abbreviation
 from .utils import pairs, pairs_end, known_tags, replace_with_snippet
 from .context import get_activation_context
 from .config import get_preview_config, get_settings, get_user_css
@@ -113,15 +113,19 @@ def typing_abbreviation(editor: sublime.View, pos: int) -> AbbreviationTracker:
     line = editor.line(pos)
     prefix = editor.substr(sublime.Region(max(line.begin(), pos - 2), pos))
     syntax_name = syntax.from_pos(editor, pos)
+    jsx_prefix = get_jsx_prefix()
     start = -1
     end = pos
     offset = 0
 
-    if syntax.is_jsx(syntax_name):
+    if syntax.is_jsx(syntax_name) and jsx_prefix:
         # In JSX, abbreviations should be prefixed
-        if len(prefix) == 2 and prefix[0] == JSX_PREFIX and re_jsx_abbr_start.match(prefix[1]):
+        if len(prefix) == 2 and prefix[0] == jsx_prefix and re_jsx_abbr_start.match(prefix[1]):
             start = pos - 2
-            offset = len(JSX_PREFIX)
+            offset = len(jsx_prefix)
+        else:
+            # Abbreviation is not prefixed, abort
+            return None
     elif re_word_bound.match(prefix):
         start = pos - 1
 
@@ -257,7 +261,7 @@ def create_tracker(editor: sublime.View, region: sublime.Region, params: dict) -
             parsed_abbr = stylesheet_abbreviation(abbreviation, config)
         else:
             parsed_abbr = markup_abbreviation(abbreviation, config)
-            jsx = config and syntax.is_jsx(config.syntax)
+            jsx = config and syntax.is_jsx(config.syntax) and bool(get_jsx_prefix())
             tracker_params['simple'] = not jsx and is_simple_markup_abbreviation(parsed_abbr)
 
         preview_config = get_preview_config(config)

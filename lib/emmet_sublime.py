@@ -11,9 +11,6 @@ from . import syntax
 from .config import get_settings, get_config
 from .utils import to_region
 
-JSX_PREFIX = '<'
-
-
 def escape_text(text: str, **kwargs):
     "Escapes all `$` in plain text for snippet output"
     return re.sub(r'\$', '\\$', text)
@@ -138,6 +135,7 @@ def extract_abbreviation(view: sublime.View, loc: int, config: Config = None):
     begin = region.begin()
     abbr_pos = pt - begin
     look_ahead = config.type != 'stylesheet'
+    prefix = get_jsx_prefix() if syntax.is_jsx(config.syntax) else None
 
     if config is None:
         config = get_config(view, pt)
@@ -147,15 +145,8 @@ def extract_abbreviation(view: sublime.View, loc: int, config: Config = None):
         # No look-ahead for stylesheets: they do not support brackets syntax
         # and enabled look-ahead produces false matches
         'lookAhead': look_ahead,
-        'prefix': JSX_PREFIX if syntax.is_jsx(config.syntax) else None
+        'prefix': prefix
     })
-
-    if not abbr_data and syntax.is_jsx(config.syntax):
-        # Try JSX without prefix
-        abbr_data = extract(text, abbr_pos, {
-            'type': config.type,
-            'lookAhead': config.type != 'stylesheet',
-        })
 
     if not abbr_data and look_ahead:
         # Try without lookAhead option: useful for abbreviations inside
@@ -163,6 +154,7 @@ def extract_abbreviation(view: sublime.View, loc: int, config: Config = None):
         abbr_data = extract(text, abbr_pos, {
             'type': config.type,
             'lookAhead': False,
+            'prefix': prefix
         })
 
     if abbr_data:
@@ -172,3 +164,8 @@ def extract_abbreviation(view: sublime.View, loc: int, config: Config = None):
         return abbr_data
 
     return None
+
+
+def get_jsx_prefix() -> str:
+    "Returns prefix for capturing JSX abbreviations"
+    return '<' if get_settings('jsx_prefix') else ''
