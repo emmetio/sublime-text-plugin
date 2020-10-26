@@ -323,14 +323,14 @@ def at_word_bound(editor: sublime.View, r: sublime.Region) -> bool:
     return not ch or re_bound_char.match(ch)
 
 
-def suggest_abbreviation_tracker(view: sublime.View, pos: int) -> AbbreviationTracker:
+def suggest_abbreviation_tracker(view: sublime.View, pos: int, force = False) -> AbbreviationTracker:
     "Tries to extract abbreviation from given position and returns tracker for it, if available"
     trk = get_tracker(view)
     if trk and not trk.region.contains(pos):
         stop_tracking(view)
         trk = None
 
-    if not trk and allow_tracking(view, pos):
+    if not trk and (force or allow_tracking(view, pos)):
         # Try to extract abbreviation from current location
         config = get_activation_context(view, pos)
         if config:

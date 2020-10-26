@@ -66,7 +66,7 @@ class EmmetExpandAbbreviation(sublime_plugin.TextCommand):
         if not trk and not tab:
             # No active tracker but we are expanding not from Tab:
             # try to create tracker from current location
-            trk = abbreviation.suggest_abbreviation_tracker(self.view, caret)
+            trk = abbreviation.suggest_abbreviation_tracker(self.view, caret, True)
 
         if trk and trk.region.contains(caret):
             abbreviation.expand_tracker(self.view, edit, trk)
