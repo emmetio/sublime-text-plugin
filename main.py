@@ -519,7 +519,7 @@ class AbbreviationMarkerListener(sublime_plugin.EventListener):
                     abbreviation.mark(editor, tracker)
                     abbreviation.show_preview(editor, tracker)
                     snippet = emmet_sublime.expand(tracker.abbreviation, tracker.config)
-                    return [('%s\tEmmet' % tracker.abbreviation, snippet)]
+                    return [('%s\tEmmet' % editor.substr(tracker.region), snippet)]
                 else:
                     abbreviation.stop_tracking(editor)
             else:
@@ -528,10 +528,10 @@ class AbbreviationMarkerListener(sublime_plugin.EventListener):
                     abbreviation.stop_tracking(editor)
 
     def on_text_command(self, view: sublime.View, command_name: str, args: list):
-        if command_name == 'auto_complete' and abbreviation.is_enabled(view, get_caret(view)):
+        if command_name == 'auto_complete' and abbreviation.allow_tracking(view, get_caret(view)):
             self.pending_completions_request = True
-        elif command_name in ('commit_completion', 'insert_best_completion'):
-            abbreviation.stop_tracking(view)
+        # elif command_name in ('commit_completion', 'insert_best_completion'):
+            # abbreviation.stop_tracking(view)
 
     def on_post_text_command(self, editor: sublime.View, command_name: str, args: list):
         if command_name == 'auto_complete':
