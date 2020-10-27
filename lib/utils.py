@@ -71,6 +71,28 @@ def replace_with_snippet(view: sublime.View, edit: sublime.Edit, region: sublime
         'contents': preprocess_snippet(snippet)
     })
 
+def multicursor_replace_with_snippet(view: sublime.View, edit: sublime.Edit, payload: list):
+    "Replaces multiple regions with snippets, maintaining final caret positions"
+    sels = []
+    doc_size = view.size()
+    for region, snippet in reversed(list(payload)):
+        replace_with_snippet(view, edit, region, snippet)
+
+        # Update locations of existing regions
+        next_size = view.size()
+        delta = next_size - doc_size
+        for r in sels:
+            r.a += delta
+            r.b += delta
+
+        doc_size = next_size
+        sels += list(view.sel())
+
+    s = view.sel()
+    s.clear()
+    s.add_all(sels)
+
+
 
 def get_caret(view: sublime.View) -> int:
     "Returns current caret position for single selection"

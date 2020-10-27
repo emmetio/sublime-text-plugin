@@ -21,7 +21,7 @@ from .lib import emmet_sublime, abbreviation, balance, syntax, comment, \
 from .lib.remove_tag import remove_tag
 from .lib.split_join_tag import split_join_tag
 from .lib.update_image_size import update_image_size
-from .lib.utils import get_caret, narrow_to_non_space, replace_with_snippet, go_to_pos
+from .lib.utils import get_caret, narrow_to_non_space, replace_with_snippet, multicursor_replace_with_snippet
 from .lib.telemetry import track_action, check_telemetry
 from .lib.config import get_settings
 
@@ -338,14 +338,14 @@ class EmmetWrapWithAbbreviation(sublime_plugin.TextCommand):
         global last_wrap_abbreviation  # pylint: disable=global-statement
 
         if wrap_abbreviation:
-            entries = self.wrap_entries[:]
-            entries.reverse()
-
-            for region, config in entries:
-                snippet = emmet_sublime.expand(wrap_abbreviation, config)
-                replace_with_snippet(self.view, edit, region, snippet)
-
+            payload = []
             last_wrap_abbreviation = wrap_abbreviation
+
+            for region, config in self.wrap_entries:
+                snippet = emmet_sublime.expand(wrap_abbreviation, config)
+                payload.append((region, snippet))
+
+            multicursor_replace_with_snippet(self.view, edit, payload)
 
             track_action('Wrap With Abbreviation')
 
@@ -387,15 +387,14 @@ class EmmetWrapWithAbbreviationPreview(sublime_plugin.TextCommand):
     "Internal command to preview abbreviation in text"
 
     def run(self, edit: sublime.Edit, items: list):
-        items = items[:]
-        items.reverse()
-        r = None
-
+        payload = []
         for begin, end, result in items:
-            r = sublime.Region(begin, end)
-            replace_with_snippet(self.view, edit, r, result)
+            payload.append((sublime.Region(begin, end), result))
 
-        if r is not None:
+        multicursor_replace_with_snippet(self.view, edit, payload)
+
+        if payload:
+            r = payload[0][0]
             self.view.show_at_center(r.begin())
 
 
