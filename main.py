@@ -530,8 +530,12 @@ class AbbreviationMarkerListener(sublime_plugin.EventListener):
     def on_text_command(self, view: sublime.View, command_name: str, args: list):
         if command_name == 'auto_complete' and abbreviation.allow_tracking(view, get_caret(view)):
             self.pending_completions_request = True
-        # elif command_name in ('commit_completion', 'insert_best_completion'):
-            # abbreviation.stop_tracking(view)
+        elif command_name in ('commit_completion', 'insert_best_completion'):
+            # NB: abbreviation tracking shouldn’t be stopped to properly complete
+            # words for abbreviation. But I’m stopping it since it mistakenly fails
+            # when completing native snippets in PHP, see
+            # https://github.com/emmetio/sublime-text-plugin/issues/139
+            abbreviation.stop_tracking(view)
 
     def on_post_text_command(self, editor: sublime.View, command_name: str, args: list):
         if command_name == 'auto_complete':
