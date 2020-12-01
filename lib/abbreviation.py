@@ -131,7 +131,7 @@ def typing_abbreviation(editor: sublime.View, pos: int) -> AbbreviationTracker:
 
     if start >= 0:
         # Check if there’s paired character
-        last_ch = prefix[-1]
+        last_ch = prefix and prefix[-1]
         if last_ch in pairs and editor.substr(sublime.Region(pos, pos + 1)) == pairs[last_ch]:
             end += 1
 

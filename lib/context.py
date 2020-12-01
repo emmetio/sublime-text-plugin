@@ -141,7 +141,76 @@ def get_html_context(editor: sublime.View, pos: int) -> dict:
     return {}
 
 
-def get_css_context(editor: sublime.View, pos: int):
+def get_css_section_region(editor: sublime.View, pos: int) -> sublime.Region:
+    "Returns region of CSS section (selector, at-rule, etc) for given location"
+    sel_prop_list = 'meta.property-list'
+    punct_prop_list = 'punctuation.section.property-list'
+    sel = 'meta.selector'
+    start = pos
+
+    if editor.match_selector(start, punct_prop_list) and editor.substr(start) == '}':
+        # Most likely at the end of section block, e.g. `{p|}
+        start -= 1
+
+    if editor.match_selector(start, sel_prop_list):
+        # Match until we find the beginning of property list
+        r = None
+        while start > 0 and editor.match_selector(start, sel_prop_list):
+            next_r = editor.extract_scope(start)
+            r = r.cover(next_r) if r else next_r
+            if editor.substr(r.a) == '{':
+                break
+            start = r.a - 1
+
+        # Find closing bracket
+        if editor.match_selector(r.b, punct_prop_list):
+            r = r.cover(editor.extract_scope(r.b))
+        if editor.match_selector(r.a - 1, sel):
+            r = r.cover(editor.extract_scope(r.a - 1))
+
+        # print('selector1\n%s' % editor.substr(r))
+        return r
+
+    if editor.match_selector(pos, sel):
+        r = editor.extract_scope(pos)
+        prop_sels = ', '.join((sel_prop_list, punct_prop_list))
+        prev = -1
+        while r.b != prev and editor.match_selector(r.b, prop_sels):
+            prev = r.b
+            r = r.cover(editor.extract_scope(r.b))
+
+        # print('selector3\n%s' % editor.substr(r))
+        return r
+
+
+
+def fast_get_css_context(editor: sublime.View, pos: int):
+    "Get CSS context using native ST API, but might be less accurate than get_css_context()"
+    # Check for edge case: typing abbreviation inside media expression,
+    # e.g. `@media (|) { ... }`
+    r = None
+    text = ''
+    sel_at_rule = 'meta.at-rule.media'
+    if editor.match_selector(pos, sel_at_rule):
+        start = pos
+        while start > 0 and editor.match_selector(start, 'punctuation.definition.group'):
+            start -= 1
+
+        r = editor.extract_scope(start)
+
+        text = '%s {}' % editor.substr(r)
+    else:
+        r = get_css_section_region(editor, pos)
+        if r:
+            text = '%s}' % editor.substr(r)
+
+    if r:
+        ctx = get_css_context_from_text(text, pos - r.a)
+        return ctx
+
+
+def search_css_context(content: str, pos: int):
+    "Searches for Emmet CSS context in content at given location"
     state = {
         'current': None,
         'pool': [],
@@ -166,7 +235,17 @@ def get_css_context(editor: sublime.View, pos: int):
         elif token_type in (TokenType.PropertyValue, TokenType.BlockEnd) and state['stack']:
             release_css_item(state['pool'], state['stack'].pop())
 
-    scan_css(get_content(editor), scan_callback)
+    scan_css(content, scan_callback)
+
+    return state
+
+
+def text_substr(text: str, r: sublime.Region) -> str:
+    return text[r.begin():r.end()]
+
+
+def get_css_context_from_text(text: str, pos: int):
+    state = search_css_context(text, pos)
 
     # CSS abbreviations can be activated only when a character is entered, e.g.
     # it should be either property name or value.
@@ -180,34 +259,40 @@ def get_css_context(editor: sublime.View, pos: int):
     # Check for edge case: typing abbreviation inside media expression,
     # e.g. `@media (|) { ... }`
     if cur['type'] == TokenType.Selector:
-        value = editor.substr(cur['region'])
+        value = text_substr(text, cur['region'])
         if value.startswith('@media') and in_media_expression(value, pos - cur['region'].begin()):
             return {'name': CSSAbbreviationScope.Property}
 
     if cur['type'] in (TokenType.PropertyName, TokenType.PropertyValue) or \
-        is_typing_before_selector(editor, pos, cur):
+        is_typing_before_selector(text, pos, cur):
 
         parent = stack[-1] if stack else None
         scope = CSSAbbreviationScope.Global
 
         if cur:
             if cur['type'] == TokenType.PropertyValue:
-                prefix = editor.substr(pos - 1)
-                value = editor.substr(cur['region'])
+                prefix = text[pos - 1]
+                value = text_substr(text, cur['region'])
                 allowed_prefixes = '!#'
                 if prefix not in allowed_prefixes and value[0] not in allowed_prefixes:
                     # For value scope, allow color abbreviations only and important
                     # modifiers. For all other cases, delegate to native completions
                     return None
                 if parent:
-                    scope = editor.substr(parent['region'])
+                    value = text_substr(text, parent['region'])
             elif cur['type'] in (TokenType.Selector, TokenType.PropertyName) and not parent:
                 scope = CSSAbbreviationScope.Section
 
         return {'name': scope}
 
+def get_css_context(editor: sublime.View, pos: int):
+    if syntax.doc_syntax(editor) == 'css':
+        return fast_get_css_context(editor, pos)
 
-def is_typing_before_selector(editor: sublime.View, pos: int, ctx: dict) -> bool:
+    return get_css_context_from_text(get_content(editor), pos)
+
+
+def is_typing_before_selector(text: str, pos: int, ctx: dict) -> bool:
     """
     Handle edge case: start typing abbreviation before selector. In this case,
     entered character becomes part of selector
@@ -216,7 +301,7 @@ def is_typing_before_selector(editor: sublime.View, pos: int, ctx: dict) -> bool
     if ctx and ctx['type'] == TokenType.Selector and ctx['region'].begin() == pos - 1:
         # Typing abbreviation before selector is tricky one:
         # ensure it’s on its own line
-        line = editor.substr(ctx['region']).splitlines()[0]
+        line = text_substr(text, ctx['region']).splitlines()[0]
         return len(line.strip()) == 1
 
     return False
