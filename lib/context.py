@@ -141,49 +141,6 @@ def get_html_context(editor: sublime.View, pos: int) -> dict:
     return {}
 
 
-def get_css_section_region(editor: sublime.View, pos: int) -> sublime.Region:
-    "Returns region of CSS section (selector, at-rule, etc) for given location"
-    sel_prop_list = 'meta.property-list'
-    punct_prop_list = 'punctuation.section.property-list'
-    sel = 'meta.selector'
-    start = pos
-
-    if editor.match_selector(start, punct_prop_list) and editor.substr(start) == '}':
-        # Most likely at the end of section block, e.g. `{p|}
-        start -= 1
-
-    if editor.match_selector(start, sel_prop_list):
-        # Match until we find the beginning of property list
-        r = None
-        while start > 0 and editor.match_selector(start, sel_prop_list):
-            next_r = editor.extract_scope(start)
-            r = r.cover(next_r) if r else next_r
-            if editor.substr(r.a) == '{':
-                break
-            start = r.a - 1
-
-        # Find closing bracket
-        if editor.match_selector(r.b, punct_prop_list):
-            r = r.cover(editor.extract_scope(r.b))
-        if editor.match_selector(r.a - 1, sel):
-            r = r.cover(editor.extract_scope(r.a - 1))
-
-        # print('selector1\n%s' % editor.substr(r))
-        return r
-
-    if editor.match_selector(pos, sel):
-        r = editor.extract_scope(pos)
-        prop_sels = ', '.join((sel_prop_list, punct_prop_list))
-        prev = -1
-        while r.b != prev and editor.match_selector(r.b, prop_sels):
-            prev = r.b
-            r = r.cover(editor.extract_scope(r.b))
-
-        # print('selector3\n%s' % editor.substr(r))
-        return r
-
-
-
 def fast_get_css_context(editor: sublime.View, pos: int):
     "Get CSS context using native ST API, but might be less accurate than get_css_context()"
     # Check for edge case: typing abbreviation inside media expression,
@@ -200,13 +157,41 @@ def fast_get_css_context(editor: sublime.View, pos: int):
 
         text = '%s {}' % editor.substr(r)
     else:
-        r = get_css_section_region(editor, pos)
+        r = get_matching_section(editor, pos)
         if r:
-            text = '%s}' % editor.substr(r)
+            text = editor.substr(r)
 
     if r:
         ctx = get_css_context_from_text(text, pos - r.a)
         return ctx
+
+
+def get_matching_section(view: sublime.View, pos: int):
+    for r in get_section_regions(view):
+        if r.contains(pos):
+            return r
+
+
+def get_section_regions(view: sublime.View):
+    result = []
+    regions = view.find_by_selector('meta.selector, meta.property-list')
+    max_size = view.size()
+
+    for r in regions:
+        start = r.begin()
+        end = r.end()
+
+        # region may start with whitespace
+        while start < end and view.substr(start).isspace():
+            start += 1
+
+        # Find terminating
+        while end > max_size and view.substr(end) != '}':
+            end += 1
+
+        result.append(sublime.Region(start, end))
+
+    return result
 
 
 def search_css_context(content: str, pos: int):
