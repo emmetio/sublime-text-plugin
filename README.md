@@ -139,7 +139,7 @@ Another new feature of Emmet 2 is inline preview of opening tag. When you move c
 
 Click on this preview will jump to open tag.
 
-This option is disable by default. To enable it, go to _Preferences > Package Settings > Emmet > Settings_ and set `tag_preview` option to `true`.
+This option is disabled by default. To enable it, go to _Preferences > Package Settings > Emmet > Settings_ and set `tag_preview` option to `true`.
 
 ## Adding custom Emmet snippets
 
@@ -218,7 +218,7 @@ A convenient way to add key bindings for Emmet commands is to go to _Preferences
 
 Here are some most frequently asked questions and issues users came up with after updating to Emmet v2:
 
-### All my keyboard shortcuts gone/nothing works!
+### All my keyboard shortcuts are gone/nothing works!
 
 Emmet comes with lots of actions like [Wrap with Abbreviation](https://docs.emmet.io/actions/wrap-with-abbreviation/), [Balance](https://docs.emmet.io/actions/match-pair/), [Select Item](https://docs.emmet.io/actions/select-item/) etc. In v1, all these actions had default key bindings. And some of these actions override default ST actions like _Go To End of Line_ (<kbd>Ctrl+E</kbd>) or actions from default packages. Unfortunately, ST doesn’t provide any means to unbind key bindings coming from packages so it became a real problem for users to properly restore editor behavior.
 
@@ -229,7 +229,7 @@ In Emmet 2, all key bindings are disabled by default so you have to add them man
 
 ### <kbd>Tab</kbd> key doesn’t work anymore
 
-Most likely, you’ve updated <kbd>Tab</kbd> key handler for `expand_abbreviation_by_tab` action from Emmet v1 in your key bindings file: simply remove it, it no longer valid.
+Most likely, you’ve updated <kbd>Tab</kbd> key handler for `expand_abbreviation_by_tab` action from Emmet v1 in your key bindings file: simply remove it, it is no longer valid.
 
 ### I don’t like new behavior with abbreviation capturing, I’d like to expand with <kbd>Tab</kbd> as earlier
 
