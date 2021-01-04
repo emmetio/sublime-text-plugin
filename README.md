@@ -45,9 +45,9 @@ ul#nav>li.item$*4>a{Item $}
 ## Installation
 
 1. From `Command Palette`, run `Package Control: Install Package` command.
-2. In opened packages list, find `Emmet` package and install it
+2. In opened packages list, find `Emmet` package and install it.
 
-If you’re unable to find `Emmet` package on last step or installed package doesn’t work as expected, restart Sublime Text and try again
+If you’re unable to find `Emmet` package on last step or installed package doesn’t work as expected, restart Sublime Text and try again.
 
 ## Expanding abbreviation
 
@@ -59,7 +59,7 @@ If you used [previous version](https://github.com/sergeche/emmet-sublime) of Emm
 
 In this plugin, abbreviation expander acts as *autocomplete provider* and automatically captures abbreviation as you type.
 
-When you start typing in *Emmet-supported context* (HTML, CSS, Slim etc.) Emmet detects if you’re typing something similar to abbreviation and adds underline which indicates *captured abbreviation*. When captured abbreviation becomes *complex* (e.g. contains attributes or multiple elements), you’ll see a preview of expanded abbreviation every time caret is inside it. Hit <kbd>Tab</kbd>key *inside captured abbreviation* to expand it, hit <kbd>Esc</kbd> to remove mark from abbreviation so you can use <kbd>Tab</kbd> for expanding native ST snippets or insert tab character.
+When you start typing in *Emmet-supported context* (HTML, CSS, Slim etc.) Emmet detects if you’re typing something similar to abbreviation and adds underline which indicates *captured abbreviation*. When captured abbreviation becomes *complex* (e.g. contains attributes or multiple elements), you’ll see a preview of expanded abbreviation every time caret is inside it. Hit <kbd>Tab</kbd> key *inside captured abbreviation* to expand it, hit <kbd>Esc</kbd> to remove mark from abbreviation so you can use <kbd>Tab</kbd> for expanding native ST snippets or insert tab character.
 
 ![Emmet abbreviation example](./images/emmet1.gif)
 
