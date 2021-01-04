@@ -235,7 +235,7 @@ Most likely, you’ve updated <kbd>Tab</kbd> key handler for `expand_abbreviatio
 
 You can get almost the same abbreviation expansion behavior as in v1:
 
-* Go to _Preferences > Package Settings > Emmet > Settings_ menu item and set `auto_mark` option to `false`.
+* Go to _Preferences > Package Settings > Emmet > Settings_ menu item and set `tab_expand` option to `false`.
 * Add the following into user key bindings (_Preferences > Key Bindings_ menu item) file:
 
 ```jsonc
