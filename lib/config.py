@@ -72,10 +72,10 @@ def get_output_options(view: sublime.View, inline=False):
     opt = {
         'output.field': field,
         'output.format': not inline,
-        'output.attributeQuotes': get_settings('attribute_quotes')
     }
 
     if syntax.doc_syntax(view) == 'html':
+        opt['output.attributeQuotes'] = get_settings('attribute_quotes')
         opt['output.selfClosingStyle'] = get_settings('markup_style')
         opt['output.compactBoolean'] = get_settings('markup_style') == 'html'
 
