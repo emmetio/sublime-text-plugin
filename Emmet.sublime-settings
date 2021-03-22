@@ -1,6 +1,6 @@
 {
 	// Automatically marks (captures) Emmet abbreviation when typing text: captured abbreviation
-	// is highlighted with underline. Use Tab key inside captured abbreviation to exapnd it.
+	// is highlighted with underline. Use Tab key inside captured abbreviation to expand it.
 	// Works in limited syntaxes only, see `abbreviation_scopes` option
 	// Possible values:
 	// – true: enable capturing for both markup and stylesheet abbreviations
@@ -63,7 +63,7 @@
 	],
 
 	// List of scopes where Emmet abbreviations should not be be captured.
-	// If avy of the following scopes matches, `abbreviation_scopes`
+	// If any of the following scopes matches, `abbreviation_scopes`
 	// will be ignored
 	"ignore_scopes": [],
 
