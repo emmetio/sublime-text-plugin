@@ -64,7 +64,7 @@
 
     // Go to Previous Edit Point
     // {
-    //     "keys": ["ctrl+alt+right"],
+    //     "keys": ["ctrl+alt+left"],
     //     "command": "emmet_go_to_edit_point",
     //     "args": { "previous": true }
     // },
