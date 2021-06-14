@@ -521,6 +521,8 @@ def is_enabled(view: sublime.View, pos: int) -> bool:
         return True
 
     syntax_info = syntax.info(view, pos)
+    if not syntax_info: return False
+
     return syntax_info['type'] == auto_mark
 
 
