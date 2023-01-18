@@ -1,0 +1,12 @@
+Emmet v2.4.0
+
+* Emmet just got better for JSX and Vue devs: use cleaner and shorter
+  abbreviations to work with CSS modules and CSS-in-JS. For example, you can
+  write `..my-class` abbreviation to get `<div styleName={styles['my-class']}>`.
+  Read more in py-emmet v1.2.0 CHANGELOG: https://github.com/emmetio/py-emmet/blob/master/CHANGELOG.md#120-2023-01-19
+  Feature discussion: https://github.com/emmetio/emmet/issues/589
+* Fixed missing semicolon inside `@media` rule (#173)
+* Support abbreviations inside `@supports (...) {}` query
+* Removed extra spaces in CSS snippet output with parentheses in value (https://github.com/emmetio/emmet/issues/647).
+* Added `script:module` HTML snippet.
+* Added `g` (`gap`) CSS snippet, replaced `dc` with `display: contents` instead of invalid `display: compact`.
