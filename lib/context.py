@@ -40,7 +40,7 @@ def get_activation_context(editor: sublime.View, pos: int) -> Config:
         ctx = get_css_context(editor, pos)
         if ctx:
             result = create_activation_context(editor, pos, ctx)
-            if editor.match_selector(pos, 'meta.at-rule.media'):
+            if editor.match_selector(pos, 'meta.at-rule.media meta.group'):
                 result.options['stylesheet.after'] = ''
             return result
 
@@ -75,7 +75,7 @@ def get_html_context(editor: sublime.View, pos: int) -> dict:
 
     # In ST3, `view.find_by_selector()` will merge adjacent regions.
     # For example, passing `entity.name.tag` selector will return a single
-    # region for `<span></span>`. Since we can easily detect tag start, we’ll
+    # range for `<span></span>`. Since we can easily detect tag start, we’ll
     # use selector to get tag name and adjacent closing punctuation to distinct
     # regions and properly build document tree
     is_html = editor.match_selector(pos, 'text.html')
@@ -150,12 +150,14 @@ def fast_get_css_context(editor: sublime.View, pos: int):
     sel_at_rule = 'meta.at-rule.media'
     if editor.match_selector(pos, sel_at_rule):
         start = pos
-        while start > 0 and editor.match_selector(start, 'punctuation.definition.group'):
+        while start > 0 and editor.match_selector(start, 'punctuation.definition.group, punctuation.section.group'):
             start -= 1
 
         r = editor.extract_scope(start)
 
-        text = '%s {}' % editor.substr(r)
+        prefix = '@media '
+        text = '%s%s {}' % (prefix, editor.substr(r))
+        return get_css_context_from_text(text, pos - r.a + len(prefix))
     else:
         r = get_matching_section(editor, pos)
         if r:
@@ -181,7 +183,7 @@ def get_section_regions(view: sublime.View):
         start = r.begin()
         end = r.end()
 
-        # region may start with whitespace
+        # a region may start with whitespace
         while start < end and view.substr(start).isspace():
             start += 1
 
