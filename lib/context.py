@@ -40,7 +40,7 @@ def get_activation_context(editor: sublime.View, pos: int) -> Config:
         ctx = get_css_context(editor, pos)
         if ctx:
             result = create_activation_context(editor, pos, ctx)
-            if editor.match_selector(pos, 'meta.at-rule.media meta.group'):
+            if editor.match_selector(pos, 'meta.at-rule.media meta.group | meta.at-rule.supports meta.group'):
                 result.options['stylesheet.after'] = ''
             return result
 
@@ -147,13 +147,15 @@ def fast_get_css_context(editor: sublime.View, pos: int):
     # e.g. `@media (|) { ... }`
     r = None
     text = ''
-    sel_at_rule = 'meta.at-rule.media'
+    sel_at_rule = 'meta.at-rule.media | meta.at-rule.supports'
     if editor.match_selector(pos, sel_at_rule):
-        start = pos
-        while start > 0 and editor.match_selector(start, 'punctuation.definition.group, punctuation.section.group'):
-            start -= 1
+        r = editor.expand_to_scope(pos, 'meta.group')
+        if not r:
+            start = pos
+            while start > 0 and editor.match_selector(start, 'punctuation.definition.group'):
+                start -= 1
 
-        r = editor.extract_scope(start)
+            r = editor.extract_scope(start)
 
         prefix = '@media '
         text = '%s%s {}' % (prefix, editor.substr(r))
@@ -166,6 +168,12 @@ def fast_get_css_context(editor: sublime.View, pos: int):
     if r:
         ctx = get_css_context_from_text(text, pos - r.a)
         return ctx
+
+    # TODO check for side-effects, may introduce unwanted inline completions
+    # a better solution is to use native ST snippets here
+    # if editor.match_selector(pos, 'source - (meta | comment)'):
+    #     # A global (root) scope
+    #     return { 'name': CSSAbbreviationScope.Global }
 
 
 def get_matching_section(view: sublime.View, pos: int):
