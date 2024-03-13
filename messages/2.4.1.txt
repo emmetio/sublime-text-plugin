@@ -1,0 +1,3 @@
+Emmet v2.4.1
+
+* Automatically remove empty `for` attribute in `<label>` element if it contains nested `<input>` or `<textarea>` element.
