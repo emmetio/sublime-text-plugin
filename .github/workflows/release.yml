@@ -5,13 +5,16 @@ on:
     tags:
     - 'v*.*.*'
 
+permissions:
+  contents: write
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - name: Set up Python
-      uses: actions/setup-python@v1
+      uses: actions/setup-python@v5
       with:
         python-version: '3.x'
     - name: Install dependencies
@@ -39,10 +42,10 @@ jobs:
     #       Emmet.zip
     #       registry.json
     - name: Deploy 🚀
-      uses: JamesIves/github-pages-deploy-action@3.7.1
+      uses: JamesIves/github-pages-deploy-action@4
       with:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        BRANCH: download # The branch the action should deploy to.
-        FOLDER: public # The folder the action should deploy.
+        token: ${{ secrets.GITHUB_TOKEN }}
+        branch: download # The branch the action should deploy to.
+        folder: public # The folder the action should deploy.
 
 
