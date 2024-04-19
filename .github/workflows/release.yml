@@ -42,7 +42,7 @@ jobs:
     #       Emmet.zip
     #       registry.json
     - name: Deploy 🚀
-      uses: JamesIves/github-pages-deploy-action@4
+      uses: JamesIves/github-pages-deploy-action
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         branch: download # The branch the action should deploy to.
