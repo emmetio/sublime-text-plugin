@@ -179,4 +179,7 @@ def extract_abbreviation(view: sublime.View, loc: int, config: Config = None):
 
 def get_jsx_prefix() -> str:
     "Returns prefix for capturing JSX abbreviations"
-    return '<' if get_settings('jsx_prefix') else ''
+    prefix = get_settings('jsx_prefix')
+    if prefix is True:
+        prefix = '<'
+    return prefix if isinstance(prefix, str) else ''

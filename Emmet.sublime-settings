@@ -20,6 +20,7 @@
     // want to expand it with `Tab` key.
     // Disabling this option will likely break native ST `Tab` key handler like
     // inserting completions and indenting code
+    // New in 2.4.4: Set prefix value as string
     "jsx_prefix": true,
 
 	// Scope for marked abbreviation region highlighting
