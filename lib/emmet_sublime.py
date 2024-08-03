@@ -116,6 +116,9 @@ def extract_abbreviation(view: sublime.View, loc: int, config: Config = None):
     """
     pt = -1
     region = None
+    look_ahead = config.type != 'stylesheet'
+    is_jsx = syntax.is_jsx(config.syntax)
+    prefix = get_jsx_prefix() if is_jsx else None
 
     if isinstance(loc, (list, tuple)):
         loc = to_region(loc)
@@ -124,6 +127,16 @@ def extract_abbreviation(view: sublime.View, loc: int, config: Config = None):
         # Character location is passed, extract from line
         pt = loc
         region = view.line(pt)
+
+        # https://github.com/emmetio/sublime-text-plugin/issues/185
+        # Handle edge case when abbreviation is extracted in JSX attribute.
+        # For example: `<A child={<B|}>`, when extracting abbreviation from
+        # | position, it will return `{<B}`, which is perfectly valid abbreviation.
+        # However, expected abbreviation is `<B`
+        if is_jsx and view.match_selector(pt, 'meta.tag.attributes'):
+            value_region = view.expand_to_scope(pt, 'source.js.embedded')
+            if value_region:
+                region = value_region
     elif isinstance(loc, sublime.Region):
         # Extract from given range
         pt = loc.end()
@@ -134,8 +147,6 @@ def extract_abbreviation(view: sublime.View, loc: int, config: Config = None):
     text = view.substr(region)
     begin = region.begin()
     abbr_pos = pt - begin
-    look_ahead = config.type != 'stylesheet'
-    prefix = get_jsx_prefix() if syntax.is_jsx(config.syntax) else None
 
     if config is None:
         config = get_config(view, pt)
