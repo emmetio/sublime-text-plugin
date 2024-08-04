@@ -169,6 +169,11 @@ def extract_abbreviation(view: sublime.View, loc: int, config: Config = None):
         })
 
     if abbr_data:
+        # https://github.com/emmetio/sublime-text-plugin/issues/185
+        # Validate that extracted abbreviation starts with prefix
+        if prefix and text[abbr_data.location - len(prefix):abbr_data.location] != prefix:
+            return None
+
         abbr_data.start += begin
         abbr_data.end += begin
         abbr_data.location += begin
