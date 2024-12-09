@@ -28,7 +28,7 @@
 
 	// Editor scope to Emmet syntax mapping
 	"syntax_scopes": {
-		"html": "text.html - source - meta.attribute-with-value.style",
+		"html": "text.html - text.html source - meta.attribute-with-value.style",
 		"xml": "text.xml - text.xml.xsl",
 		"xsl": "text.xml.xsl",
 		"jsx": "source.js.jsx | source.tsx | source.js | source.jsx",
