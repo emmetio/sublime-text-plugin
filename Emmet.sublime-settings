@@ -13,22 +13,22 @@
 	// – true: enable preview for both markup and stylesheet abbreviations
 	// – false: completely disable preview
 	// – "markup" or "stylesheet": enable previews for either markup or stylesheet abbreviations
-    "abbreviation_preview": true,
+	"abbreviation_preview": true,
 
-    // If enabled, all abbreviations in JSX must be prefixed with `<` character.
-    // It allows you to explicitly specify that you are typing abbreviation and
-    // want to expand it with `Tab` key.
-    // Disabling this option will likely break native ST `Tab` key handler like
-    // inserting completions and indenting code
-    // New in 2.4.4: Set prefix value as string
-    "jsx_prefix": true,
+	// If enabled, all abbreviations in JSX must be prefixed with `<` character.
+	// It allows you to explicitly specify that you are typing abbreviation and
+	// want to expand it with `Tab` key.
+	// Disabling this option will likely break native ST `Tab` key handler like
+	// inserting completions and indenting code
+	// New in 2.4.4: Set prefix value as string
+	"jsx_prefix": true,
 
 	// Scope for marked abbreviation region highlighting
 	"marker_scope": "comment",
 
 	// Editor scope to Emmet syntax mapping
 	"syntax_scopes": {
-		"html": "text.html - source - meta.attribute-with-value.style",
+		"html": "text.html - text.html source - meta.attribute-with-value.style",
 		"xml": "text.xml - text.xml.xsl",
 		"xsl": "text.xml.xsl",
 		"jsx": "source.js.jsx | source.tsx | source.js | source.jsx",
@@ -53,12 +53,12 @@
 	// List of scope selectors where abbreviation marker should be activated,
 	// e.g. plugin will mark text that user types as abbreviation
 	"abbreviation_scopes": [
-		"(text.html | text.xml) - source - meta - comment",
+		"text.html - text.html meta.tag - text.html meta.embedded - text.html meta.interpolation - text.html comment - text.html source",
+		"text.xml - text.xml meta.tag - text.xml meta.embedded - text.xml meta.interpolation - text.xml comment - text.xml source",
 		"source.sass - meta.property-value - meta.property-name - string - punctuation - comment",
 		"(source.css | source.scss | source.less | source.postcss | source.stylus) & meta.property-list",
 		"(source.css | source.scss | source.less | source.postcss | source.stylus) - meta.property-value - meta.property-name - string - comment",
-        "(source.tsx | source.js | source.jsx) - comment",
-        "text.html.cfml - meta.tag",
+		"(source.tsx | source.js | source.jsx) - comment",
 		// Inline CSS
 		"text.html meta.attribute-with-value.style (string.quoted | source.css)"
 	],
@@ -69,15 +69,15 @@
 	"ignore_scopes": [],
 
 	// Expand Emmet abbreviation with Tab key when in abbreviation marker
-    "tab_expand": true,
+	"tab_expand": true,
 
-    // Expand Emmet abbreviation with Tab key with multiple cursors in editor.
-    // Currently, this mode is less restricted that single-cursor Tab: it doesn’t
-    // require abbreviation to be immediately typed and expanded by user, it may
-    // expand existing abbreviation.
-    // As a side-effect, you may not be able to insert tab character after words
-    // if this option is enabled
-    "multicursor_tab": true,
+	// Expand Emmet abbreviation with Tab key with multiple cursors in editor.
+	// Currently, this mode is less restricted that single-cursor Tab: it doesn’t
+	// require abbreviation to be immediately typed and expanded by user, it may
+	// expand existing abbreviation.
+	// As a side-effect, you may not be able to insert tab character after words
+	// if this option is enabled
+	"multicursor_tab": true,
 
 	// Emmet syntaxes (keys of "syntax_scopes" dictionary) where Tab expander
 	// is limited to known snippets only.
@@ -91,11 +91,11 @@
 	// * any predefined Emmet snippet
 	// * upper-cased word (JSX, Svelte components)
 	// * words with dash (Vue, Web Components)
-    "known_snippets_only": ["html"],
+	"known_snippets_only": ["html"],
 
-    // Automatically insert `class` attribute when typing `.` inside open tag
-    // and `id` attribute when typing `#`
-    "auto_id_class": false,
+	// Automatically insert `class` attribute when typing `.` inside open tag
+	// and `id` attribute when typing `#`
+	"auto_id_class": false,
 
 	// Display open tag preview next to closing tag when caret is inside it
 	// and open tag is not currently visible
@@ -174,14 +174,14 @@
 	// See `GlobalConfig` interface for supported properties: https://github.com/emmetio/emmet/blob/master/src/config.ts
 	// Example:
 	// "config": {
-	// 	"markup": {
-	// 		"snippets": {
-	// 			"foo": "foo.bar>baz"
-	// 		},
-	// 		"options": {
-	// 			"output.selfClosingStyle": "xhtml"
-	// 		}
-	// 	}
+	//  "markup": {
+	//      "snippets": {
+	//          "foo": "foo.bar>baz"
+	//      },
+	//      "options": {
+	//          "output.selfClosingStyle": "xhtml"
+	//      }
+	//  }
 	// }
 	"config": {},
 
