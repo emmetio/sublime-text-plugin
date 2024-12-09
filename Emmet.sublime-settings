@@ -53,12 +53,12 @@
 	// List of scope selectors where abbreviation marker should be activated,
 	// e.g. plugin will mark text that user types as abbreviation
 	"abbreviation_scopes": [
-		"(text.html | text.xml) - source - meta - comment",
+		"text.html - text.html meta.tag - text.html meta.embedded - text.html meta.interpolation - text.html comment - text.html source",
+		"text.xml - text.xml meta.tag - text.xml meta.embedded - text.xml meta.interpolation - text.xml comment - text.xml source",
 		"source.sass - meta.property-value - meta.property-name - string - punctuation - comment",
 		"(source.css | source.scss | source.less | source.postcss | source.stylus) & meta.property-list",
 		"(source.css | source.scss | source.less | source.postcss | source.stylus) - meta.property-value - meta.property-name - string - comment",
 		"(source.tsx | source.js | source.jsx) - comment",
-		"text.html.cfml - meta.tag",
 		// Inline CSS
 		"text.html meta.attribute-with-value.style (string.quoted | source.css)"
 	],
